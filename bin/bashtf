@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+
+#set -x # debug mode
+#set -n # syntax check
+ROOT="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"/..
+echo $ROOT
+
+declare -a TEST_COMMENT_LINENUM   # テストコメントがある行番号
+declare -a LINENUM_HASH           # 行番号 -> テストコメントの有無(true or false)
+declare -a TEST_COMMENT_HASH      # 行番号 -> テストコメントの内容
+declare -i LINENUM=1
+declare TEST_COMMENT
+declare PARSE_METHOD
+
+PARSE_METHOD="parse_main"
+
+parse_test_comments() {
+  case $1 in
+    "" )
+      TEST_COMMENT_LINENUM+=( "$LINENUM" )
+      LINENUM_HASH[LINENUM]=true
+      TEST_COMMENT_HASH[LINENUM]="$TEST_COMMENT"
+      PARSE_METHOD="parse_main"
+      LINENUM+=1
+      TEST_COMMENT=""
+      ;;
+    * )
+      TEST_COMMENT="$TEST_COMMENT$1"
+      ;;
+  esac
+}
+
+parse_hash() {
+  case $1 in
+    ":" )
+      PARSE_METHOD="parse_test_comments"
+      ;;
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      PARSE_METHOD="parse_main"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
+      ;;
+  esac
+}
+
+parse_dq() {
+  case $1 in
+    '"' )
+      PARSE_METHOD="parse_main"
+      ;;
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      ;;
+    * )
+      :
+      ;;
+  esac
+}
+
+parse_sq() {
+  case $1 in
+    "'" )
+      PARSE_METHOD="parse_main"
+      ;;
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      ;;
+    * )
+      :
+      ;;
+  esac
+}
+
+parse_bs() {
+  case $1 in
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      PARSE_METHOD="parse_main"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
+      ;;
+  esac
+}
+
+parse_main() {
+  case $1 in
+    "#" )
+      PARSE_METHOD="parse_hash"
+      ;;
+    "\\" )
+      PARSE_METHOD="parse_bs"
+      ;;
+    "'" )
+      PARSE_METHOD="parse_sq"
+      ;;
+    '"' )
+      PARSE_METHOD="parse_dq"
+      ;;
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      PARSE_METHOD="parse_main"
+      ;;
+    * )
+      ;;
+  esac
+}
+
+main() {
+  local file=$1
+  local line
+  local char
+
+  while IFS= read -r line; do
+    while IFS= read -r -n 1 char; do
+      $PARSE_METHOD "$char"
+    done < <(echo $line)
+  done < $file
+}
+
+main "$@"
+
+declare -p TEST_COMMENT_HASH
+echo ------------
+declare -p TEST_COMMENT_LINENUM
+echo ------------
+declare -p LINENUM_HASH
+echo ------------
+declare -p BASH_SOURCE
+echo ------------
+
+declare -i LINENO_CACHE=0
+declare COMMAND_CACHE
+declare -i LIST_INDEX=1      # 0番目にはname属性が入ってるのでそれを無視するため
+                             # => #: name='Testing Framework'
+#set -x
+#set -v
+
+lookback_execution() {
+  [ ${TEST_COMMENT_LINENUM[$LIST_INDEX]} -lt $1 ] &&
+    echo "     => yes" && LIST_INDEX+=1
+}
+
+catch_execution() {
+  [ "$2" == "$BASH_SOURCE" ] && return
+  lookback_execution "$@"
+  echo " * $1 $BASH_COMMAND"
+  LINENO_CACHE="$1"
+  COMMAND_CACHE="$BASH_COMMAND"
+}
+
+runtest() {
+  set -E
+  set -T
+  trap 'catch_execution "$LINENO" "$BASH_SOURCE"' DEBUG
+  trap 'lookback_execution "$LINENO" "$BASH_SOURCE"' RETURN
+  . "$1"
+  trap ':' DEBUG RETURN
+  set +E
+  set +T
+}
+
+runtest $1

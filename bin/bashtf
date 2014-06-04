@@ -144,24 +144,27 @@ declare -i LIST_INDEX=1      # 0番目にはname属性が入ってるのでそ�
 #set -v
 
 lookback_execution() {
+  echo "${TEST_COMMENT_LINENUM[$LIST_INDEX]} < $1"
   [ ${TEST_COMMENT_LINENUM[$LIST_INDEX]} -lt $1 ] &&
     echo "     => yes" && LIST_INDEX+=1
 }
 
 catch_execution() {
-  [ "$2" == "$BASH_SOURCE" ] && return
-  lookback_execution "$@"
-  echo " * $1 $BASH_COMMAND"
-  LINENO_CACHE="$1"
-  COMMAND_CACHE="$BASH_COMMAND"
+  [ "$2" = "$TARGET_FULLPATH" ] && {
+    lookback_execution "$@"
+    echo " * $1 $BASH_COMMAND"
+    LINENO_CACHE="$1"
+    COMMAND_CACHE="$BASH_COMMAND"
+  }
 }
 
 runtest() {
+  TARGET_FULLPATH="$(readlink -f -- "$1")"
   set -E
   set -T
   trap 'catch_execution "$LINENO" "$BASH_SOURCE"' DEBUG
-  trap 'lookback_execution "$LINENO" "$BASH_SOURCE"' RETURN
-  . "$1"
+  . `readlink -f -- "$1"`
+  lookback_execution `wc -l "$TARGET_FULLPATH"`
   trap ':' DEBUG RETURN
   set +E
   set +T

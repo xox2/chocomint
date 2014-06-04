@@ -3,19 +3,20 @@
 
 #: name='Testing FRAmework for SHell'       
 
+true 1
+#: status=0
+
+. lib/lib   #: status!=0
 . lib/lib
-true
-false
-#:status=1
+. tests/dummy   #: status!=0
+true 2
+false #:status=1
 
-echo 1234
-#: status=0 match='1234'           
+nocommand
 
-#ただのcommentだよ
-false
+echo 1234 #: status=0 match='1234'           
 
-declare -p \
-  BASH_SOURCE
+false #ただのcommentだよ
 
 for i in 1 2 3
 do
@@ -23,13 +24,25 @@ do
   echo \"fasdfasd #:oodfipasid
 done
 
+true \
+  true
+
 echo 'a #:
 sadasdasdasda\
-adsasdasdasd' #:    status=0    match='ads'
+adsa #: asdasd' #:    status=0    match='ads'
+
+echo 'a #: sadasdasdasdsdfashfljsdlfhashasklhfljlksdhflkjahsdflkhaslkfhasolkjfaasdasdasd'
+#:    status=0    match='ads'
+
 echo '342 #:
 1231234324
 2343452345' #: status=0 match='2343'
 
-echo "dummy"
-false
-  #: status=1
+echo "dummy" #: match='dummy'
+false #: status=1
+
+
+
+
+
+

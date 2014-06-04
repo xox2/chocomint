@@ -1,0 +1,21 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+declare -p BASH_SOURCE
+
+echo dummy
+
+echo dummydummy

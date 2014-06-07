@@ -7,19 +7,19 @@ echo $ROOT
 
 declare -a DEF_COMMENT_LINENUM   # テストコメントがある行番号
 declare -a TEST_COMMENT_LINENUM   # テストコメントがある行番号
-declare -a LINENUM_HASH           # 行番号 -> テストコメントの有無(true or false)
+declare -a TEST_COMMENT_STYLE           # 行番号 -> テストコメントの有無(true or false)
 declare -a TEST_COMMENT_HASH      # 行番号 -> テストコメントの内容
 declare -i LINENUM=1
 declare TEST_COMMENT
 declare PARSE_METHOD
 
-PARSE_METHOD="parse_main"
+PARSE_METHOD="parse_nl"
 
 parse_def_comments() {
   case $1 in
     "" )
       DEF_COMMENT_LINENUM+=( "$LINENUM" )
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD="parse_nl"
       LINENUM+=1
       DEF_COMMENT=""
       ;;
@@ -36,9 +36,13 @@ parse_test_comments() {
       ;;
     "" )
       TEST_COMMENT_LINENUM+=( "$LINENUM" )
-      LINENUM_HASH[LINENUM]=true
+      if [ "$COMMENT_IN" = "NL" ]; then
+        TEST_COMMENT_STYLE[LINENUM]="NL"
+      else
+        TEST_COMMENT_STYLE[LINENUM]="EOL"
+      fi; unset COMMENT_IN
       TEST_COMMENT_HASH[LINENUM]="$TEST_COMMENT"
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD="parse_nl"
       LINENUM+=1
       TEST_COMMENT=""
       ;;
@@ -54,9 +58,8 @@ parse_hash() {
       PARSE_METHOD="parse_test_comments"
       ;;
     "" )
-      LINENUM_HASH[LINENUM]=false
       LINENUM+=1
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD="parse_nl"
       ;;
     * )
       PARSE_METHOD="parse_main"
@@ -64,13 +67,27 @@ parse_hash() {
   esac
 }
 
+parse_dq_bs() {
+  case $1 in
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_dq"
+      ;;
+    * )
+      PARSE_METHOD="parse_dq"
+      ;;
+  esac
+}
+
 parse_dq() {
   case $1 in
+    "\\" )
+      PARSE_METHOD="parse_dq_bs"
+      ;;
     '"' )
       PARSE_METHOD="parse_main"
       ;;
     "" )
-      LINENUM_HASH[LINENUM]=false
       LINENUM+=1
       ;;
     * )
@@ -79,13 +96,27 @@ parse_dq() {
   esac
 }
 
+parse_sq_bs() {
+  case $1 in
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_sq"
+      ;;
+    * )
+      PARSE_METHOD="parse_sq"
+      ;;
+  esac
+}
+
 parse_sq() {
   case $1 in
+    "\\" )
+      PARSE_METHOD="parse_sq_bs"
+      ;;
     "'" )
       PARSE_METHOD="parse_main"
       ;;
     "" )
-      LINENUM_HASH[LINENUM]=false
       LINENUM+=1
       ;;
     * )
@@ -97,7 +128,6 @@ parse_sq() {
 parse_bs() {
   case $1 in
     "" )
-      LINENUM_HASH[LINENUM]=false
       LINENUM+=1
       PARSE_METHOD="parse_main"
       ;;
@@ -122,11 +152,66 @@ parse_main() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINENUM_HASH[LINENUM]=false
       LINENUM+=1
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD="parse_nl"
       ;;
     * )
+      ;;
+  esac
+}
+
+parse_nl_space() {
+  case $1 in
+    "#" )
+      PARSE_METHOD="parse_hash"
+      COMMENT_IN="NL"
+      ;;
+    " "|"\t" )
+      PARSE_METHOD="parse_nl_space"
+      ;;
+    "\\" )
+      PARSE_METHOD="parse_bs"
+      ;;
+    "'" )
+      PARSE_METHOD="parse_sq"
+      ;;
+    '"' )
+      PARSE_METHOD="parse_dq"
+      ;;
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_nl"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
+      ;;
+  esac
+}
+
+parse_nl() {
+  case $1 in
+    "#" )
+      PARSE_METHOD="parse_hash"
+      COMMENT_IN="NL"
+      ;;
+    " "|"\t" )
+      PARSE_METHOD="parse_nl_space"
+      ;;
+    "\\" )
+      PARSE_METHOD="parse_bs"
+      ;;
+    "'" )
+      PARSE_METHOD="parse_sq"
+      ;;
+    '"' )
+      PARSE_METHOD="parse_dq"
+      ;;
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_nl"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
       ;;
   esac
 }
@@ -149,7 +234,7 @@ declare -p TEST_COMMENT_HASH
 echo ------------
 declare -p TEST_COMMENT_LINENUM
 echo ------------
-declare -p LINENUM_HASH
+declare -p TEST_COMMENT_STYLE
 echo ------------
 declare -p BASH_SOURCE
 echo ------------
@@ -161,27 +246,16 @@ declare -i LIST_INDEX=0
 #set -x
 #set -v
 
-lookback_execution() {
-  echo "${TEST_COMMENT_LINENUM[$LIST_INDEX]} < $1"
-  [ ${TEST_COMMENT_LINENUM[$LIST_INDEX]} -lt $1 ] && {
-    HASH__[$LINENO_CACHE,0]="$BASH_COMMAND"
-    HASH__[$LINENO_CACHE,1]="${TEST_COMMENT_HASH[${TEST_COMMENT_LINENUM[$LIST_INDEX]}]}"
-    echo "===> ${HASH__[$LINENO_CACHE,1]}" >&3
-    LIST_INDEX+=1
-  }
-}
-
 catch_execution() {
   [ "$2" = "$TARGET_FULLPATH" ] && {
-    lookback_execution $1
     tput setaf 1 >&3
     echo " * $1 $BASH_COMMAND" >&3
     tput setaf 7 >&3
-    ([ "${LINENUM_HASH[$1]}" = "true" ] || [ "${LINENUM_HASH[$(($1+1))]}" = "true" ]) && {
-      echo -- >&3
-    }
-    LINENO_CACHE="$1"
-    COMMAND_CACHE="$BASH_COMMAND"
+    if [ "${TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
+      eval "echo \"==> ${TEST_COMMENT_HASH[$1]}\" >&3"
+    elif [ "${TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
+      eval "echo \"==> ${TEST_COMMENT_HASH[$(($1+1))]}\" >&3"
+    fi
   }
 }
 
@@ -194,7 +268,6 @@ preprocess() {
 }
 
 postprocess() {
-  lookback_execution $(wc -l < "$TARGET_FULLPATH") # 最終行番号
   trap DEBUG
   exec 1>&3- 2>&4-
   set +E

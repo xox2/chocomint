@@ -6,14 +6,12 @@ ROOT="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"/..
 echo $ROOT
 
 declare -a DEF_COMMENT_LINENUM   # テストコメントがある行番号
-declare -a TEST_COMMENT_LINENUM   # テストコメントがある行番号
-declare -a TEST_COMMENT_STYLE           # 行番号 -> テストコメントの有無(true or false)
-declare -a TEST_COMMENT_HASH      # 行番号 -> テストコメントの内容
+declare -a TEST_COMMENT_LINENUM  # テストコメントがある行番号
+declare -a TEST_COMMENT_STYLE    # "NL" or "EOL"
+declare -a TEST_COMMENT      # 行番号 -> テストコメントの内容
 declare -i LINENUM=1
 declare TEST_COMMENT
-declare PARSE_METHOD
-
-PARSE_METHOD="parse_nl"
+declare PARSE_METHOD="parse_nl"
 
 parse_def_comments() {
   case $1 in
@@ -36,12 +34,8 @@ parse_test_comments() {
       ;;
     "" )
       TEST_COMMENT_LINENUM+=( "$LINENUM" )
-      if [ "$COMMENT_IN" = "NL" ]; then
-        TEST_COMMENT_STYLE[LINENUM]="NL"
-      else
-        TEST_COMMENT_STYLE[LINENUM]="EOL"
-      fi; unset COMMENT_IN
-      TEST_COMMENT_HASH[LINENUM]="$TEST_COMMENT"
+      TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
+      TEST_COMMENT[LINENUM]="$TEST_COMMENT"
       PARSE_METHOD="parse_nl"
       LINENUM+=1
       TEST_COMMENT=""
@@ -141,6 +135,7 @@ parse_main() {
   case $1 in
     "#" )
       PARSE_METHOD="parse_hash"
+      COMMENT_IN="EOL"
       ;;
     "\\" )
       PARSE_METHOD="parse_bs"
@@ -230,7 +225,7 @@ main() {
 
 main "$@"
 
-declare -p TEST_COMMENT_HASH
+declare -p TEST_COMMENT
 echo ------------
 declare -p TEST_COMMENT_LINENUM
 echo ------------
@@ -239,35 +234,66 @@ echo ------------
 declare -p BASH_SOURCE
 echo ------------
 
-declare -A HASH__
-declare -i LINENO_CACHE=0
-declare COMMAND_CACHE
-declare -i LIST_INDEX=0
-#set -x
-#set -v
+declare -i EXEC_NUM=1
+
+ruler() {
+  [ "$TERM_COLS" ] || {
+    local cols=`tput cols 2>&4`
+    for ((i=0; i<$cols; i++))
+    do
+      TERM_COLS="$TERM_COLS""$1"
+    done
+  }
+  echo "$TERM_COLS" >&3
+}
+
+screen_out() {
+    local stdout=$(cat /tmp/_bashtf_command_stdout.$$.log)
+    [ "$stdout" ] && {
+      #tput setaf 2 >&3
+      echo "[ stdout ]" >&3
+      echo "$stdout" >&3
+      #tput sgr0 >&3
+      : > /tmp/_bashtf_command_stdout.$$.log
+    }
+    local errout=$(cat /tmp/_bashtf_command_stderr.$$.log)
+    [ "$errout" ] && {
+      echo "[ errout ]" >&3
+      echo "$errout" >&3
+      : > /tmp/_bashtf_command_stderr.$$.log
+    }
+}
 
 catch_execution() {
   [ "$2" = "$TARGET_FULLPATH" ] && {
-    tput setaf 1 >&3
-    echo " * $1 $BASH_COMMAND" >&3
-    tput setaf 7 >&3
+    screen_out
+
+    tput bold >&3
+    ruler "="
+    printf "No.%0$((${#LINENUM}+1))d  L%0${#LINENUM}d\n" "$((EXEC_NUM++))" "$1" >&3
+    echo "raw  : $BASH_COMMAND" >&3
+    eval "echo \"eval : $BASH_COMMAND\" >&3"
+
     if [ "${TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
-      eval "echo \"==> ${TEST_COMMENT_HASH[$1]}\" >&3"
+      echo -n "test : " >&3
+      eval "echo \"${TEST_COMMENT[$1]}\" >&3"
     elif [ "${TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
-      eval "echo \"==> ${TEST_COMMENT_HASH[$(($1+1))]}\" >&3"
+      echo -n "test : " >&3
+      eval "echo \"${TEST_COMMENT[$(($1+1))]}\" >&3"
     fi
+    tput sgr0 >&3
   }
 }
 
 preprocess() {
   set -E
   set -T
-  out=3
-  eval "exec $out>&1 4>&2 1> std.log 2> err.log"
+  eval "exec 3>&1 4>&2 1> /tmp/_bashtf_command_stdout.$$.log 2> /tmp/_bashtf_command_stderr.$$.log"
   trap 'catch_execution "$LINENO" "$BASH_SOURCE"' DEBUG
 }
 
 postprocess() {
+  screen_out
   trap DEBUG
   exec 1>&3- 2>&4-
   set +E

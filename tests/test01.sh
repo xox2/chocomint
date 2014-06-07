@@ -3,16 +3,16 @@
 
 #:: name='Testing FRAmework for SHell'       
 
-true 1
+true No.1
 #: status=0
 
-. lib/lib   #: status!=0
-. lib/lib
-. tests/dummy   #: status!=0
-true 2
+. lib/cant_load   #: status!=0
+. lib/cant_load
+. tests/dummy   #: status=0
+true
 false #:status=1
 
-nocommand
+no_command
 
 echo 1234 #: status=0 match='1234'           
 
@@ -20,33 +20,36 @@ false #ただのcommentだよ
 
 for i in 1 2 3
 do
-  echo \'bdbsd $i #:nonono $i
+  echo \'bdbsd $i #: match='$i'
   echo \"fasdfasd $i
-  #:oodfipasid $i
+  #: match="$i"
 done
 
 echo "pipe command" | cat
 
 str=`echo subshell zxc | cat`
 str=$(echo subshell qwe | cat)
-echo "str=\"$str\"" #: $str
-echo "str=\'$str\'" #: $str
+echo "str=\"$str\"" #: match="$str"
+echo "str=\'$str\'" #: match="$str"
 
 true \
   true
 
+ls --version
+ls --s
+
 true \
-#: backslash newline test
+#: status=0
 true \
-  #: backslash whitespace newline test
+  #: status=0
 
 multiple_line='a #:
 sadasdasdasda\
 adsa #: asdasd'     #:    status=0
-echo $multiple_line #:    status=0    match='ads'
+echo "$multiple_line" #:    status=0    match='asd'
 
 echo 'a #: sadasdasdasdsdfashfljsdlfhashasklhfljlksdhflkjahsdflkhaslkfhasolkjfaasdasdasd'
-	#:    status=0    match='ads'
+	#:    status=0    match='flj'
 
      echo '342 #:
 1231234324
@@ -54,6 +57,7 @@ echo 'a #: sadasdasdasdsdfashfljsdlfhashasklhfljlksdhflkjahsdflkhaslkfhasolkjfaa
 
 echo "dummy" #: match='dummy'
 false #: status=1
+echo "FFFFIIIIIINNNNIIIISSSSHHHHHH!!!!!!!" #: status=0
 
 
 

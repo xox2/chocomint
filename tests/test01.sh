@@ -1,7 +1,7 @@
 #!/usr/bin/env bashtf
 # vim: ft=sh
 
-#: name='Testing FRAmework for SHell'       
+#:: name='Testing FRAmework for SHell'       
 
 true 1
 #: status=0
@@ -21,15 +21,23 @@ false #ただのcommentだよ
 for i in 1 2 3
 do
   echo \'bdbsd #:nonono
-  echo \"fasdfasd #:oodfipasid
+  echo \"fasdfasd
+  #:oodfipasid
 done
+
+echo "pipe command" | cat
+
+str=`echo subshell zxc | cat`
+str=$(echo subshell qwe | cat)
+echo $str
 
 true \
   true
 
-echo 'a #:
+multiple_line='a #:
 sadasdasdasda\
-adsa #: asdasd' #:    status=0    match='ads'
+adsa #: asdasd'
+echo $multi_line #:    status=0    match='ads'
 
 echo 'a #: sadasdasdasdsdfashfljsdlfhashasklhfljlksdhflkjahsdflkhaslkfhasolkjfaasdasdasd'
 #:    status=0    match='ads'

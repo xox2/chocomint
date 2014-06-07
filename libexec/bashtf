@@ -1,0 +1,211 @@
+#!/usr/bin/env bash
+
+#set -x # debug mode
+#set -n # syntax check
+ROOT="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"/..
+echo $ROOT
+
+declare -a DEF_COMMENT_LINENUM   # テストコメントがある行番号
+declare -a TEST_COMMENT_LINENUM   # テストコメントがある行番号
+declare -a LINENUM_HASH           # 行番号 -> テストコメントの有無(true or false)
+declare -a TEST_COMMENT_HASH      # 行番号 -> テストコメントの内容
+declare -i LINENUM=1
+declare TEST_COMMENT
+declare PARSE_METHOD
+
+PARSE_METHOD="parse_main"
+
+parse_def_comments() {
+  case $1 in
+    "" )
+      DEF_COMMENT_LINENUM+=( "$LINENUM" )
+      PARSE_METHOD="parse_main"
+      LINENUM+=1
+      DEF_COMMENT=""
+      ;;
+    * )
+      DEF_COMMENT="$DEF_COMMENT$1"
+      ;;
+  esac
+}
+
+parse_test_comments() {
+  case $1 in
+    ":" )
+      PARSE_METHOD="parse_def_comments"
+      ;;
+    "" )
+      TEST_COMMENT_LINENUM+=( "$LINENUM" )
+      LINENUM_HASH[LINENUM]=true
+      TEST_COMMENT_HASH[LINENUM]="$TEST_COMMENT"
+      PARSE_METHOD="parse_main"
+      LINENUM+=1
+      TEST_COMMENT=""
+      ;;
+    * )
+      TEST_COMMENT="$TEST_COMMENT$1"
+      ;;
+  esac
+}
+
+parse_hash() {
+  case $1 in
+    ":" )
+      PARSE_METHOD="parse_test_comments"
+      ;;
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      PARSE_METHOD="parse_main"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
+      ;;
+  esac
+}
+
+parse_dq() {
+  case $1 in
+    '"' )
+      PARSE_METHOD="parse_main"
+      ;;
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      ;;
+    * )
+      :
+      ;;
+  esac
+}
+
+parse_sq() {
+  case $1 in
+    "'" )
+      PARSE_METHOD="parse_main"
+      ;;
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      ;;
+    * )
+      :
+      ;;
+  esac
+}
+
+parse_bs() {
+  case $1 in
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      PARSE_METHOD="parse_main"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
+      ;;
+  esac
+}
+
+parse_main() {
+  case $1 in
+    "#" )
+      PARSE_METHOD="parse_hash"
+      ;;
+    "\\" )
+      PARSE_METHOD="parse_bs"
+      ;;
+    "'" )
+      PARSE_METHOD="parse_sq"
+      ;;
+    '"' )
+      PARSE_METHOD="parse_dq"
+      ;;
+    "" )
+      LINENUM_HASH[LINENUM]=false
+      LINENUM+=1
+      PARSE_METHOD="parse_main"
+      ;;
+    * )
+      ;;
+  esac
+}
+
+main() {
+  local file=$1
+  local line
+  local char
+
+  while IFS= read -r line; do
+    while IFS= read -r -n 1 char; do
+      $PARSE_METHOD "$char"
+    done < <(echo $line)
+  done < $file
+}
+
+main "$@"
+
+declare -p TEST_COMMENT_HASH
+echo ------------
+declare -p TEST_COMMENT_LINENUM
+echo ------------
+declare -p LINENUM_HASH
+echo ------------
+declare -p BASH_SOURCE
+echo ------------
+
+declare -A HASH__
+declare -i LINENO_CACHE=0
+declare COMMAND_CACHE
+declare -i LIST_INDEX=0
+#set -x
+#set -v
+
+lookback_execution() {
+  echo "${TEST_COMMENT_LINENUM[$LIST_INDEX]} < $1"
+  [ ${TEST_COMMENT_LINENUM[$LIST_INDEX]} -lt $1 ] && {
+    HASH__[$LINENO_CACHE,0]="$BASH_COMMAND"
+    HASH__[$LINENO_CACHE,1]="${TEST_COMMENT_HASH[${TEST_COMMENT_LINENUM[$LIST_INDEX]}]}"
+    echo "===> ${HASH__[$LINENO_CACHE,1]}" >&3
+    LIST_INDEX+=1
+  }
+}
+
+catch_execution() {
+  [ "$2" = "$TARGET_FULLPATH" ] && {
+    lookback_execution $1
+    tput setaf 1 >&3
+    echo " * $1 $BASH_COMMAND" >&3
+    tput setaf 7 >&3
+    ([ "${LINENUM_HASH[$1]}" = "true" ] || [ "${LINENUM_HASH[$(($1+1))]}" = "true" ]) && {
+      echo -- >&3
+    }
+    LINENO_CACHE="$1"
+    COMMAND_CACHE="$BASH_COMMAND"
+  }
+}
+
+preprocess() {
+  set -E
+  set -T
+  out=3
+  eval "exec $out>&1 4>&2 1> std.log 2> err.log"
+  trap 'catch_execution "$LINENO" "$BASH_SOURCE"' DEBUG
+}
+
+postprocess() {
+  lookback_execution $(wc -l < "$TARGET_FULLPATH") # 最終行番号
+  trap DEBUG
+  exec 1>&3- 2>&4-
+  set +E
+  set +T
+}
+
+runtest() {
+  TARGET_FULLPATH="$(readlink -f -- "$1")"
+  preprocess
+  . "$TARGET_FULLPATH"
+  postprocess
+}
+
+runtest $1

@@ -7,10 +7,11 @@ echo $ROOT
 
 declare -a DEF_COMMENT_LINENUM   # テストコメントがある行番号
 declare -a TEST_COMMENT_LINENUM  # テストコメントがある行番号
-declare -a TEST_COMMENT_STYLE    # "NL" or "EOL"
+declare -a _BASHTF_TEST_COMMENT_STYLE    # "NL" or "EOL"
 declare -a TEST_COMMENT      # 行番号 -> テストコメントの内容
 declare -i LINENUM=1
 declare TEST_COMMENT
+declare _BASHTF_TEST_MARKER=":"
 declare PARSE_METHOD="parse_nl"
 
 parse_def_comments() {
@@ -29,12 +30,12 @@ parse_def_comments() {
 
 parse_test_comments() {
   case $1 in
-    ":" )
+    "$_BASHTF_TEST_MARKER" )
       PARSE_METHOD="parse_def_comments"
       ;;
     "" )
       TEST_COMMENT_LINENUM+=( "$LINENUM" )
-      TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
+      _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
       TEST_COMMENT[LINENUM]="$TEST_COMMENT"
       PARSE_METHOD="parse_nl"
       LINENUM+=1
@@ -48,7 +49,7 @@ parse_test_comments() {
 
 parse_hash() {
   case $1 in
-    ":" )
+    "$_BASHTF_TEST_MARKER" )
       PARSE_METHOD="parse_test_comments"
       ;;
     "" )
@@ -229,14 +230,25 @@ declare -p TEST_COMMENT
 echo ------------
 declare -p TEST_COMMENT_LINENUM
 echo ------------
-declare -p TEST_COMMENT_STYLE
+declare -p _BASHTF_TEST_COMMENT_STYLE
 echo ------------
 declare -p BASH_SOURCE
-echo ------------
 
-declare -i EXEC_NUM=1
+declare -i _BASHTF_CMD_ID=0
 
-ruler() {
+_bashtf_echo() {
+  echo "$@" >&3
+}
+
+_bashtf_eval_echo() {
+  eval "_bashtf_echo $@"
+}
+
+_bashtf_tput() {
+  tput $@ >&3
+}
+
+_bashtf_draw_ruler() {
   [ "$TERM_COLS" ] || {
     local cols=`tput cols 2>&4`
     for ((i=0; i<$cols; i++))
@@ -244,67 +256,83 @@ ruler() {
       TERM_COLS="$TERM_COLS""$1"
     done
   }
-  echo "$TERM_COLS" >&3
+  _bashtf_echo "$TERM_COLS"
 }
 
-screen_out() {
-    local stdout=$(cat /tmp/_bashtf_command_stdout.$$.log)
-    [ "$stdout" ] && {
-      #tput setaf 2 >&3
-      echo "[ stdout ]" >&3
-      echo "$stdout" >&3
-      #tput sgr0 >&3
-      : > /tmp/_bashtf_command_stdout.$$.log
-    }
-    local errout=$(cat /tmp/_bashtf_command_stderr.$$.log)
-    [ "$errout" ] && {
-      echo "[ errout ]" >&3
-      echo "$errout" >&3
-      : > /tmp/_bashtf_command_stderr.$$.log
-    }
-}
+_bashtf_prev_result() {
+  local cmd_stat=$1
+  local stdout=$(cat /tmp/_bashtf_command_stdout.$$.log)
+  local errout=$(cat /tmp/_bashtf_command_stderr.$$.log)
 
-catch_execution() {
-  [ "$2" = "$TARGET_FULLPATH" ] && {
-    screen_out
+  [ "$stdout" ] && {
+    _bashtf_echo "[ stdout ]"
+    _bashtf_echo "$stdout"
+    : > "$_BASHTF_CMD_OUT"
+  }
 
-    tput bold >&3
-    ruler "="
-    printf "No.%0$((${#LINENUM}+1))d  L%0${#LINENUM}d\n" "$((EXEC_NUM++))" "$1" >&3
-    echo "raw  : $BASH_COMMAND" >&3
-    eval "echo \"eval : $BASH_COMMAND\" >&3"
-
-    if [ "${TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
-      echo -n "test : " >&3
-      eval "echo \"${TEST_COMMENT[$1]}\" >&3"
-    elif [ "${TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
-      echo -n "test : " >&3
-      eval "echo \"${TEST_COMMENT[$(($1+1))]}\" >&3"
-    fi
-    tput sgr0 >&3
+  [ "$errout" ] && {
+    _bashtf_echo "[ errout ]"
+    _bashtf_echo "$errout"
+    : > "$_BASHTF_CMD_ERR"
   }
 }
 
-preprocess() {
-  set -E
-  set -T
-  eval "exec 3>&1 4>&2 1> /tmp/_bashtf_command_stdout.$$.log 2> /tmp/_bashtf_command_stderr.$$.log"
-  trap 'catch_execution "$LINENO" "$BASH_SOURCE"' DEBUG
+moja() {
+  local status
+  local match
+  eval "$@"
+  _bashtf_echo "-- status -> $status"
+  _bashtf_echo "-- match -> '$match'"
 }
 
-postprocess() {
-  screen_out
+_bashtf_test_process() {
+  local line="$1"
+  local testline
+
+  if [ "${_BASHTF_TEST_COMMENT_STYLE[$line]}" = "EOL" ]; then
+    testline="$line"
+  elif [ "${_BASHTF_TEST_COMMENT_STYLE[$((line+1))]}" = "NL" ]; then
+    testline=$((line+1))
+  fi
+
+  _BASHTF_TEST_COMMENT_CACHE="${TEST_COMMENT[$testline]}"
+}
+
+catch_execution() {
+  local prev_cmd_stat="$?"
+  local line="$1"
+  local src_path="$2"
+  [ "$src_path" = "$TARGET_FULLPATH" ] && {
+    [ $((_BASHTF_CMD_ID++)) -gt 0 ] && _bashtf_prev_result "$prev_cmd_stat"
+
+    _bashtf_tput bold
+    _bashtf_draw_ruler "="
+    _bashtf_echo      "No.$_BASHTF_CMD_ID  L$line"
+    _bashtf_echo      "raw  : $BASH_COMMAND"
+    _bashtf_eval_echo "eval : $BASH_COMMAND"
+    _bashtf_test_process "$line"
+    _bashtf_tput sgr0
+  }
+}
+
+_BASHTF_CMD_OUT="/tmp/_bashtf_command_stdout.$$.log"
+_BASHTF_CMD_ERR="/tmp/_bashtf_command_stderr.$$.log"
+
+_bashtf_runtest() {
+  TARGET_FULLPATH="$(readlink -f -- "$1")"
+
+  set -T
+  exec 3>&1 4>&2 1> $_BASHTF_CMD_OUT 2> $_BASHTF_CMD_ERR
+  trap 'catch_execution "$LINENO" "$BASH_SOURCE"' DEBUG
+
+  . "$TARGET_FULLPATH"
+  _bashtf_prev_result "$?" "$TARGET_FULLPATH"
+
   trap DEBUG
   exec 1>&3- 2>&4-
-  set +E
   set +T
 }
 
-runtest() {
-  TARGET_FULLPATH="$(readlink -f -- "$1")"
-  preprocess
-  . "$TARGET_FULLPATH"
-  postprocess
-}
+_bashtf_runtest $1
 
-runtest $1
+rm "$_BASHTF_CMD_OUT" "$_BASHTF_CMD_ERR"

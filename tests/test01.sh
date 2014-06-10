@@ -1,18 +1,18 @@
 #!/usr/bin/env bashtf
 # vim: ft=sh
 
-#:: name='Testing FRAmework for SHell'       
+#:: name='なんかのテスト'       
 
 true No.1
 #: status=0
 
 . lib/cant_load   #: status!=0
-. lib/cant_load
+. lib/cant_load_
 . tests/dummy   #: status=0
-true
+true _
 false #:status=1
 
-no_command
+no_command_
 
 echo 1234 #:status=0 match='1234'           
 
@@ -25,12 +25,11 @@ do
   #: match="$i"
 done
 
-echo "pipe command" | cat
+echo "pipe command_" | cat
 
 str=`echo subshell zxc | cat`
 str=$(echo subshell qwe | cat)
-echo "str=\"$str\"" #: match="$str $str" status=0
-echo "str=\'$str\'" #: match="$str $str" status=0
+echo "str=\"$str\"" #: match="$str $str" status=91283091823019823
 
 true \
   true
@@ -55,7 +54,7 @@ echo 'a #: sadasdasdasdsdfashfljsdlfhashasklhfljlksdhflkjahsdflkhaslkfhasolkjfaa
 1231234324
 2343452345' #: status=0 match='2343'
 
-echo "dummy" #: match='dummy'
+echo "dummy" #: match='dummy' status=1
 echo "FFFFIIIIIINNNNIIIISSSSHHHHHH!!!!!!!" #: status=0
 no_command #: status=127
 

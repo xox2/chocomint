@@ -230,32 +230,13 @@ main "$@"
 
 . $_BASHTF_LIBEXEC_DIR/outputs
 
-_bashtf_analyze_test_results() {
-  local exitstat=$1
-  local stdout=$(cat /tmp/_bashtf_command_stdout.$$.log)
-  local errout=$(cat /tmp/_bashtf_command_stderr.$$.log)
-
-  _bashtf_judge "$_BASHTF_TEST_COMMENT_CACHE" "$exitstat" "$stdout" "$stderr"
-
-  #[ "$stdout" ] && {
-  #  _bashtf_echo "[ stdout ]"
-  #  _bashtf_echo "$stdout"
-  #  : > "$_BASHTF_CMD_OUT"
-  #}
-
-  #[ "$errout" ] && {
-  #  _bashtf_echo "[ errout ]"
-  #  _bashtf_echo "$errout"
-  #  : > "$_BASHTF_CMD_ERR"
-  #}
-}
 
 _bashtf_judge() {
   local _testcmnt="$1" _exitstat="$2" _stdout="$3" _stderr="$4"
   local status __status=false match __match=false
   eval "$_testcmnt"
 
-  if [ "$status" = "$_exitstat" ] || [ -z "$status" ] ; then
+  if [[ "$status" = "$_exitstat" || -z "$status" ]] ; then
     __status=true
   fi
 
@@ -263,8 +244,30 @@ _bashtf_judge() {
     __match=true
   fi
 
-  _bashtf_echo "$__status $__match"
+  printf "===> %5s %5s : %s\n" "$__status" "$__match" "$_BASHTF_CMD_CACHE">&3
 }
+
+
+_bashtf_analyze_test_results() {
+  local exitstat=$1
+  local stdout=$2
+  local errout=$3
+
+  _bashtf_judge "$_BASHTF_TEST_COMMENT_CACHE" "$exitstat" "$stdout" "$stderr"
+
+  [ "$stdout" ] && {
+  :
+  #  _bashtf_echo "[ stdout ]"
+  #  _bashtf_echo "$stdout"
+  }
+
+  [ "$errout" ] && {
+  :
+  #  _bashtf_echo "[ errout ]"
+  #  _bashtf_echo "$errout"
+  }
+}
+
 
 _bashtf_cache_execution_data() {
   local line="$1" testline
@@ -286,16 +289,28 @@ _bashtf_cache_execution_data() {
   fi
 }
 
+
 _bashtf_trap_command_execution() {
-  local prev_cmd_stat="$?"
+  local prev_stat="$?"
+
+  exec 1>&-
+  local prev_stdout=$(cat $_BASHTF_CMD_OUT)
+  exec 1> "$_BASHTF_CMD_OUT"
+
+  exec 2>&-
+  local prev_errout=$(cat $_BASHTF_CMD_ERR)
+  exec 2> "$_BASHTF_CMD_ERR"
+
   local line="$1"
   local src_path="$2"
+
   [ "$src_path" = "$TARGET_FULLPATH" ] && {
-    $_BASHTF_TESTEXIST && _bashtf_analyze_test_results "$prev_cmd_stat"
+    _BASHTF_TESTEXIST=${_BASHTF_TESTEXIST:-false} # false when start
+    $_BASHTF_TESTEXIST && _bashtf_analyze_test_results "$prev_stat" "$prev_stdout" "$prev_stderr"
     _bashtf_cache_execution_data "$line" "$BASH_COMMAND"
-    ((_BASHTF_CMD_ID++))
   }
 }
+
 
 _bashtf_runtest() {
   TARGET_FULLPATH="$(readlink -f -- "$1")"
@@ -312,6 +327,8 @@ _bashtf_runtest() {
   set +T
 }
 
+
 _bashtf_runtest $1
+
 
 rm "$_BASHTF_CMD_OUT" "$_BASHTF_CMD_ERR"

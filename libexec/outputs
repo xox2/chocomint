@@ -1,14 +1,23 @@
 # vim: ft=sh
 
-declare -p TEST_COMMENT
-echo ------------
-declare -p TEST_COMMENT_LINENUM
-echo ------------
-declare -p _BASHTF_TEST_COMMENT_STYLE
-echo ------------
-declare -p BASH_SOURCE
+_bashtf_display() {
+  local space_num=$1
+  local spaces
 
-declare -i _BASHTF_CMD_ID=1
+  for ((i=0; i<$space_num; i++))
+  do
+    spaces="$spaces "
+  done
+
+  while read -r line
+  do
+    _bashtf_echo "$spaces$line"
+  done < <(echo "$2")
+}
+
+_bashtf_printf() {
+  printf $@ >&3
+}
 
 _bashtf_echo() {
   echo "$@" >&3

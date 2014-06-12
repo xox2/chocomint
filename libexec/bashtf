@@ -244,7 +244,8 @@ _bashtf_judge() {
     __match=true
   fi
 
-  printf "===> %5s %5s : %s\n" "$__status" "$__match" "$_BASHTF_CMD_CACHE">&3
+  printf "===> %s %s\n" "$__status" "$__match" >&3
+  _bashtf_indent_echo 5 "$_BASHTF_CMD_CACHE"
 }
 
 

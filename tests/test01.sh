@@ -6,7 +6,7 @@
 true No.1
 #: status=0
 
-. lib/cant_load   #: status!=0
+. lib/cant_load   #: not_status=0
 . lib/cant_load_
 . tests/dummy   #: status=0
 true _
@@ -27,9 +27,12 @@ done
 
 echo "pipe command_" | cat
 
-str=`echo subshell zxc | cat`
-str=$(echo subshell qwe | cat)
-echo "str=\"$str\"" #: match="$str $str" status=91283091823019823
+str=`echo サブシェルだよ | cat`
+echo "strの値は、 $str です。" #: v[str]=3  not_v[str]=あいうえお status=9
+str=$(echo 10 | cat)
+echo "strの値は、 $str です。" #: v[str]=3  not_v[str]="a b c d $str" status=91
+str="モヘンジョダロ"
+echo "strの値は、 $str です。" #: v[str]=3  not_v[str]=i"$str" status=9
 
 true \
   true
@@ -45,7 +48,7 @@ true \
 multiple_line='a #:
 sadasdasdasda\
 adsa #: asdasd'     #:    status=0
-echo "$multiple_line" #:    status=0    match='asd'
+echo "$multiple_line" #:   status=0    match='asd'
 
 echo 'a #: sadasdasdasdsdfashfljsdlfhashasklhfljlksdhflkjahsdflkhaslkfhasolkjfaasdasdasd'
 	#:    status=0    match='flj'

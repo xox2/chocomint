@@ -233,19 +233,55 @@ main "$@"
 
 _bashtf_judge() {
   local _testcmnt="$1" _exitstat="$2" _stdout="$3" _stderr="$4"
-  local status __status=false match __match=false
+  local status match
+  local not_status not_match
+  local -A v not_v
+  local -a result_list
+
   eval "$_testcmnt"
 
-  if [[ "$status" = "$_exitstat" || -z "$status" ]] ; then
-    __status=true
+  for var in ${!v[@]}; do
+    if eval "[[ \$$var = \"${v[$var]}\" ]]"; then
+      result_list+=( true )
+    else
+      result_list+=( false )
+    fi
+  done
+
+  for var in ${!not_v[@]}; do
+    if eval "[[ \$$var = \"${not_v[$var]}\" ]]"; then
+      result_list+=( false )
+    else
+      result_list+=( true )
+    fi
+  done
+
+  [ "$status" ] && if [[ "$status" = "$_exitstat" ]] ; then
+    result_list+=( true )
+  else
+    result_list+=( false )
   fi
 
-  if echo "$_stdout" | \egrep "$match" > /dev/null 2>&1 || [ -z "$match" ]; then
-    __match=true
+  [ "$not_status" ] && if [[ "$not_status" = "$_exitstat" ]] ; then
+    result_list+=( false )
+  else
+    result_list+=( true )
   fi
 
-  printf "===> %s %s\n" "$__status" "$__match" >&3
-  _bashtf_indent_echo 5 "$_BASHTF_CMD_CACHE"
+  [ "$match" ] && if echo "$_stdout" | \egrep "$match" > /dev/null 2>&1; then
+    result_list+=( true )
+  else
+    result_list+=( false )
+  fi
+
+  [ "$not_match" ] && if echo "$_stdout" | \egrep "$not_match" > /dev/null 2>&1; then
+    result_list+=( false )
+  else
+    result_list+=( true )
+  fi
+
+  _bashtf_echo "===> ${result_list[@]}"
+  _bashtf_indent_echo 5 "$_BASHTF_CMD_EVAL_CACHE"
 }
 
 
@@ -254,6 +290,7 @@ _bashtf_analyze_test_results() {
   local stdout=$2
   local errout=$3
 
+  #_bashtf_echo "--------- $_BASHTF_TEST_COMMENT_EVAL_CACHE"
   _bashtf_judge "$_BASHTF_TEST_COMMENT_CACHE" "$exitstat" "$stdout" "$stderr"
 
   [ "$stdout" ] && {
@@ -280,12 +317,15 @@ _bashtf_cache_execution_data() {
   if [ "${_BASHTF_TEST_COMMENT_STYLE[$line]}" = "EOL" ]; then
     testline="$line"
     _BASHTF_TEST_COMMENT_CACHE="${TEST_COMMENT[$testline]}"
+    _BASHTF_TEST_COMMENT_EVAL_CACHE=$(eval "echo -n \"${TEST_COMMENT[$testline]}\"")
     _BASHTF_TESTEXIST=true
   elif [ "${_BASHTF_TEST_COMMENT_STYLE[$((line+1))]}" = "NL" ]; then
     testline=$((line+1))
     _BASHTF_TEST_COMMENT_CACHE="${TEST_COMMENT[$testline]}"
+    _BASHTF_TEST_COMMENT_EVAL_CACHE=$(eval "echo -n \"${TEST_COMMENT[$testline]}\"")
     _BASHTF_TESTEXIST=true
   else
+    _BASHTF_TEST_COMMENT_CACHE=''
     _BASHTF_TESTEXIST=false
   fi
 }
@@ -294,12 +334,13 @@ _bashtf_cache_execution_data() {
 _bashtf_trap_command_execution() {
   local prev_stat="$?"
 
-  exec 1>&-
-  local prev_stdout=$(cat $_BASHTF_CMD_OUT)
-  exec 1> "$_BASHTF_CMD_OUT"
+  #exec 1>&-
+  local prev_stdout=$(<$_BASHTF_CMD_OUT)
+  #exec 1> "$_BASHTF_CMD_OUT"
+  : > "$_BASHTF_CMD_OUT"
 
   exec 2>&-
-  local prev_errout=$(cat $_BASHTF_CMD_ERR)
+  local prev_errout=$(<$_BASHTF_CMD_ERR)
   exec 2> "$_BASHTF_CMD_ERR"
 
   local line="$1"

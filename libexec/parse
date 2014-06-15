@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+# vim: ft=sh
+
+declare -a _BASHTF_TEST_COMMENT_STYLE    # "NL" or "EOL"
+declare -a _BASHTF_TEST_COMMENT_LIST      # 行番号 -> テストコメントの内容
+declare -i LINENUM=1
+declare TEST_COMMENT
+declare TEST_MARKER=":"
+declare PARSE_METHOD="parse_nl"
+
+parse_test_comments() {
+  case $1 in
+    "" )
+      _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
+      _BASHTF_TEST_COMMENT_LIST[LINENUM]="$TEST_COMMENT"
+      PARSE_METHOD="parse_nl"
+      LINENUM+=1
+      TEST_COMMENT=""
+      ;;
+    * )
+      TEST_COMMENT="$TEST_COMMENT$1"
+      ;;
+  esac
+}
+
+parse_hash() {
+  case $1 in
+    "$TEST_MARKER" )
+      PARSE_METHOD="parse_test_comments"
+      ;;
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_nl"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
+      ;;
+  esac
+}
+
+parse_dq_bs() {
+  case $1 in
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_dq"
+      ;;
+    * )
+      PARSE_METHOD="parse_dq"
+      ;;
+  esac
+}
+
+parse_dq() {
+  case $1 in
+    "\\" )
+      PARSE_METHOD="parse_dq_bs"
+      ;;
+    '"' )
+      PARSE_METHOD="parse_main"
+      ;;
+    "" )
+      LINENUM+=1
+      ;;
+    * )
+      :
+      ;;
+  esac
+}
+
+parse_sq_bs() {
+  case $1 in
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_sq"
+      ;;
+    * )
+      PARSE_METHOD="parse_sq"
+      ;;
+  esac
+}
+
+parse_sq() {
+  case $1 in
+    "\\" )
+      PARSE_METHOD="parse_sq_bs"
+      ;;
+    "'" )
+      PARSE_METHOD="parse_main"
+      ;;
+    "" )
+      LINENUM+=1
+      ;;
+    * )
+      :
+      ;;
+  esac
+}
+
+parse_bs() {
+  case $1 in
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_main"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
+      ;;
+  esac
+}
+
+parse_main() {
+  case $1 in
+    "#" )
+      PARSE_METHOD="parse_hash"
+      COMMENT_IN="EOL"
+      ;;
+    "\\" )
+      PARSE_METHOD="parse_bs"
+      ;;
+    "'" )
+      PARSE_METHOD="parse_sq"
+      ;;
+    '"' )
+      PARSE_METHOD="parse_dq"
+      ;;
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_nl"
+      ;;
+    * )
+      ;;
+  esac
+}
+
+parse_nl_space() {
+  case $1 in
+    "#" )
+      PARSE_METHOD="parse_hash"
+      COMMENT_IN="NL"
+      ;;
+    " "|"\t" )
+      PARSE_METHOD="parse_nl_space"
+      ;;
+    "\\" )
+      PARSE_METHOD="parse_bs"
+      ;;
+    "'" )
+      PARSE_METHOD="parse_sq"
+      ;;
+    '"' )
+      PARSE_METHOD="parse_dq"
+      ;;
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_nl"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
+      ;;
+  esac
+}
+
+parse_nl() {
+  case $1 in
+    "#" )
+      PARSE_METHOD="parse_hash"
+      COMMENT_IN="NL"
+      ;;
+    " "|"\t" )
+      PARSE_METHOD="parse_nl_space"
+      ;;
+    "\\" )
+      PARSE_METHOD="parse_bs"
+      ;;
+    "'" )
+      PARSE_METHOD="parse_sq"
+      ;;
+    '"' )
+      PARSE_METHOD="parse_dq"
+      ;;
+    "" )
+      LINENUM+=1
+      PARSE_METHOD="parse_nl"
+      ;;
+    * )
+      PARSE_METHOD="parse_main"
+      ;;
+  esac
+}
+
+main() {
+  local file=$1
+  local line
+  local char
+
+  while IFS= read -r line; do
+    while IFS= read -r -n 1 char; do
+      $PARSE_METHOD "$char"
+    done < <(echo $line)
+  done < $file
+}
+
+main "$@"
+
+declare -p _BASHTF_TEST_COMMENT_STYLE    # "NL" or "EOL"
+declare -p _BASHTF_TEST_COMMENT_LIST      # 行番号 -> テストコメントの内容

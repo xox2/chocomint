@@ -2,9 +2,10 @@
 # vim: ft=sh
 
 declare -a _BASHTF_TEST_COMMENT_STYLE    # "NL" or "EOL"
-declare -a _BASHTF_TEST_COMMENT_LIST      # 行番号 -> テストコメントの内容
+declare -a _BASHTF_TEST_COMMENT_LIST     # 行番号 -> テストコメントの内容
 declare -i LINENUM=1
 declare TEST_COMMENT
+declare COMMENT_IN
 declare TEST_MARKER=":"
 declare PARSE_METHOD="parse_nl"
 
@@ -18,7 +19,7 @@ parse_test_comments() {
       TEST_COMMENT=""
       ;;
     * )
-      TEST_COMMENT="$TEST_COMMENT$1"
+      TEST_COMMENT="$TEST_COMMENT""$1"
       ;;
   esac
 }
@@ -189,9 +190,7 @@ parse_nl() {
 }
 
 main() {
-  local file=$1
-  local line
-  local char
+  local file=$1 line char
 
   while IFS= read -r line; do
     while IFS= read -r -n 1 char; do
@@ -202,5 +201,5 @@ main() {
 
 main "$@"
 
-declare -p _BASHTF_TEST_COMMENT_STYLE    # "NL" or "EOL"
-declare -p _BASHTF_TEST_COMMENT_LIST      # 行番号 -> テストコメントの内容
+declare -p _BASHTF_TEST_COMMENT_STYLE
+declare -p _BASHTF_TEST_COMMENT_LIST

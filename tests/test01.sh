@@ -1,8 +1,6 @@
 #!/usr/bin/env bashtf
 # vim: ft=sh
 
-#:: name='なんかのテスト'       
-
 true No.1
 #: status=0
 

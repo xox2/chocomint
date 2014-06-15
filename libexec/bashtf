@@ -2,8 +2,6 @@
 
 declare _BASHTF_LIBEXEC_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 
-declare -a DEF_COMMENT_LINENUM   # テストコメントがある行番号
-declare -a TEST_COMMENT_LINENUM  # テストコメントがある行番号
 declare -a _BASHTF_TEST_COMMENT_STYLE    # "NL" or "EOL"
 declare -a TEST_COMMENT      # 行番号 -> テストコメントの内容
 declare -i LINENUM=1
@@ -14,27 +12,12 @@ declare PARSE_METHOD="parse_nl"
 declare _BASHTF_CMD_OUT="/tmp/_bashtf_command_stdout.$$.log"
 declare _BASHTF_CMD_ERR="/tmp/_bashtf_command_stderr.$$.log"
 
-parse_def_comments() {
-  case $1 in
-    "" )
-      DEF_COMMENT_LINENUM+=( "$LINENUM" )
-      PARSE_METHOD="parse_nl"
-      LINENUM+=1
-      DEF_COMMENT=""
-      ;;
-    * )
-      DEF_COMMENT="$DEF_COMMENT$1"
-      ;;
-  esac
-}
-
 parse_test_comments() {
   case $1 in
     "$_BASHTF_TEST_MARKER" )
       PARSE_METHOD="parse_def_comments"
       ;;
     "" )
-      TEST_COMMENT_LINENUM+=( "$LINENUM" )
       _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
       TEST_COMMENT[LINENUM]="$TEST_COMMENT"
       PARSE_METHOD="parse_nl"

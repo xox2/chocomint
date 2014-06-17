@@ -11,8 +11,64 @@ declare PARSE_METHOD="parse_nl"
 declare -A NANTOKA
 TESTNUM=0
 
+parse_test_dq_bs() {
+  case $1 in
+    * )
+      TEST_COMMENT="$TEST_COMMENT""$1"
+      PARSE_METHOD="parse_test_dq"
+      ;;
+  esac
+}
+
+parse_test_dq() {
+  case $1 in
+    '"' )
+      PARSE_METHOD="parse_test_right"
+      ;;
+    "\\" )
+      TEST_COMMENT="$TEST_COMMENT""\\"
+      PARSE_METHOD="parse_test_dq_bs"
+      ;;
+    * )
+      TEST_COMMENT="$TEST_COMMENT""$1"
+      ;;
+  esac
+}
+
+parse_test_sq() {
+  case $1 in
+    "'" )
+      TEST_COMMENT="$TEST_COMMENT""'"
+      PARSE_METHOD="parse_test_right"
+      ;;
+    * )
+      TEST_COMMENT="$TEST_COMMENT""$1"
+      ;;
+  esac
+}
+
+parse_test_bs() {
+  case $1 in
+    * )
+      TEST_COMMENT="$TEST_COMMENT""$1"
+      PARSE_METHOD="parse_test_right"
+      ;;
+  esac
+}
+
 parse_test_right() {
   case $1 in
+    '"' )
+      PARSE_METHOD="parse_test_dq"
+      ;;
+    "'" )
+      TEST_COMMENT="$TEST_COMMENT""'"
+      PARSE_METHOD="parse_test_sq"
+      ;;
+    "\\" )
+      TEST_COMMENT="$TEST_COMMENT""\\"
+      PARSE_METHOD="parse_test_bs"
+      ;;
     "" )
       _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
       NANTOKA[$LINENUM,$TESTNUM,right]="$TEST_COMMENT"
@@ -59,9 +115,10 @@ parse_test_left() {
       PARSE_METHOD="parse_test_mid"
       parse_test_mid "$1"
       ;;
+    " "|"\t" )
+      ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
-      echo $TEST_COMMENT
       ;;
   esac
 }
@@ -229,6 +286,4 @@ main() {
 main "$@"
 
 declare -p _BASHTF_TEST_COMMENT_STYLE
-declare -p _BASHTF_TEST_COMMENT_LIST
-declare -p NANTOKA  # NANTOKA[$lineno,num]
-                     # NANTOKA[$lineno,$num,$place]
+declare -p NANTOKA

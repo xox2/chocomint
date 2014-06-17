@@ -8,15 +8,25 @@ declare TEST_COMMENT
 declare COMMENT_IN
 declare TEST_MARKER=":"
 declare PARSE_METHOD="parse_nl"
+declare -A NANTOKA
+TESTNUM=0
 
-parse_test_comments() {
+parse_test_right() {
   case $1 in
     "" )
       _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
-      _BASHTF_TEST_COMMENT_LIST[LINENUM]="$TEST_COMMENT"
+      NANTOKA[$LINENUM,$TESTNUM,right]="$TEST_COMMENT"
       PARSE_METHOD="parse_nl"
       LINENUM+=1
       TEST_COMMENT=""
+      TESTNUM=0
+      ;;
+    " "|"\t" )
+      _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
+      NANTOKA[$LINENUM,$TESTNUM,right]="$TEST_COMMENT"
+      PARSE_METHOD="parse_test_left"
+      TEST_COMMENT=""
+      ((TESTNUM++))
       ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
@@ -24,10 +34,42 @@ parse_test_comments() {
   esac
 }
 
+parse_test_mid() {
+  case $1 in
+    "=" )
+      TEST_COMMENT="$TEST_COMMENT""="
+      ;;
+    "!" )
+      TEST_COMMENT="!"
+      ;;
+    * )
+      NANTOKA[$LINENUM,$TESTNUM,mid]="$TEST_COMMENT"
+      TEST_COMMENT=""
+      PARSE_METHOD="parse_test_right"
+      parse_test_right "$1"
+      ;;
+  esac
+}
+
+parse_test_left() {
+  case $1 in
+    "!"|"=" )
+      NANTOKA[$LINENUM,$TESTNUM,left]="$TEST_COMMENT"
+      TEST_COMMENT=""
+      PARSE_METHOD="parse_test_mid"
+      parse_test_mid "$1"
+      ;;
+    * )
+      TEST_COMMENT="$TEST_COMMENT""$1"
+      echo $TEST_COMMENT
+      ;;
+  esac
+}
+
 parse_hash() {
   case $1 in
     "$TEST_MARKER" )
-      PARSE_METHOD="parse_test_comments"
+      PARSE_METHOD="parse_test_left"
       ;;
     "" )
       LINENUM+=1
@@ -68,23 +110,8 @@ parse_dq() {
   esac
 }
 
-parse_sq_bs() {
-  case $1 in
-    "" )
-      LINENUM+=1
-      PARSE_METHOD="parse_sq"
-      ;;
-    * )
-      PARSE_METHOD="parse_sq"
-      ;;
-  esac
-}
-
 parse_sq() {
   case $1 in
-    "\\" )
-      PARSE_METHOD="parse_sq_bs"
-      ;;
     "'" )
       PARSE_METHOD="parse_main"
       ;;
@@ -203,3 +230,5 @@ main "$@"
 
 declare -p _BASHTF_TEST_COMMENT_STYLE
 declare -p _BASHTF_TEST_COMMENT_LIST
+declare -p NANTOKA  # NANTOKA[$lineno,num]
+                     # NANTOKA[$lineno,$num,$place]

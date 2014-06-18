@@ -8,7 +8,7 @@ declare TEST_COMMENT
 declare COMMENT_IN
 declare TEST_MARKER=":"
 declare PARSE_METHOD="parse_nl"
-declare -A NANTOKA
+declare -A _BASHTF_HASH
 TESTNUM=0
 
 parse_test_dq_bs() {
@@ -71,7 +71,8 @@ parse_test_right() {
       ;;
     "" )
       _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
-      NANTOKA[$LINENUM,$TESTNUM,right]="$TEST_COMMENT"
+      _BASHTF_HASH[$LINENUM,$TESTNUM,right]="$TEST_COMMENT"
+      _BASHTF_HASH[$LINENUM,max]="$TESTNUM"
       PARSE_METHOD="parse_nl"
       LINENUM+=1
       TEST_COMMENT=""
@@ -79,8 +80,8 @@ parse_test_right() {
       ;;
     " "|"\t" )
       _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
-      NANTOKA[$LINENUM,$TESTNUM,right]="$TEST_COMMENT"
-      PARSE_METHOD="parse_test_left"
+      _BASHTF_HASH[$LINENUM,$TESTNUM,right]="$TEST_COMMENT"
+      PARSE_METHOD="parse_test_blank"
       TEST_COMMENT=""
       ((TESTNUM++))
       ;;
@@ -92,14 +93,14 @@ parse_test_right() {
 
 parse_test_mid() {
   case $1 in
-    "=" )
-      TEST_COMMENT="$TEST_COMMENT""="
+    "="|":" )
+      TEST_COMMENT="$TEST_COMMENT""$1"
       ;;
     "!" )
       TEST_COMMENT="!"
       ;;
     * )
-      NANTOKA[$LINENUM,$TESTNUM,mid]="$TEST_COMMENT"
+      _BASHTF_HASH[$LINENUM,$TESTNUM,mid]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_right"
       parse_test_right "$1"
@@ -109,13 +110,11 @@ parse_test_mid() {
 
 parse_test_left() {
   case $1 in
-    "!"|"=" )
-      NANTOKA[$LINENUM,$TESTNUM,left]="$TEST_COMMENT"
+    "!"|"="|":" )
+      _BASHTF_HASH[$LINENUM,$TESTNUM,left]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_mid"
       parse_test_mid "$1"
-      ;;
-    " "|"\t" )
       ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
@@ -123,10 +122,21 @@ parse_test_left() {
   esac
 }
 
+parse_test_blank() {
+  case $1 in
+    " "|"\t" )
+      ;;
+    * )
+      PARSE_METHOD="parse_test_left"
+      parse_test_left "$1"
+      ;;
+  esac
+}
+
 parse_hash() {
   case $1 in
     "$TEST_MARKER" )
-      PARSE_METHOD="parse_test_left"
+      PARSE_METHOD="parse_test_blank"
       ;;
     "" )
       LINENUM+=1
@@ -286,4 +296,4 @@ main() {
 main "$@"
 
 declare -p _BASHTF_TEST_COMMENT_STYLE
-declare -p NANTOKA
+declare -p _BASHTF_HASH

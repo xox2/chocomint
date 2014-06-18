@@ -5,7 +5,7 @@ declare _BASHTF_LIBEXEC_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}"
 declare _BASHTF_CMD_OUT="/tmp/_bashtf_command_stdout.$$.log"
 declare _BASHTF_CMD_ERR="/tmp/_bashtf_command_stderr.$$.log"
 
-eval $($_BASHTF_LIBEXEC_DIR/parse "$@")
+eval "`$_BASHTF_LIBEXEC_DIR/parse \"$@\"`"
 
 . $_BASHTF_LIBEXEC_DIR/outputs
 
@@ -67,9 +67,18 @@ _bashtf_analyze_test_results() {
   local exitstat=$1
   local stdout=$2
   local errout=$3
+  local testnum=${_BASHTF_HASH[$_BASHTF_TESTLINE,max]}
 
+  for i in `seq 0 $testnum`
+  do
+    local left="${_BASHTF_HASH[$_BASHTF_TESTLINE,$i,left]}"
+    local mid="${_BASHTF_HASH[$_BASHTF_TESTLINE,$i,mid]}"
+    local right="${_BASHTF_HASH[$_BASHTF_TESTLINE,$i,right]}"
+    _bashtf_echo "$left" "$mid" "$right"
+  done
+  _bashtf_echo "-----------------"
   #_bashtf_echo "--------- $_BASHTF_TEST_COMMENT_EVAL_CACHE"
-  _bashtf_judge "$_BASHTF_TEST_COMMENT_CACHE" "$exitstat" "$stdout" "$stderr"
+  #_bashtf_judge "$_BASHTF_TEST_COMMENT_CACHE" "$exitstat" "$stdout" "$stderr"
 
   [ "$stdout" ] && {
   :
@@ -86,24 +95,24 @@ _bashtf_analyze_test_results() {
 
 
 _bashtf_cache_execution_data() {
-  local line="$1" testline
+  local line="$1"
 
   _BASHTF_LINENO_CACHE="$line"
   _BASHTF_CMD_CACHE="$2"
   _BASHTF_CMD_EVAL_CACHE=$(eval "echo -n \"$2\"")
 
   if [ "${_BASHTF_TEST_COMMENT_STYLE[$line]}" = "EOL" ]; then
-    testline="$line"
-    _BASHTF_TEST_COMMENT_CACHE="${_BASHTF_TEST_COMMENT_LIST[$testline]}"
-    _BASHTF_TEST_COMMENT_EVAL_CACHE=$(eval "echo -n \"${_BASHTF_TEST_COMMENT_LIST[$testline]}\"")
+    _BASHTF_TESTLINE="$line"
+    #_BASHTF_TEST_COMMENT_CACHE="${_BASHTF_TEST_COMMENT_LIST[$_BASHTF_TESTLINE]}"
+    #_BASHTF_TEST_COMMENT_EVAL_CACHE=$(eval "echo -n \"${_BASHTF_TEST_COMMENT_LIST[$_BASHTF_TESTLINE]}\"")
     _BASHTF_TESTEXIST=true
   elif [ "${_BASHTF_TEST_COMMENT_STYLE[$((line+1))]}" = "NL" ]; then
-    testline=$((line+1))
-    _BASHTF_TEST_COMMENT_CACHE="${_BASHTF_TEST_COMMENT_LIST[$testline]}"
-    _BASHTF_TEST_COMMENT_EVAL_CACHE=$(eval "echo -n \"${_BASHTF_TEST_COMMENT_LIST[$testline]}\"")
+    _BASHTF_TESTLINE=$((line+1))
+    #_BASHTF_TEST_COMMENT_CACHE="${_BASHTF_TEST_COMMENT_LIST[$_BASHTF_TESTLINE]}"
+    #_BASHTF_TEST_COMMENT_EVAL_CACHE=$(eval "echo -n \"${_BASHTF_TEST_COMMENT_LIST[$_BASHTF_TESTLINE]}\"")
     _BASHTF_TESTEXIST=true
   else
-    _BASHTF_TEST_COMMENT_CACHE=''
+    #_BASHTF_TEST_COMMENT_CACHE=''
     _BASHTF_TESTEXIST=false
   fi
 }
@@ -112,14 +121,11 @@ _bashtf_cache_execution_data() {
 _bashtf_trap_command_execution() {
   local prev_stat="$?"
 
-  #exec 1>&-
   local prev_stdout=$(<$_BASHTF_CMD_OUT)
-  #exec 1> "$_BASHTF_CMD_OUT"
-  : > "$_BASHTF_CMD_OUT"
+  : > "$_BASHTF_CMD_OUT" # make empty
 
-  exec 2>&-
   local prev_errout=$(<$_BASHTF_CMD_ERR)
-  exec 2> "$_BASHTF_CMD_ERR"
+  : > "$_BASHTF_CMD_ERR"
 
   local line="$1"
   local src_path="$2"

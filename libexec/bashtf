@@ -7,7 +7,7 @@ declare _BASHTF_CMD_ERR="/tmp/_bashtf_command_stderr.$$.log"
 
 eval "`$_BASHTF_LIBEXEC_DIR/parse \"$@\"`"
 
-. $_BASHTF_LIBEXEC_DIR/outputs
+source $_BASHTF_LIBEXEC_DIR/outputs
 
 _bashtf_judge() {
   local _testcmnt="$1" _exitstat="$2" _stdout="$3" _stderr="$4"
@@ -103,38 +103,33 @@ _bashtf_cache_execution_data() {
 
   if [ "${_BASHTF_TEST_COMMENT_STYLE[$line]}" = "EOL" ]; then
     _BASHTF_TESTLINE="$line"
-    #_BASHTF_TEST_COMMENT_CACHE="${_BASHTF_TEST_COMMENT_LIST[$_BASHTF_TESTLINE]}"
-    #_BASHTF_TEST_COMMENT_EVAL_CACHE=$(eval "echo -n \"${_BASHTF_TEST_COMMENT_LIST[$_BASHTF_TESTLINE]}\"")
     _BASHTF_TESTEXIST=true
   elif [ "${_BASHTF_TEST_COMMENT_STYLE[$((line+1))]}" = "NL" ]; then
     _BASHTF_TESTLINE=$((line+1))
-    #_BASHTF_TEST_COMMENT_CACHE="${_BASHTF_TEST_COMMENT_LIST[$_BASHTF_TESTLINE]}"
-    #_BASHTF_TEST_COMMENT_EVAL_CACHE=$(eval "echo -n \"${_BASHTF_TEST_COMMENT_LIST[$_BASHTF_TESTLINE]}\"")
     _BASHTF_TESTEXIST=true
   else
-    #_BASHTF_TEST_COMMENT_CACHE=''
     _BASHTF_TESTEXIST=false
   fi
 }
 
 
 _bashtf_trap_command_execution() {
-  local prev_stat="$?"
-
-  local prev_stdout=$(<$_BASHTF_CMD_OUT)
-  : > "$_BASHTF_CMD_OUT" # make empty
-
-  local prev_errout=$(<$_BASHTF_CMD_ERR)
-  : > "$_BASHTF_CMD_ERR"
-
-  local line="$1"
-  local src_path="$2"
+  local prev_stat="$?" line="$1" src_path="$2"
 
   [ "$src_path" = "$TARGET_FULLPATH" ] && {
     _BASHTF_TESTEXIST=${_BASHTF_TESTEXIST:-false} # false when start
-    $_BASHTF_TESTEXIST && _bashtf_analyze_test_results "$prev_stat" "$prev_stdout" "$prev_stderr"
+
+    $_BASHTF_TESTEXIST &&
+      _bashtf_analyze_test_results \
+        "$prev_stat" \
+        "$(<$_BASHTF_CMD_OUT)" \
+        "$(<$_BASHTF_CMD_ERR)"
+
     _bashtf_cache_execution_data "$line" "$BASH_COMMAND"
   }
+
+  : > "$_BASHTF_CMD_OUT" # make empty
+  : > "$_BASHTF_CMD_ERR"
 }
 
 
@@ -145,16 +140,17 @@ _bashtf_runtest() {
   exec 3>&1 4>&2 1> $_BASHTF_CMD_OUT 2> $_BASHTF_CMD_ERR
   trap '_bashtf_trap_command_execution "$LINENO" "$BASH_SOURCE"' DEBUG
 
-  . "$TARGET_FULLPATH"
-  _bashtf_analyze_test_results "$?" "$TARGET_FULLPATH"
+  source "$TARGET_FULLPATH"
+  _bashtf_analyze_test_results \
+    "$?" \
+    "$(<$_BASHTF_CMD_OUT)" \
+    "$(<$_BASHTF_CMD_ERR)"
 
   trap DEBUG
   exec 1>&3- 2>&4-
   set +T
 }
 
-
 _bashtf_runtest $1
-
 
 rm "$_BASHTF_CMD_OUT" "$_BASHTF_CMD_ERR"

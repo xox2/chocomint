@@ -18,7 +18,7 @@ false #ただのcommentだよ
 
 for i in 1 2 3
 do
-  echo \'bdbsd $i #: match:"$i"
+  echo \'bdbsd $i #: match:"sd $i"
   echo \"fasdfasd $i
   #: match:"$i"
 done
@@ -26,7 +26,7 @@ done
 echo "pipe command_" | cat
 
 str=`echo サブシェルだよ | cat`
-echo "strの値は、 $str です。" #: $str=3  $str!=あいうえお status:9
+echo "strの値は、 $str です。" #: $str=3  $str!=あいうえお status:9 match:'dakdjhflash'
 str=$(echo 10 | cat)
 echo "strの値は、 $str です。"
 #: $str=3  $str!="a b c d e f g h i $str" match:"\""'$''P''W''D'" ""$PWD"'"' status:9999999999999999999999999999
@@ -40,7 +40,7 @@ ls --version
 ls --s
 
 true \
-#: status:0
+#: status:0 match:'popo'
 true \
   #: status:0
 

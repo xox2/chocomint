@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
 # vim: ft=sh
 
-declare -a _BASHTF_TEST_COMMENT_STYLE    # "NL" or "EOL"
-declare -a _BASHTF_TEST_COMMENT_LIST     # 行番号 -> テストコメントの内容
-declare -i LINENUM=1
-declare TEST_COMMENT
-declare COMMENT_IN
-declare TEST_MARKER=":"
-declare PARSE_METHOD="parse_nl"
 declare -A _BASHTF_HASH
-TESTNUM=0
+declare -a _BASHTF_TEST_COMMENT_STYLE # "NL" or "EOL"
+declare -i LINE_NUMBER=1
+declare -i TEST_NUMBER=0
+declare TEST_MARKER=":"
+declare PARSE_METHOD="parse_nl" # initial parse-method
 
 parse_test_dq_bs() {
   case $1 in
@@ -70,20 +67,20 @@ parse_test_right() {
       PARSE_METHOD="parse_test_bs"
       ;;
     "" )
-      _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
-      _BASHTF_HASH[$LINENUM,$TESTNUM,right]="$TEST_COMMENT"
-      _BASHTF_HASH[$LINENUM,max]="$TESTNUM"
+      _BASHTF_TEST_COMMENT_STYLE[LINE_NUMBER]="$COMMENT_IN"
+      _BASHTF_HASH[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
+      _BASHTF_HASH[$LINE_NUMBER,max]="$TEST_NUMBER"
       PARSE_METHOD="parse_nl"
-      LINENUM+=1
+      LINE_NUMBER+=1
       TEST_COMMENT=""
-      TESTNUM=0
+      TEST_NUMBER=0
       ;;
     " "|"\t" )
-      _BASHTF_TEST_COMMENT_STYLE[LINENUM]="$COMMENT_IN"
-      _BASHTF_HASH[$LINENUM,$TESTNUM,right]="$TEST_COMMENT"
+      _BASHTF_TEST_COMMENT_STYLE[LINE_NUMBER]="$COMMENT_IN"
+      _BASHTF_HASH[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
       PARSE_METHOD="parse_test_blank"
       TEST_COMMENT=""
-      ((TESTNUM++))
+      ((TEST_NUMBER++))
       ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
@@ -100,7 +97,7 @@ parse_test_mid() {
       TEST_COMMENT="!"
       ;;
     * )
-      _BASHTF_HASH[$LINENUM,$TESTNUM,mid]="$TEST_COMMENT"
+      _BASHTF_HASH[$LINE_NUMBER,$TEST_NUMBER,mid]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_right"
       parse_test_right "$1"
@@ -111,7 +108,7 @@ parse_test_mid() {
 parse_test_left() {
   case $1 in
     "!"|"="|":" )
-      _BASHTF_HASH[$LINENUM,$TESTNUM,left]="$TEST_COMMENT"
+      _BASHTF_HASH[$LINE_NUMBER,$TEST_NUMBER,left]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_mid"
       parse_test_mid "$1"
@@ -139,7 +136,7 @@ parse_hash() {
       PARSE_METHOD="parse_test_blank"
       ;;
     "" )
-      LINENUM+=1
+      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -151,7 +148,7 @@ parse_hash() {
 parse_dq_bs() {
   case $1 in
     "" )
-      LINENUM+=1
+      LINE_NUMBER+=1
       PARSE_METHOD="parse_dq"
       ;;
     * )
@@ -169,7 +166,7 @@ parse_dq() {
       PARSE_METHOD="parse_main"
       ;;
     "" )
-      LINENUM+=1
+      LINE_NUMBER+=1
       ;;
     * )
       :
@@ -183,7 +180,7 @@ parse_sq() {
       PARSE_METHOD="parse_main"
       ;;
     "" )
-      LINENUM+=1
+      LINE_NUMBER+=1
       ;;
     * )
       :
@@ -194,7 +191,7 @@ parse_sq() {
 parse_bs() {
   case $1 in
     "" )
-      LINENUM+=1
+      LINE_NUMBER+=1
       PARSE_METHOD="parse_main"
       ;;
     * )
@@ -219,7 +216,7 @@ parse_main() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINENUM+=1
+      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -246,7 +243,7 @@ parse_nl_space() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINENUM+=1
+      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -274,13 +271,18 @@ parse_nl() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINENUM+=1
+      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
       PARSE_METHOD="parse_main"
       ;;
   esac
+}
+
+expose_variable() {
+  declare -p _BASHTF_TEST_COMMENT_STYLE
+  declare -p _BASHTF_HASH
 }
 
 main() {
@@ -291,9 +293,8 @@ main() {
       $PARSE_METHOD "$char"
     done < <(echo $line)
   done < $file
+
+  expose_variable
 }
 
 main "$@"
-
-declare -p _BASHTF_TEST_COMMENT_STYLE
-declare -p _BASHTF_HASH

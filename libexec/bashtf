@@ -122,6 +122,8 @@ _bashtf_trap_command_execution() {
   local _bashtf_prev_stat="$?"
 
   if [ "$2" = "$TARGET_FULLPATH" ]; then
+    exec 1>&3 2>&4
+
     _BASHTF_TESTEXIST=${_BASHTF_TESTEXIST:-false} # false when start
 
     $_BASHTF_TESTEXIST &&
@@ -132,8 +134,7 @@ _bashtf_trap_command_execution() {
 
     _bashtf_cache_execution_data "$1" "$BASH_COMMAND"
 
-    : > "$_BASHTF_CMD_OUT" # make empty
-    : > "$_BASHTF_CMD_ERR"
+    exec 1> $_BASHTF_CMD_OUT 2> $_BASHTF_CMD_ERR
   fi
 }
 

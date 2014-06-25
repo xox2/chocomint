@@ -5,6 +5,16 @@ _BASHTF_LIBEXEC_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 _BASHTF_CMD_OUT="/tmp/_bashtf_command_stdout.$$.log"
 _BASHTF_CMD_ERR="/tmp/_bashtf_command_stderr.$$.log"
 
+_bashtf_ok() {
+  _bashtf_echo -n " ✔ ok "
+  _bashtf_echo " $@"
+}
+
+_bashtf_ng() {
+  _bashtf_echo -n " ✘ ng "
+  _bashtf_echo " $@"
+}
+
 _bashtf_judge() {
   # $1 left string
   # $2 middle string
@@ -14,33 +24,33 @@ _bashtf_judge() {
   # $6 stderr
   case $2 in
     "=" )
-      if [ "$1" = "$3" ]; then
-        echo "$1" = "$3" "==> true"
+      if eval [ "$1" = "$3" ]; then
+        _bashtf_ok "$1 $2 $3"
       else
-        echo "$1" = "$3" "==> false"
+        _bashtf_ng "$1 $2 $3"
       fi
       ;;
     "!=" )
       if [ "$1" != "$3" ]; then
-        echo "$1" != "$3" "==> true"
+        _bashtf_ok "$1 $2 $3"
       else
-        echo "$1" != "$3" "==> false"
+        _bashtf_ng "$1 $2 $3"
       fi
       ;;
     ":" )
       case $1 in
         'status' )
           if [ "$4" = "$3" ]; then
-            echo status:"$3" "==> true"
+            _bashtf_ok "$1 $2 $3"
           else
-            echo status:"$3" "==> false"
+            _bashtf_ng "$1 $2 $3"
           fi
           ;;
         'match' )
           if \egrep -q "`eval echo "$3"`" "$_BASHTF_CMD_OUT"; then
-            eval echo match:"$3" "==\> true"
+            _bashtf_ok "$1 $2 $3"
           else
-            eval echo match:"$3" "==\> false"
+            _bashtf_ng "$1 $2 $3"
           fi
           ;;
       esac
@@ -49,36 +59,21 @@ _bashtf_judge() {
       case $1 in
         'status' )
           if [ "$4" != "$3" ]; then
-            echo status:"$3" "==> true"
+            _bashtf_ok "$1 $2 $3"
           else
-            echo status:"$3" "==> false"
+            _bashtf_ng "$1 $2 $3"
           fi
           ;;
         'match' )
           if \egrep -q "`eval echo "$3"`" "$_BASHTF_CMD_OUT"; then
-            eval echo match:"$3" "==\> false"
+            _bashtf_ng "$1 $2 $3"
           else
-            eval echo match:"$3" "==\> true"
+            _bashtf_ok "$1 $2 $3"
           fi
           ;;
       esac
       ;;
   esac
-
-  #[ "$match" ] && if echo "$_stdout" | \egrep "$match" > /dev/null 2>&1; then
-  #  result_list+=( true )
-  #else
-  #  result_list+=( false )
-  #fi
-
-  #[ "$not_match" ] && if echo "$_stdout" | \egrep "$not_match" > /dev/null 2>&1; then
-  #  result_list+=( false )
-  #else
-  #  result_list+=( true )
-  #fi
-
-  #echo "===> ${result_list[@]}"
-  #_bashtf_indent_echo 5 "$_BASHTF_CMD_EVAL_CACHE"
 }
 
 
@@ -86,6 +81,7 @@ _bashtf_analyze_test_results() {
   # $1 exitstatus
   # $2 stdout
   # $3 stderr
+  _bashtf_echo "==> $_BASHTF_CMD_CACHE"
   for _bashtf_i in `seq 0 ${_BASHTF_HASH[$_BASHTF_TESTLINE,max]}`
   do
     _bashtf_judge \
@@ -96,6 +92,7 @@ _bashtf_analyze_test_results() {
       "$2" \
       "$3"
   done
+  _bashtf_echo
 }
 
 
@@ -107,9 +104,13 @@ _bashtf_cache_execution_data() {
   if [ "${_BASHTF_TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
     _BASHTF_TESTLINE="$1"
     _BASHTF_TESTEXIST=true
+    : > $_BASHTF_CMD_OUT
+    : > $_BASHTF_CMD_ERR
   elif [ "${_BASHTF_TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
     _BASHTF_TESTLINE=$(($1+1))
     _BASHTF_TESTEXIST=true
+    : > $_BASHTF_CMD_OUT
+    : > $_BASHTF_CMD_ERR
   else
     _BASHTF_TESTEXIST=false
   fi
@@ -122,14 +123,13 @@ _bashtf_trap() {
   local _bashtf_prev_stat="$?"
 
   if [ "$2" = "$TARGET_FULLPATH" ]; then
-    _bashtf_redirect_switch_off
-    $_BASHTF_TESTEXIST &&
+    $_BASHTF_TESTEXIST && {
       _bashtf_analyze_test_results \
         "$_bashtf_prev_stat" \
         "$(<$_BASHTF_CMD_OUT)" \
         "$(<$_BASHTF_CMD_ERR)"
+    }
     _bashtf_cache_execution_data "$1" "$BASH_COMMAND"
-    _bashtf_redirect_switch_on
   fi
 }
 
@@ -145,15 +145,21 @@ _bashtf_redirect_switch_off() {
 
 
 _bashtf_test_process() {
+  _BASHTF_FAIL_COUNT=0
+  _BASHTF_TEST_COUNT=0
   _BASHTF_TESTEXIST=false
   _bashtf_redirect_switch_on
-  source "$1"
-  _bashtf_redirect_switch_off
 
-  _bashtf_analyze_test_results \
-    "$?" \
-    "$(<$_BASHTF_CMD_OUT)" \
-    "$(<$_BASHTF_CMD_ERR)"
+  source "$1"; local exitstat=$?
+  # if the last command has a test, execute the analysis here.
+  $_BASHTF_TESTEXIST && {
+    _bashtf_analyze_test_results \
+      "$exitstat" \
+      "$(<$_BASHTF_CMD_OUT)" \
+      "$(<$_BASHTF_CMD_ERR)"
+  }
+
+  _bashtf_redirect_switch_off
 
   rm "$_BASHTF_CMD_OUT" "$_BASHTF_CMD_ERR"
 }

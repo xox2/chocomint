@@ -6,13 +6,26 @@ _COMPOUND_CMD_OUT="/tmp/_compound_command_stdout.$$.log"
 _COMPOUND_CMD_ERR="/tmp/_compound_command_stderr.$$.log"
 
 _compound_ok() {
+  _compound_tput setaf 2
   _compound_echo -n " ✔ ok "
+  _compound_tput sgr0
   _compound_echo " $@"
 }
 
 _compound_ng() {
+  _compound_tput setaf 1
   _compound_echo -n " ✘ ng "
+  _compound_tput sgr0
   _compound_echo " $@"
+}
+
+_compound_match() {
+  if \egrep -q "$(eval echo "$1")" "$_COMPOUND_CMD_OUT" ||
+     \egrep -q "$(eval echo "$1")" "$_COMPOUND_CMD_ERR"; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 _compound_judge() {
@@ -47,7 +60,7 @@ _compound_judge() {
           fi
           ;;
         'match' )
-          if \egrep -q "`eval echo "$3"`" "$_COMPOUND_CMD_OUT"; then
+          if _compound_match "$3"; then
             _compound_ok "$1 $2 $3"
           else
             _compound_ng "$1 $2 $3"
@@ -65,7 +78,7 @@ _compound_judge() {
           fi
           ;;
         'match' )
-          if \egrep -q "`eval echo "$3"`" "$_COMPOUND_CMD_OUT"; then
+          if _compound_match "$3"; then
             _compound_ng "$1 $2 $3"
           else
             _compound_ok "$1 $2 $3"
@@ -81,7 +94,6 @@ _compound_analyze_test_results() {
   # $1 exitstatus
   # $2 stdout
   # $3 stderr
-  _compound_echo "==> $_COMPOUND_CMD_CACHE"
   for _compound_i in `seq 0 ${_COMPOUND_HASH[$_COMPOUND_TESTLINE,max]}`
   do
     _compound_judge \
@@ -96,21 +108,24 @@ _compound_analyze_test_results() {
 }
 
 
+_compound_testexist_case() {
+  _COMPOUND_TESTLINE="$1"
+  _COMPOUND_TESTEXIST=true
+  : > $_COMPOUND_CMD_OUT
+  : > $_COMPOUND_CMD_ERR
+  _compound_echo "# $_COMPOUND_CMD_CACHE"
+}
+
+
 _compound_cache_execution_data() {
   _COMPOUND_LINENO_CACHE="$1"
   _COMPOUND_CMD_CACHE="$2"
   _COMPOUND_CMD_EVAL_CACHE=$(eval "echo -n \"$2\"")
 
   if [ "${_COMPOUND_TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
-    _COMPOUND_TESTLINE="$1"
-    _COMPOUND_TESTEXIST=true
-    : > $_COMPOUND_CMD_OUT
-    : > $_COMPOUND_CMD_ERR
+    _compound_testexist_case "$1"
   elif [ "${_COMPOUND_TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
-    _COMPOUND_TESTLINE=$(($1+1))
-    _COMPOUND_TESTEXIST=true
-    : > $_COMPOUND_CMD_OUT
-    : > $_COMPOUND_CMD_ERR
+    _compound_testexist_case "$(($1+1))"
   else
     _COMPOUND_TESTEXIST=false
   fi

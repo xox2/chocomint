@@ -1,14 +1,14 @@
+#!/bin/bash
 # vim: ft=sh
 
 _compound_indent_echo() {
-  local space_num=$1
-  local spaces=''
+  local _compound_spaces=''
 
-  for ((i=0; i<$space_num; i++)); do
-    spaces="$spaces "
+  for ((i=0; i<$1; i++)); do
+    _compound_spaces="$_compound_spaces "
   done
 
-  echo "$2" | sed "s/^/$spaces/" >&3
+  echo "$2" | sed "s/^/$_compound_spaces/" >&3
 }
 
 
@@ -34,8 +34,8 @@ _compound_tput() {
 
 _compound_draw_ruler() {
   [ "$_COMPOUND_TERM_COLS" ] || {
-    local cols=`tput cols 2>&4`
-    for ((i=0; i<$cols; i++)); do
+    local _compound_cols=`tput _compound_cols 2>&4`
+    for ((i=0; i<$_compound_cols; i++)); do
       _COMPOUND_TERM_COLS="$_COMPOUND_TERM_COLS""$1"
     done
   }

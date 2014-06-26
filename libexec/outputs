@@ -1,6 +1,6 @@
 # vim: ft=sh
 
-_bashtf_indent_echo() {
+_compound_indent_echo() {
   local space_num=$1
   local spaces=''
 
@@ -12,32 +12,32 @@ _bashtf_indent_echo() {
 }
 
 
-_bashtf_printf() {
+_compound_printf() {
   printf $@ >&3
 }
 
 
-_bashtf_echo() {
+_compound_echo() {
   echo "$@" >&3
 }
 
 
-_bashtf_eval_echo() {
-  eval "_bashtf_echo $@"
+_compound_eval_echo() {
+  eval "_compound_echo $@"
 }
 
 
-_bashtf_tput() {
+_compound_tput() {
   tput $@ >&3
 }
 
 
-_bashtf_draw_ruler() {
-  [ "$_BASHTF_TERM_COLS" ] || {
+_compound_draw_ruler() {
+  [ "$_COMPOUND_TERM_COLS" ] || {
     local cols=`tput cols 2>&4`
     for ((i=0; i<$cols; i++)); do
-      _BASHTF_TERM_COLS="$_BASHTF_TERM_COLS""$1"
+      _COMPOUND_TERM_COLS="$_COMPOUND_TERM_COLS""$1"
     done
   }
-  _bashtf_echo "$_BASHTF_TERM_COLS"
+  _compound_echo "$_COMPOUND_TERM_COLS"
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env bashtf
+#!/bin/bash
 # vim: ft=sh
 
 true No.1

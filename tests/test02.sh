@@ -1,4 +1,4 @@
-#!/usr/bin/env bashtf
+#!/bin/bash
 # vim: ft=sh
 
 for qqq in 1 2 3

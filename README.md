@@ -1,4 +1,4 @@
-bashtf
-======
+compound.sh
+===========
 
-Minimal Testing Framework for Bash
+compound.sh is simple, easy, comment-based Testing Framework for Bash 4

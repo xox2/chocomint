@@ -3,6 +3,7 @@
 
 declare -A _CHOCOMINT_HASH
 declare -a _CHOCOMINT_TEST_COMMENT_STYLE # "NL" or "EOL"
+declare -i _CHOCOMINT_TEST_NUM=0
 declare -i LINE_NUMBER=1
 declare -i TEST_NUMBER=0
 declare TEST_MARKER=":"
@@ -74,6 +75,7 @@ parse_test_right() {
       LINE_NUMBER+=1
       TEST_COMMENT=""
       TEST_NUMBER=0
+      ((_CHOCOMINT_TEST_NUM++))
       ;;
     " "|"\t" )
       _CHOCOMINT_TEST_COMMENT_STYLE[LINE_NUMBER]="$COMMENT_IN"
@@ -81,6 +83,7 @@ parse_test_right() {
       PARSE_METHOD="parse_test_blank"
       TEST_COMMENT=""
       ((TEST_NUMBER++))
+      ((_CHOCOMINT_TEST_NUM++))
       ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
@@ -283,6 +286,7 @@ parse_nl() {
 expose_variable() {
   declare -p _CHOCOMINT_TEST_COMMENT_STYLE
   declare -p _CHOCOMINT_HASH
+  declare -p _CHOCOMINT_TEST_NUM
 }
 
 main() {

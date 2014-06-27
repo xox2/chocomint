@@ -1,4 +1,4 @@
 chocomint.sh
 ============
 
-compound.sh is simple, easy, comment-based Testing Framework for Bash 4
+Simple, Easy, comment-based Testing Framework for Bash 4

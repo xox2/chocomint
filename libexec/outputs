@@ -1,43 +1,43 @@
 #!/bin/bash
 # vim: ft=sh
 
-_compound_indent_echo() {
-  local _compound_spaces=''
+_chocomint_indent_echo() {
+  local _chocomint_spaces=''
 
   for ((i=0; i<$1; i++)); do
-    _compound_spaces="$_compound_spaces "
+    _chocomint_spaces="$_chocomint_spaces "
   done
 
-  echo "$2" | sed "s/^/$_compound_spaces/" >&3
+  echo "$2" | sed "s/^/$_chocomint_spaces/" >&3
 }
 
 
-_compound_printf() {
+_chocomint_printf() {
   printf $@ >&3
 }
 
 
-_compound_echo() {
+_chocomint_echo() {
   echo "$@" >&3
 }
 
 
-_compound_eval_echo() {
-  eval "_compound_echo $@"
+_chocomint_eval_echo() {
+  eval "_chocomint_echo $@"
 }
 
 
-_compound_tput() {
+_chocomint_tput() {
   tput $@ >&3
 }
 
 
-_compound_draw_ruler() {
-  [ "$_COMPOUND_TERM_COLS" ] || {
-    local _compound_cols=`tput _compound_cols 2>&4`
-    for ((i=0; i<$_compound_cols; i++)); do
-      _COMPOUND_TERM_COLS="$_COMPOUND_TERM_COLS""$1"
+_chocomint_draw_ruler() {
+  [ "$_CHOCOMINT_TERM_COLS" ] || {
+    local _chocomint_cols=`tput _chocomint_cols 2>&4`
+    for ((i=0; i<$_chocomint_cols; i++)); do
+      _CHOCOMINT_TERM_COLS="$_CHOCOMINT_TERM_COLS""$1"
     done
   }
-  _compound_echo "$_COMPOUND_TERM_COLS"
+  _chocomint_echo "$_CHOCOMINT_TERM_COLS"
 }

@@ -1,0 +1,196 @@
+#!/usr/bin/env bash
+
+_CHOCOMINT_LIBEXEC_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
+
+_CHOCOMINT_CMD_OUT="/tmp/_chocomint_command_stdout.$$.log"
+_CHOCOMINT_CMD_ERR="/tmp/_chocomint_command_stderr.$$.log"
+
+_chocomint_ok() {
+  _chocomint_tput setaf 2
+  _chocomint_echo -n " ✔ ok "
+  _chocomint_tput sgr0
+  _chocomint_echo " $@"
+}
+
+_chocomint_ng() {
+  _chocomint_tput setaf 1
+  _chocomint_echo -n " ✘ ng "
+  _chocomint_tput sgr0
+  _chocomint_echo " $@"
+}
+
+_chocomint_match() {
+  if \egrep -q "$(eval echo "$1")" "$_CHOCOMINT_CMD_OUT" ||
+     \egrep -q "$(eval echo "$1")" "$_CHOCOMINT_CMD_ERR"; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+_chocomint_judge() {
+  # $1 left string
+  # $2 middle string
+  # $3 right string
+  # $4 exit status
+  # $5 stdout
+  # $6 stderr
+  case $2 in
+    "=" )
+      if eval [ "$1" = "$3" ]; then
+        _chocomint_ok "$1 $2 $3"
+      else
+        _chocomint_ng "$1 $2 $3"
+      fi
+      ;;
+    "!=" )
+      if [ "$1" != "$3" ]; then
+        _chocomint_ok "$1 $2 $3"
+      else
+        _chocomint_ng "$1 $2 $3"
+      fi
+      ;;
+    ":" )
+      case $1 in
+        'status' )
+          if [ "$4" = "$3" ]; then
+            _chocomint_ok "$1 $2 $3"
+          else
+            _chocomint_ng "$1 $2 $3"
+          fi
+          ;;
+        'match' )
+          if _chocomint_match "$3"; then
+            _chocomint_ok "$1 $2 $3"
+          else
+            _chocomint_ng "$1 $2 $3"
+          fi
+          ;;
+      esac
+      ;;
+    "!:" )
+      case $1 in
+        'status' )
+          if [ "$4" != "$3" ]; then
+            _chocomint_ok "$1 $2 $3"
+          else
+            _chocomint_ng "$1 $2 $3"
+          fi
+          ;;
+        'match' )
+          if _chocomint_match "$3"; then
+            _chocomint_ng "$1 $2 $3"
+          else
+            _chocomint_ok "$1 $2 $3"
+          fi
+          ;;
+      esac
+      ;;
+  esac
+}
+
+
+_chocomint_analyze_test_results() {
+  # $1 exitstatus
+  # $2 stdout
+  # $3 stderr
+  for _chocomint_i in `seq 0 ${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,max]}`
+  do
+    _chocomint_judge \
+      "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,left]}" \
+      "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+      "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,right]}" \
+      "$1" \
+      "$2" \
+      "$3"
+  done
+  _chocomint_echo
+}
+
+
+_chocomint_testexist_case() {
+  _CHOCOMINT_TESTLINE="$1"
+  _CHOCOMINT_TESTEXIST=true
+  : > $_CHOCOMINT_CMD_OUT
+  : > $_CHOCOMINT_CMD_ERR
+  _chocomint_echo "# $_CHOCOMINT_CMD_CACHE"
+}
+
+
+_chocomint_cache_execution_data() {
+  _CHOCOMINT_LINENO_CACHE="$1"
+  _CHOCOMINT_CMD_CACHE="$2"
+  _CHOCOMINT_CMD_EVAL_CACHE=$(eval "echo -n \"$2\"")
+
+  if [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
+    _chocomint_testexist_case "$1"
+  elif [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
+    _chocomint_testexist_case "$(($1+1))"
+  else
+    _CHOCOMINT_TESTEXIST=false
+  fi
+}
+
+
+_chocomint_trap() {
+  # $1 line number
+  # $2 source path
+  local _chocomint_prev_stat="$?"
+
+  if [ "$2" = "$TARGET_FULLPATH" ]; then
+    $_CHOCOMINT_TESTEXIST && {
+      _chocomint_analyze_test_results \
+        "$_chocomint_prev_stat" \
+        "$(<$_CHOCOMINT_CMD_OUT)" \
+        "$(<$_CHOCOMINT_CMD_ERR)"
+    }
+    _chocomint_cache_execution_data "$1" "$BASH_COMMAND"
+  fi
+}
+
+
+_chocomint_redirect_switch_on() {
+  exec 3>&1 4>&2 1> $_CHOCOMINT_CMD_OUT 2> $_CHOCOMINT_CMD_ERR
+}
+
+
+_chocomint_redirect_switch_off() {
+  exec 1>&3- 2>&4-
+}
+
+
+_chocomint_test_process() {
+  _CHOCOMINT_FAIL_COUNT=0
+  _CHOCOMINT_TEST_COUNT=0
+  _CHOCOMINT_TESTEXIST=false
+  _chocomint_redirect_switch_on
+
+  source "$1"; local exitstat=$?
+  # if the last command has a test, execute the analysis here.
+  $_CHOCOMINT_TESTEXIST && {
+    _chocomint_analyze_test_results \
+      "$exitstat" \
+      "$(<$_CHOCOMINT_CMD_OUT)" \
+      "$(<$_CHOCOMINT_CMD_ERR)"
+  }
+
+  _chocomint_redirect_switch_off
+
+  rm "$_CHOCOMINT_CMD_OUT" "$_CHOCOMINT_CMD_ERR"
+}
+
+
+_chocomint_main() {
+  TARGET_FULLPATH="$(readlink -f -- "$1")"
+  eval "`$_CHOCOMINT_LIBEXEC_DIR/parse $TARGET_FULLPATH`"
+  source $_CHOCOMINT_LIBEXEC_DIR/outputs
+
+  set -T; trap '_chocomint_trap "$LINENO" "$BASH_SOURCE"' DEBUG
+
+  _chocomint_test_process "$TARGET_FULLPATH"
+
+  trap DEBUG; set +T
+}
+
+
+_chocomint_main "$1"

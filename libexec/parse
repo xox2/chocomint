@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # vim: ft=sh
 
-declare -A _COMPOUND_HASH
-declare -a _COMPOUND_TEST_COMMENT_STYLE # "NL" or "EOL"
+declare -A _CHOCOMINT_HASH
+declare -a _CHOCOMINT_TEST_COMMENT_STYLE # "NL" or "EOL"
 declare -i LINE_NUMBER=1
 declare -i TEST_NUMBER=0
 declare TEST_MARKER=":"
@@ -67,17 +67,17 @@ parse_test_right() {
       PARSE_METHOD="parse_test_bs"
       ;;
     "" )
-      _COMPOUND_TEST_COMMENT_STYLE[LINE_NUMBER]="$COMMENT_IN"
-      _COMPOUND_HASH[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
-      _COMPOUND_HASH[$LINE_NUMBER,max]="$TEST_NUMBER"
+      _CHOCOMINT_TEST_COMMENT_STYLE[LINE_NUMBER]="$COMMENT_IN"
+      _CHOCOMINT_HASH[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
+      _CHOCOMINT_HASH[$LINE_NUMBER,max]="$TEST_NUMBER"
       PARSE_METHOD="parse_nl"
       LINE_NUMBER+=1
       TEST_COMMENT=""
       TEST_NUMBER=0
       ;;
     " "|"\t" )
-      _COMPOUND_TEST_COMMENT_STYLE[LINE_NUMBER]="$COMMENT_IN"
-      _COMPOUND_HASH[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
+      _CHOCOMINT_TEST_COMMENT_STYLE[LINE_NUMBER]="$COMMENT_IN"
+      _CHOCOMINT_HASH[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
       PARSE_METHOD="parse_test_blank"
       TEST_COMMENT=""
       ((TEST_NUMBER++))
@@ -97,7 +97,7 @@ parse_test_mid() {
       TEST_COMMENT="!"
       ;;
     * )
-      _COMPOUND_HASH[$LINE_NUMBER,$TEST_NUMBER,mid]="$TEST_COMMENT"
+      _CHOCOMINT_HASH[$LINE_NUMBER,$TEST_NUMBER,mid]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_right"
       parse_test_right "$1"
@@ -108,7 +108,7 @@ parse_test_mid() {
 parse_test_left() {
   case $1 in
     "!"|"="|":" )
-      _COMPOUND_HASH[$LINE_NUMBER,$TEST_NUMBER,left]="$TEST_COMMENT"
+      _CHOCOMINT_HASH[$LINE_NUMBER,$TEST_NUMBER,left]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_mid"
       parse_test_mid "$1"
@@ -281,8 +281,8 @@ parse_nl() {
 }
 
 expose_variable() {
-  declare -p _COMPOUND_TEST_COMMENT_STYLE
-  declare -p _COMPOUND_HASH
+  declare -p _CHOCOMINT_TEST_COMMENT_STYLE
+  declare -p _CHOCOMINT_HASH
 }
 
 main() {

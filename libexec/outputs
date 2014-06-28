@@ -3,34 +3,45 @@
 
 _chocomint_indent_echo() {
   local _chocomint_spaces=''
-
   for ((i=0; i<$1; i++)); do
     _chocomint_spaces="$_chocomint_spaces "
   done
-
   echo "$2" | sed "s/^/$_chocomint_spaces/" >&3
 }
 
-
 _chocomint_printf() {
-  printf $@ >&3
+  printf "$@" >&3
 }
-
 
 _chocomint_echo() {
   echo "$@" >&3
 }
 
+_chocomint_cat() {
+  cat "$@" >&3
+}
 
 _chocomint_eval_echo() {
   eval "_chocomint_echo $@"
 }
 
-
 _chocomint_tput() {
-  tput $@ >&3
+  tput "$@" >&3
 }
 
+_chocomint_ok() {
+  _chocomint_tput setaf 2
+  _chocomint_echo -n "   ✔ "
+  _chocomint_tput sgr0
+  _chocomint_echo "$*"
+}
+
+_chocomint_ng() {
+  _chocomint_tput setaf 1
+  _chocomint_echo -n "   ✘ "
+  _chocomint_tput sgr0
+  _chocomint_echo "$*"
+}
 
 _chocomint_draw_ruler() {
   [ "$_CHOCOMINT_TERM_COLS" ] || {

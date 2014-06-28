@@ -13,7 +13,9 @@ echo "error out" >&2
 
 echo 1234 #: status:0 match:'1234'
 
-sleep 5; false #: status:1
+sleep 2; false #: status:1
+
+ls --nothing #: status:0
 
 for i in 1 2 3
 do
@@ -23,7 +25,7 @@ done
 echo "pipe" | cat
 
 str='first'
-str=`echo here is subshell | cat`
+str=`echo \"here\" is subshell | cat`
 echo "$str" #: $str!=3 $str!='aabbcc' status!:9 match:'here'
 str=$(echo 10 | cat)
 echo "str=$str"
@@ -31,7 +33,7 @@ echo "str=$str"
 
 multiple_line='line one: a
 line two: b
-line three: c' #: status:0
+line three: c' #: status:0 $multiple_line='dummytest'
 
 echo "$multiple_line" #: status:0 match:'b'
 

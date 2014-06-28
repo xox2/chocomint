@@ -28,13 +28,15 @@ _chocomint_analyze_test_results() {
       _chocomint_ok \
         "$_chocomint_left" \
         "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
-        "$_chocomint_right"
+        "$_chocomint_right" \
+        "$1"
       ((_CHOCOMINT_TEST_SUCCESS++))
     else
       _chocomint_ng \
         "$_chocomint_left" \
         "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
-        "$_chocomint_right"
+        "$_chocomint_right" \
+        "$1"
       _chocomint_cmd_failure=true
       _CHOCOMINT_FAILURE=true
       ((_CHOCOMINT_TEST_FAILURE++))
@@ -42,41 +44,7 @@ _chocomint_analyze_test_results() {
     ((_CHOCOMINT_TEST_COUNT++))
   done
 
-  if $_chocomint_cmd_failure; then
-    _chocomint_echo "failed. then, display 'stdout' and 'stderr'."
-    if [ -s "$_CHOCOMINT_CMD_OUT" ] || [ -s "$_CHOCOMINT_CMD_ERR" ]; then
-      if [ -s "$_CHOCOMINT_CMD_OUT" ]; then
-        _chocomint_tput bold
-        _chocomint_echo "=== stdout begin ==="
-        _chocomint_tput sgr0
-        _chocomint_cat $_CHOCOMINT_CMD_OUT
-        _chocomint_tput sgr0
-        _chocomint_tput bold
-        _chocomint_echo "==== stdout end ===="
-        _chocomint_tput sgr0
-      else
-        _chocomint_echo "'stdout' is nothing."
-      fi
-      if [ -s "$_CHOCOMINT_CMD_ERR" ]; then
-        _chocomint_tput bold
-        _chocomint_echo "=== stderr begin ==="
-        _chocomint_tput sgr0
-        _chocomint_cat $_CHOCOMINT_CMD_ERR
-        _chocomint_tput sgr0
-        _chocomint_tput bold
-        _chocomint_echo "==== stderr end ===="
-        _chocomint_tput sgr0
-      else
-        _chocomint_echo "'stderr' is nothing."
-      fi
-    else
-      _chocomint_echo "but, there were no outputs."
-    fi
-  else
-    _chocomint_echo "succeeded."
-    ((_CHOCOMINT_CMD_SUCCESS++))
-  fi
-
+  _chocomint_display_if_failed $_chocomint_cmd_failure
   ((_CHOCOMINT_CMD_COUNT++))
 }
 
@@ -149,15 +117,6 @@ _chocomint_test_process() {
   rm "$_CHOCOMINT_CMD_OUT" "$_CHOCOMINT_CMD_ERR"
 }
 
-_chocomint_show_overall() {
-  tput bold
-  tput setaf 6
-  echo "$_CHOCOMINT_TEST_FAILURE tests failed."
-  echo "$_CHOCOMINT_TEST_SUCCESS/$_CHOCOMINT_TEST_COUNT tests," \
-       "$_CHOCOMINT_CMD_SUCCESS/$_CHOCOMINT_CMD_COUNT commands succeeded."
-  tput sgr0
-}
-
 _chocomint_main() {
   _CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"
   _CHOCOMINT_CMD_SUCCESS=0
@@ -167,12 +126,21 @@ _chocomint_main() {
   _CHOCOMINT_TEST_COUNT=0
   _CHOCOMINT_FAILURE=false
 
+  _chocomint_motd
+
+  echo -n 'Parsing...'
   source <($_CHOCOMINT_LIBEXEC_DIR/parse $_CHOCOMINT_TARGET_FULLPATH)
+  echo '...done.'
 
   set -T; trap '_chocomint_trap "$LINENO" "$BASH_SOURCE"' DEBUG
   _chocomint_test_process "$_CHOCOMINT_TARGET_FULLPATH"
   trap DEBUG; set +T
-  _chocomint_show_overall
+  _chocomint_show_overall \
+    "$_CHOCOMINT_TEST_FAILURE" \
+    "$_CHOCOMINT_TEST_SUCCESS" \
+    "$_CHOCOMINT_TEST_COUNT" \
+    "$_CHOCOMINT_CMD_SUCCESS" \
+    "$_CHOCOMINT_CMD_COUNT"
 
   $_CHOCOMINT_FAILURE && return 1
   return 0

@@ -21,90 +21,19 @@ _chocomint_ng() {
   _chocomint_echo " $@"
 }
 
-_chocomint_match() {
-  if \egrep -q "$(eval echo "$1")" "$_CHOCOMINT_CMD_OUT" ||
-     \egrep -q "$(eval echo "$1")" "$_CHOCOMINT_CMD_ERR"; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-_chocomint_judge() {
-  # $1 left string
-  # $2 middle string
-  # $3 right string
-  # $4 exit status
-  # $5 stdout
-  # $6 stderr
-  case $2 in
-    "=" )
-      if eval [ "$1" = "$3" ]; then
-        return 0
-      else
-        return 1
-      fi
-      ;;
-    "!=" )
-      if [ "$1" != "$3" ]; then
-        return 0
-      else
-        return 1
-      fi
-      ;;
-    ":" )
-      case $1 in
-        'status' )
-          if [ "$4" = "$3" ]; then
-            return 0
-          else
-            return 1
-          fi
-          ;;
-        'match' )
-          if _chocomint_match "$3"; then
-            return 0
-          else
-            return 1
-          fi
-          ;;
-      esac
-      ;;
-    "!:" )
-      case $1 in
-        'status' )
-          if [ "$4" != "$3" ]; then
-            return 0
-          else
-            return 1
-          fi
-          ;;
-        'match' )
-          if _chocomint_match "$3"; then
-            return 1
-          else
-            return 0
-          fi
-          ;;
-      esac
-      ;;
-  esac
-}
-
-
 _chocomint_analyze_test_results() {
   # $1 exitstatus
   # $2 stdout
   # $3 stderr
   for _chocomint_i in `seq 0 ${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,max]}`
   do
-    if _chocomint_judge \
+    if $_CHOCOMINT_LIBEXEC_DIR/judge \
       "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,left]}" \
       "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
       "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,right]}" \
       "$1" \
-      "$2" \
-      "$3"
+      "$_CHOCOMINT_CMD_OUT" \
+      "$_CHOCOMINT_CMD_ERR"
     then
       _chocomint_ok "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,left]}" \
                     "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \

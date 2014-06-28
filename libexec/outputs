@@ -9,42 +9,25 @@ _chocomint_motd() {
   echo 'Minimal, simple, easy, comment-based Testing Framework for Bash 4.x'
 }
 
-_chocomint_indent_echo() {
-  local _chocomint_spaces=''
-  for ((i=0; i<$1; i++)); do
-    _chocomint_spaces="$_chocomint_spaces "
-  done
-  echo "$2" | sed "s/^/$_chocomint_spaces/" >&3
-}
-
-_chocomint_printf() {
-  printf "$@" >&3
+_chocomint_tput_echo() {
+  case $1 in
+    [0-7] )
+      _chocomint_tput setaf "$1"
+      ;;
+    'bold' )
+      _chocomint_tput bold
+      ;;
+  esac
+  _chocomint_echo "${@:2}"
+  _chocomint_tput sgr0
 }
 
 _chocomint_echo() {
   echo "$@" >&3
 }
 
-_chocomint_tput_echo() {
-  case $1 in
-    '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7' )
-      tput setaf "$1" >&3
-      shift
-      ;;
-    'bold' )
-      tput bold >&3
-      ;;
-  esac
-  echo "$@" >&3
-  tput sgr0 >&3
-}
-
 _chocomint_cat() {
   cat "$@" >&3
-}
-
-_chocomint_eval_echo() {
-  eval "_chocomint_echo $@"
 }
 
 _chocomint_tput() {
@@ -52,56 +35,59 @@ _chocomint_tput() {
 }
 
 _chocomint_print_judgement() {
+  # $1 label tput color
+  # $2 label string
+  # $3 left
+  # $4 mid
+  # $5 right
+  # $6 exitstat
   local _chocomint_tput_opt="5"
-  _chocomint_tput setaf $1
-  _chocomint_echo -n "$2" # 'ok' or 'ng'
-  _chocomint_tput sgr0
-  shift 2
-  case $1 in
+  _chocomint_tput_echo "$1" -n "$2" # 'ok' or 'ng'
+  case $3 in
     'status' )
-      case $2 in
+      case $4 in
         ':' )
           _chocomint_echo -n "return "
-          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$4"
+          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$6"
           _chocomint_echo -n " should be "
-          _chocomint_tput_echo "$_chocomint_tput_opt" "$3"
+          _chocomint_tput_echo "$_chocomint_tput_opt" "$5"
           ;;
         '!:' )
           _chocomint_echo -n "return "
-          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$4"
+          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$6"
           _chocomint_echo -n " should not be "
-          _chocomint_tput_echo "$_chocomint_tput_opt" "$3"
+          _chocomint_tput_echo "$_chocomint_tput_opt" "$5"
           ;;
       esac
       ;;
     'match' )
-      case $2 in
+      case $4 in
         ':' )
           _chocomint_echo -n "match '"
-          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$3"
+          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$5"
           _chocomint_echo "'"
           ;;
         '!:' )
           _chocomint_echo -n "not match '"
-          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$3"
+          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$5"
           _chocomint_echo "'"
           ;;
       esac
       ;;
-    * )
-      case $2 in
+    * ) # judge variables
+      case $4 in
         '=' )
           _chocomint_echo -n "value '"
-          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$1"
-          _chocomint_echo -n "' should be '"
           _chocomint_tput_echo "$_chocomint_tput_opt" -n "$3"
+          _chocomint_echo -n "' should be '"
+          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$5"
           _chocomint_echo "'"
           ;;
         '!=' )
           _chocomint_echo -n "value '"
-          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$1"
-          _chocomint_echo -n "' should not be '"
           _chocomint_tput_echo "$_chocomint_tput_opt" -n "$3"
+          _chocomint_echo -n "' should not be '"
+          _chocomint_tput_echo "$_chocomint_tput_opt" -n "$5"
           _chocomint_echo "'"
           ;;
       esac
@@ -110,21 +96,19 @@ _chocomint_print_judgement() {
 }
 
 _chocomint_ok() {
+  # $1 left
+  # $2 mid
+  # $3 right
+  # $4 exitstat
   _chocomint_print_judgement "2" "   ✔ " "$@"
 }
 
 _chocomint_ng() {
+  # $1 left
+  # $2 mid
+  # $3 right
+  # $4 exitstat
   _chocomint_print_judgement "1" "   ✘ " "$@"
-}
-
-_chocomint_draw_ruler() {
-  [ "$_CHOCOMINT_TERM_COLS" ] || {
-    local _chocomint_cols=`tput _chocomint_cols 2>&4`
-    for ((i=0; i<$_chocomint_cols; i++)); do
-      _CHOCOMINT_TERM_COLS="$_CHOCOMINT_TERM_COLS""$1"
-    done
-  }
-  _chocomint_echo "$_CHOCOMINT_TERM_COLS"
 }
 
 _chocomint_display_if_failed() {
@@ -132,33 +116,23 @@ _chocomint_display_if_failed() {
     _chocomint_echo "failed. then, display 'stdout' and 'stderr'."
     if [ -s "$_CHOCOMINT_CMD_OUT" ] || [ -s "$_CHOCOMINT_CMD_ERR" ]; then
       if [ -s "$_CHOCOMINT_CMD_OUT" ]; then
-        _chocomint_tput bold
-        _chocomint_echo '``` stdout'
-        _chocomint_tput sgr0
+        _chocomint_tput_echo bold '``` stdout'
         _chocomint_cat $_CHOCOMINT_CMD_OUT
-        _chocomint_tput sgr0
-        _chocomint_tput bold
-        _chocomint_echo '```'
-        _chocomint_tput sgr0
+        _chocomint_tput sgr0 # for reset previous output attributes
+        _chocomint_tput_echo bold '```'
       else
         _chocomint_echo "'stdout' is nothing."
       fi
       if [ -s "$_CHOCOMINT_CMD_ERR" ]; then
-        _chocomint_tput bold
-        _chocomint_echo '``` stderr'
-        _chocomint_tput sgr0
+        _chocomint_tput_echo bold '``` stderr'
         _chocomint_cat $_CHOCOMINT_CMD_ERR
-        _chocomint_tput sgr0
-        _chocomint_tput bold
-        _chocomint_echo '```'
-        _chocomint_tput sgr0
+        _chocomint_tput sgr0 # for reset previous output attributes
+        _chocomint_tput_echo bold '```'
       else
         _chocomint_echo "'stderr' is nothing."
       fi
     else
-      _chocomint_tput bold
-      _chocomint_echo "but, output is nothing."
-      _chocomint_tput sgr0
+      _chocomint_tput_echo bold "but, output is nothing."
     fi
   else
     _chocomint_echo "succeeded."
@@ -173,4 +147,11 @@ _chocomint_show_overall() {
   echo "$2/$3 tests," \
        "$4/$5 command-executions succeeded."
   tput sgr0
+}
+
+_chocomint_show_command() {
+  _chocomint_tput bold
+  _chocomint_tput setaf 3
+  _chocomint_echo "=> $1"
+  _chocomint_tput sgr0
 }

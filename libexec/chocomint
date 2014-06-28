@@ -54,10 +54,7 @@ _chocomint_testexist_case() {
   _CHOCOMINT_TESTEXIST=true
   : > $_CHOCOMINT_CMD_OUT
   : > $_CHOCOMINT_CMD_ERR
-  _chocomint_tput bold
-  _chocomint_tput setaf 3
-  _chocomint_echo "=> $_CHOCOMINT_CMD_CACHE"
-  _chocomint_tput sgr0
+  _chocomint_show_command "$_CHOCOMINT_CMD_CACHE"
 }
 
 
@@ -129,7 +126,7 @@ _chocomint_main() {
   _chocomint_motd
 
   echo -n 'Parsing...'
-  source <($_CHOCOMINT_LIBEXEC_DIR/parse $_CHOCOMINT_TARGET_FULLPATH)
+  source <($_CHOCOMINT_LIBEXEC_DIR/parse $_CHOCOMINT_TARGET_FULLPATH) # local variable
   echo '...done.'
 
   set -T; trap '_chocomint_trap "$LINENO" "$BASH_SOURCE"' DEBUG

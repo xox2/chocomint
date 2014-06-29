@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# vim: ft=sh
+
+source $_CHOCOMINT_LIBEXEC_DIR/outputs
+
+aggregate() {
+  # $1 exitstatus
+  # $2 stdout
+  # $3 stderr
+  local _chocomint_cmd_failure=false
+  local _chocomint_left _chocomint_right
+  ((_CHOCOMINT_CMD_COUNT++))
+
+  for _chocomint_i in $(seq 0 ${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,max]})
+  do
+    _chocomint_left="$(eval echo "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
+    _chocomint_right="$(eval echo "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
+    ((_CHOCOMINT_TEST_COUNT++))
+
+    if $_CHOCOMINT_LIBEXEC_DIR/judge \
+        "$_chocomint_left" \
+        "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "$_chocomint_right" \
+        "$1" \
+        "$_CHOCOMINT_CMD_OUT" \
+        "$_CHOCOMINT_CMD_ERR"
+    then
+      _chocomint_ok \
+        "$_chocomint_left" \
+        "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "$_chocomint_right" \
+        "$1"
+      ((_CHOCOMINT_TEST_SUCCESS++))
+    else
+      _chocomint_ng \
+        "$_chocomint_left" \
+        "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "$_chocomint_right" \
+        "$1"
+      _chocomint_cmd_failure=true
+      _CHOCOMINT_FAILURE=true
+      ((_CHOCOMINT_TEST_FAILURE++))
+    fi
+  done
+
+  _chocomint_display_if_failed "$_chocomint_cmd_failure"
+}
+
+expose_variable() {
+  declare -p _CHOCOMINT_CMD_SUCCESS
+  declare -p _CHOCOMINT_CMD_COUNT
+  declare -p _CHOCOMINT_TEST_FAILURE
+  declare -p _CHOCOMINT_TEST_SUCCESS
+  declare -p _CHOCOMINT_TEST_COUNT
+  declare -p _CHOCOMINT_FAILURE
+}
+
+main() {
+  aggregate
+  expose_variable
+}
+
+main "$@"

@@ -9,14 +9,16 @@ source $_CHOCOMINT_LIBEXEC_DIR/outputs
 
 _chocomint_analyze_test_results() {
   # $1 exitstatus
-  # $2 stdout
-  # $3 stderr
   local _chocomint_cmd_failure=false
   local _chocomint_left _chocomint_right
-  for _chocomint_i in `seq 0 ${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,max]}`
+  ((_CHOCOMINT_CMD_COUNT++))
+
+  for _chocomint_i in $(seq 0 ${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,max]})
   do
     _chocomint_left="$(eval echo "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
     _chocomint_right="$(eval echo "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
+    ((_CHOCOMINT_TEST_COUNT++))
+
     if $_CHOCOMINT_LIBEXEC_DIR/judge \
         "$_chocomint_left" \
         "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
@@ -41,19 +43,20 @@ _chocomint_analyze_test_results() {
       _CHOCOMINT_FAILURE=true
       ((_CHOCOMINT_TEST_FAILURE++))
     fi
-    ((_CHOCOMINT_TEST_COUNT++))
   done
 
-  _chocomint_display_if_failed $_chocomint_cmd_failure
-  ((_CHOCOMINT_CMD_COUNT++))
+  _chocomint_display_if_failed "$_chocomint_cmd_failure"
 }
 
 
 _chocomint_testexist_case() {
+  # $1 test line number
+  # $2 stdout file
+  # $3 stderr file
   _CHOCOMINT_TESTLINE="$1"
   _CHOCOMINT_TESTEXIST=true
-  : > $_CHOCOMINT_CMD_OUT
-  : > $_CHOCOMINT_CMD_ERR
+  : > $2
+  : > $3
   _chocomint_show_command "$_CHOCOMINT_CMD_CACHE"
 }
 
@@ -64,9 +67,15 @@ _chocomint_cache_execution_data() {
   _CHOCOMINT_CMD_EVAL_CACHE=$(eval "echo -n \"$2\"")
 
   if [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
-    _chocomint_testexist_case "$1"
+    _chocomint_testexist_case \
+      "$1" \
+      "$_CHOCOMINT_CMD_OUT" \
+      "$_CHOCOMINT_CMD_ERR"
   elif [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
-    _chocomint_testexist_case "$(($1+1))"
+    _chocomint_testexist_case \
+      "$(($1+1))" \
+      "$_CHOCOMINT_CMD_OUT" \
+      "$_CHOCOMINT_CMD_ERR"
   else
     _CHOCOMINT_TESTEXIST=false
   fi
@@ -80,10 +89,7 @@ _chocomint_trap() {
 
   if [ "$2" = "$_CHOCOMINT_TARGET_FULLPATH" ]; then
     $_CHOCOMINT_TESTEXIST && {
-      _chocomint_analyze_test_results \
-        "$_chocomint_prev_stat" \
-        "$(<$_CHOCOMINT_CMD_OUT)" \
-        "$(<$_CHOCOMINT_CMD_ERR)"
+      _chocomint_analyze_test_results "$_chocomint_prev_stat"
     }
     _chocomint_cache_execution_data "$1" "$BASH_COMMAND"
   fi

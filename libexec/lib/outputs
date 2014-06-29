@@ -1,14 +1,6 @@
 #!/bin/bash
 # vim: ft=sh
 
-_chocomint_motd() {
-  echo '       _                               _         _   '
-  echo ' ___  | |_   ___   ___   ___   _____  |_|  ___  | |_ '
-  echo '|  _| |   | | . | |  _| | . | |     | | | |   | |  _|'
-  echo '|___| |_|_| |___| |___| |___| |_|_|_| |_| |_|_| |_|  '
-  echo 'Minimal, simple, easy, comment-based Testing Framework for Bash 4.x'
-}
-
 _chocomint_tput_echo() {
   case $1 in
     [0-7] )

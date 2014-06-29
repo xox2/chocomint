@@ -5,7 +5,7 @@ _CHOCOMINT_LIBEXEC_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 _CHOCOMINT_CMD_OUT="/tmp/_chocomint_command_stdout.$$.log"
 _CHOCOMINT_CMD_ERR="/tmp/_chocomint_command_stderr.$$.log"
 
-source $_CHOCOMINT_LIBEXEC_DIR/outputs
+source $_CHOCOMINT_LIBEXEC_DIR/lib/outputs
 
 _chocomint_analyze_test_results() {
   # $1 exitstatus
@@ -88,9 +88,8 @@ _chocomint_trap() {
   local _chocomint_prev_stat="$?"
 
   if [ "$2" = "$_CHOCOMINT_TARGET_FULLPATH" ]; then
-    $_CHOCOMINT_TESTEXIST && {
+    $_CHOCOMINT_TESTEXIST &&
       _chocomint_analyze_test_results "$_chocomint_prev_stat"
-    }
     _chocomint_cache_execution_data "$1" "$BASH_COMMAND"
   fi
 }
@@ -109,12 +108,8 @@ _chocomint_test_process() {
   _chocomint_redirect_switch_on
   source "$1"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
-  $_CHOCOMINT_TESTEXIST && {
-    _chocomint_analyze_test_results \
-      "$exitstat" \
-      "$(<$_CHOCOMINT_CMD_OUT)" \
-      "$(<$_CHOCOMINT_CMD_ERR)"
-  }
+  $_CHOCOMINT_TESTEXIST &&
+    _chocomint_analyze_test_results "$exitstat"
   _chocomint_redirect_switch_off
 
   rm "$_CHOCOMINT_CMD_OUT" "$_CHOCOMINT_CMD_ERR"
@@ -129,7 +124,9 @@ _chocomint_main() {
   _CHOCOMINT_TEST_COUNT=0
   _CHOCOMINT_FAILURE=false
 
-  _chocomint_motd
+  echo '============'
+  echo 'chocomint.sh'
+  echo '============'
 
   echo -n 'Parsing...'
   source <($_CHOCOMINT_LIBEXEC_DIR/parse $_CHOCOMINT_TARGET_FULLPATH) # local variable
@@ -138,6 +135,7 @@ _chocomint_main() {
   set -T; trap '_chocomint_trap "$LINENO" "$BASH_SOURCE"' DEBUG
   _chocomint_test_process "$_CHOCOMINT_TARGET_FULLPATH"
   trap DEBUG; set +T
+
   _chocomint_show_overall \
     "$_CHOCOMINT_TEST_FAILURE" \
     "$_CHOCOMINT_TEST_SUCCESS" \

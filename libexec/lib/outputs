@@ -102,9 +102,9 @@ _chocomint_ng() {
   _chocomint_print_judgement "1" "   ✘ " "$@"
 }
 
-_chocomint_display_if_failed() {
+_chocomint_display_stdouterr() {
   if $1; then
-    _chocomint_echo "failed. then, display 'STDOUT' and 'STDERR'."
+    _chocomint_echo "${_CHOCOMINT_TIME_RESULT::-6} sec. failed. then, display 'STDOUT' and 'STDERR'."
     if [ -s "$_CHOCOMINT_CMD_OUT" ] || [ -s "$_CHOCOMINT_CMD_ERR" ]; then
       if [ -s "$_CHOCOMINT_CMD_OUT" ]; then
         _chocomint_tput_echo bold '``` STDOUT'
@@ -126,7 +126,7 @@ _chocomint_display_if_failed() {
       _chocomint_tput_echo bold "but, output is nothing."
     fi
   else
-    _chocomint_echo "succeeded."
+    _chocomint_echo "${_CHOCOMINT_TIME_RESULT::-6} sec. succeeded."
     ((_CHOCOMINT_CMD_SUCCESS++))
   fi
 }

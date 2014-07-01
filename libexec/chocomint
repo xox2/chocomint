@@ -12,7 +12,7 @@ _CHOCOMINT_TEST_FAILURE=0
 _CHOCOMINT_TEST_SUCCESS=0
 _CHOCOMINT_TEST_COUNT=0
 _CHOCOMINT_FAILURE=false
-_CHOCOMINT_TESTEXIST=false
+_CHOCOMINT_TEST_EXIST=false
 
 source $_CHOCOMINT_LIBEXEC_DIR/lib/outputs
 
@@ -54,7 +54,7 @@ _chocomint_analyze_test_results() {
     fi
   done
 
-  _chocomint_display_if_failed "$_chocomint_cmd_failure"
+  _chocomint_display_stdouterr "$_chocomint_cmd_failure"
 }
 
 
@@ -63,33 +63,42 @@ _chocomint_cache_execution_data() {
   _CHOCOMINT_CMD_CACHE="$2"
 
   if [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
-    _CHOCOMINT_TESTEXIST=true
+    _CHOCOMINT_TEST_EXIST=true
     _CHOCOMINT_TESTLINE="$1"
   elif [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
-    _CHOCOMINT_TESTEXIST=true
+    _CHOCOMINT_TEST_EXIST=true
     _CHOCOMINT_TESTLINE="$(($1+1))"
   else
-    _CHOCOMINT_TESTEXIST=false
+    _CHOCOMINT_TEST_EXIST=false
   fi
 
-  $_CHOCOMINT_TESTEXIST && {
+  $_CHOCOMINT_TEST_EXIST && {
     : > $_CHOCOMINT_CMD_OUT
     : > $_CHOCOMINT_CMD_ERR
     _chocomint_show_command "$_CHOCOMINT_CMD_CACHE"
   }
 }
 
+_chocomint_time_end() {
+  local _chocomint_time_end=$(date +%s.%N)
+  [ "$_CHOCOMINT_TIME_START" ] && {
+    _CHOCOMINT_TIME_RESULT=$(echo "$_chocomint_time_end - $_CHOCOMINT_TIME_START" | bc | sed -e 's/^\./0\./')
+  }
+}
 
 _chocomint_trap() {
   # $1 line number
   # $2 source path
   local _chocomint_prev_stat="$?"
+  _chocomint_time_end
 
   if [ "$2" = "$_CHOCOMINT_TARGET_FULLPATH" ]; then
-    $_CHOCOMINT_TESTEXIST &&
+    $_CHOCOMINT_TEST_EXIST &&
       _chocomint_analyze_test_results "$_chocomint_prev_stat"
     _chocomint_cache_execution_data "$1" "$BASH_COMMAND"
   fi
+
+  _CHOCOMINT_TIME_START=$(date +%s.%N)
 }
 
 
@@ -98,7 +107,7 @@ _chocomint_test_process() {
   exec 3>&1 4>&2 1> $_CHOCOMINT_CMD_OUT 2> $_CHOCOMINT_CMD_ERR
   source "$1"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
-  $_CHOCOMINT_TESTEXIST &&
+  $_CHOCOMINT_TEST_EXIST &&
     _chocomint_analyze_test_results "$exitstat"
   exec 1>&3- 2>&4-
   trap DEBUG; set +T

@@ -1,6 +1,19 @@
 #!/bin/bash
 # vim: ft=sh
 
+_chocomint_title_echo() {
+  local _chocomint_name_ver=" $1 $2 "
+  local _chocomint_ruler
+  local _chocomint_ruler_char='+'
+  for (( _chocomint_i=0; _chocomint_i<${#_chocomint_name_ver}; _chocomint_i++ ))
+  do
+    _chocomint_ruler="${_chocomint_ruler}${_chocomint_ruler_char}"
+  done
+  echo "$_chocomint_ruler"
+  echo "$_chocomint_name_ver"
+  echo "$_chocomint_ruler"
+}
+
 _chocomint_tput_echo() {
   case $1 in
     [0-7] )

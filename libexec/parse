@@ -284,6 +284,7 @@ parse_nl() {
 }
 
 expose_variable() {
+  declare -p _CHOCOMINT_HASH > /dev/null 2>&1 || exit 1
   declare -p _CHOCOMINT_TEST_COMMENT_STYLE
   declare -p _CHOCOMINT_HASH
   declare -p _CHOCOMINT_TEST_NUM

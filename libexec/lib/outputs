@@ -83,15 +83,15 @@ function _chocomint_.judgeout() {
     'status' )
       case $4 in
         ':' )
-          _chocomint_.echo -n "return "
+          _chocomint_.echo -n "status "
           _chocomint_.techo "$_chocomint_opt_tput" -n "$6"
           _chocomint_.echo -n " should be "
           _chocomint_.techo "$_chocomint_opt_tput" "$5"
           ;;
         '!:' )
-          _chocomint_.echo -n "return "
+          _chocomint_.echo -n "status "
           _chocomint_.techo "$_chocomint_opt_tput" -n "$6"
-          _chocomint_.echo -n " should not be "
+          _chocomint_.echo -n " should NOT be "
           _chocomint_.techo "$_chocomint_opt_tput" "$5"
           ;;
       esac
@@ -99,14 +99,14 @@ function _chocomint_.judgeout() {
     'match' )
       case $4 in
         ':' )
-          _chocomint_.echo -n "match \`"
+          _chocomint_.echo -n "eregex \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
-          _chocomint_.echo "\`"
+          _chocomint_.echo "\` should NOT match outputs"
           ;;
         '!:' )
-          _chocomint_.echo -n "not match \`"
+          _chocomint_.echo -n "eregex \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
-          _chocomint_.echo "\`"
+          _chocomint_.echo "\` should match outputs"
           ;;
       esac
       ;;
@@ -122,7 +122,7 @@ function _chocomint_.judgeout() {
         '!=' )
           _chocomint_.echo -n "value \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$3"
-          _chocomint_.echo -n "\` should not be \`"
+          _chocomint_.echo -n "\` should NOT be \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
           _chocomint_.echo "\`"
           ;;

@@ -5,8 +5,8 @@ match() {
   # $1 right string
   # $2 stdout_file
   # $3 stderr_file
-  if \egrep -q "$(eval echo "$1")" "$2" ||
-     \egrep -q "$(eval echo "$1")" "$3"; then
+  if \egrep -q "$1" "$2" ||
+     \egrep -q "$1" "$3"; then
     return 0
   else
     return 1

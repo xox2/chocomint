@@ -20,6 +20,7 @@ parse_test_dq_bs() {
 parse_test_dq() {
   case $1 in
     '"' )
+      TEST_COMMENT="$TEST_COMMENT""\""
       PARSE_METHOD="parse_test_right"
       ;;
     "\\" )
@@ -56,6 +57,7 @@ parse_test_bs() {
 parse_test_right() {
   case $1 in
     '"' )
+      TEST_COMMENT="$TEST_COMMENT""\""
       PARSE_METHOD="parse_test_dq"
       ;;
     "'" )
@@ -122,6 +124,12 @@ parse_test_left() {
 parse_test_blank() {
   case $1 in
     " "|"\t" )
+      ;;
+    "" )
+      PARSE_METHOD="parse_nl"
+      LINE_NUMBER+=1
+      TEST_COMMENT=""
+      TEST_NUMBER=0
       ;;
     * )
       PARSE_METHOD="parse_test_left"
@@ -292,7 +300,7 @@ main() {
   while IFS= read -r line; do
     while IFS= read -r -n 1 char; do
       $PARSE_METHOD "$char"
-    done < <(echo $line)
+    done < <(echo "$line")
   done < $file
 
   expose_variable

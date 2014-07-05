@@ -129,7 +129,9 @@ _chocomint_main() {
   echo 'Parsing tests...'
   source <($CHOCOMINT_LIBEXEC/parse "$1" || cat /dev/null) # local variable
 
-  chocomint_outputs.title "$_CHOCOMINT_NAME" "`cat $CHOCOMINT_LIBEXEC/../VERSION`"
+  chocomint_outputs.title \
+    "$_CHOCOMINT_NAME" \
+    "`cat $CHOCOMINT_LIBEXEC/../VERSION`"
 
   _chocomint_run_test "$1"
 

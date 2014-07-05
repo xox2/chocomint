@@ -16,8 +16,8 @@ _CHOCOMINT_TEST_COUNT=0
 _CHOCOMINT_FAILURE=false
 _CHOCOMINT_TEST_EXIST=false
 
-source $_CHOCOMINT_LIBEXEC_DIR/../lib/chocomint/outputs
-source $_CHOCOMINT_LIBEXEC_DIR/../lib/chocomint/utils
+source $_CHOCOMINT_LIBEXEC_DIR/lib/outputs
+source $_CHOCOMINT_LIBEXEC_DIR/lib/utils
 
 _chocomint_analyze_test_results() {
   # $1 exitstatus

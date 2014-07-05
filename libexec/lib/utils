@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: ft=sh
 
-source $_CHOCOMINT_LIBEXEC_DIR/../lib/chocomint/outputs
+source $_CHOCOMINT_LIBEXEC_DIR/lib/outputs
 
 chocomint_utils.error() {
   case $1 in

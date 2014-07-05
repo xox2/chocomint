@@ -25,15 +25,15 @@ _chocomint_aggregate_results() {
   local _chocomint_left _chocomint_right
   ((_CHOCOMINT_CMD_COUNT++))
 
-  for _chocomint_i in $(seq 0 ${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,max]})
+  for _chocomint_i in $(seq 0 ${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,max]})
   do
-    _chocomint_left="$(eval echo "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
-    _chocomint_right="$(eval echo "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
+    _chocomint_left="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
+    _chocomint_right="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
     ((_CHOCOMINT_TEST_COUNT++))
 
     if $CHOCOMINT_LIBEXEC/judge \
         "$_chocomint_left" \
-        "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
         "$1" \
         "$CHOCOMINT_CMD_OUT" \
@@ -41,7 +41,7 @@ _chocomint_aggregate_results() {
     then
       chocomint_outputs.ok \
         "$_chocomint_left" \
-        "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
         "$1"
       ((_CHOCOMINT_TEST_SUCCESS++))
@@ -49,7 +49,7 @@ _chocomint_aggregate_results() {
       chocomint_utils.error $?
       chocomint_outputs.ng \
         "$_chocomint_left" \
-        "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
         "$1"
       _chocomint_cmd_failure=true
@@ -65,10 +65,10 @@ _chocomint_aggregate_results() {
 _chocomint_prepare_execution() {
   _CHOCOMINT_LINENO_CACHE="$1"
 
-  if [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
+  if [ "${CHOCOMINT_TEST_POSITION[$1]}" = "EOL" ]; then
     _CHOCOMINT_TEST_EXIST=true
     CHOCOMINT_TESTLINE="$1"
-  elif [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
+  elif [ "${CHOCOMINT_TEST_POSITION[$(($1+1))]}" = "NL" ]; then
     _CHOCOMINT_TEST_EXIST=true
     CHOCOMINT_TESTLINE="$(($1+1))"
   else

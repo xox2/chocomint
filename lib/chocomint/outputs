@@ -1,0 +1,206 @@
+#!/bin/bash
+# vim: ft=sh
+
+chocomint_outputs.error() {
+  _chocomint_.tput bold
+  _chocomint_.techo 1 "   ! ERROR: $1"
+
+  local _chocomint_begin_col=$((CHOCOMINT_TESTLINE - 3))
+  local _chocomint_end_col=$((CHOCOMINT_TESTLINE + 3))
+  local _chocomint_file_max_lines=`cat "$CHOCOMINT_TARGET_FULLPATH" | wc -l`
+
+  [ $_chocomint_begin_col -lt 1 ] && _chocomint_begin_col=1
+  [ $_chocomint_end_col -gt $_chocomint_file_max_lines ] &&
+    _chocomint_end_col=$_chocomint_file_max_lines
+
+  local _chocomint_cols_count=$_chocomint_begin_col
+  local _chocomint_padding=${#_chocomint_end_col}
+
+  _chocomint_.echo -e "\nin \`$CHOCOMINT_TARGET_FULLPATH\`"
+  while read -r line; do
+    if [ $_chocomint_cols_count -eq $CHOCOMINT_TESTLINE ]; then
+      _chocomint_.echo -n '->'
+      _chocomint_.echo " `printf "%${_chocomint_padding}d" $_chocomint_cols_count` |  `tput setaf 1`$line`tput sgr0`"
+    else
+      _chocomint_.echo -n '  '
+      _chocomint_.echo " `printf "%${_chocomint_padding}d" $_chocomint_cols_count` |  $line"
+    fi
+    ((_chocomint_cols_count++))
+  done < <(sed -n "${_chocomint_begin_col},${_chocomint_end_col}p" "$CHOCOMINT_TARGET_FULLPATH")
+  _chocomint_.echo
+
+  _chocomint_.tput bold
+  _chocomint_.techo 1 "...aborted."
+
+  exit 1
+}
+
+
+chocomint_outputs.title() {
+  local _chocomint_name_ver=" $1 $2 "
+  local _chocomint_ruler
+  local _chocomint_ruler_char='+'
+  for (( _chocomint_i=0; _chocomint_i<${#_chocomint_name_ver}; _chocomint_i++ ))
+  do
+    _chocomint_ruler="${_chocomint_ruler}${_chocomint_ruler_char}"
+  done
+  echo "$_chocomint_ruler"
+  echo "$_chocomint_name_ver"
+  echo "$_chocomint_ruler"
+}
+
+
+_chocomint_.techo() {
+  case $1 in
+    [0-7] )
+      _chocomint_.tput setaf "$1"
+      ;;
+    'bold' )
+      _chocomint_.tput bold
+      ;;
+  esac
+  _chocomint_.echo "${@:2}$(tput sgr0)"
+}
+
+
+_chocomint_.echo() {
+  echo "$@" >&3
+}
+
+
+_chocomint_.cat() {
+  cat "$@" >&3
+}
+
+
+_chocomint_.tput() {
+  tput "$@" >&3
+}
+
+
+_chocomint_print_judgement() {
+  # $1 label tput color
+  # $2 label string
+  # $3 left
+  # $4 mid
+  # $5 right
+  # $6 exitstat
+  local _chocomint_opt_tput="5"
+  _chocomint_.techo "$1" -n "$2" # 'ok' or 'ng'
+  case $3 in
+    'status' )
+      case $4 in
+        ':' )
+          _chocomint_.echo -n "return "
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$6"
+          _chocomint_.echo -n " should be "
+          _chocomint_.techo "$_chocomint_opt_tput" "$5"
+          ;;
+        '!:' )
+          _chocomint_.echo -n "return "
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$6"
+          _chocomint_.echo -n " should not be "
+          _chocomint_.techo "$_chocomint_opt_tput" "$5"
+          ;;
+      esac
+      ;;
+    'match' )
+      case $4 in
+        ':' )
+          _chocomint_.echo -n "match \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\`"
+          ;;
+        '!:' )
+          _chocomint_.echo -n "not match \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\`"
+          ;;
+      esac
+      ;;
+    * ) # judge variables
+      case $4 in
+        '=' )
+          _chocomint_.echo -n "value \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$3"
+          _chocomint_.echo -n "\` should be \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\`"
+          ;;
+        '!=' )
+          _chocomint_.echo -n "value \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$3"
+          _chocomint_.echo -n "\` should not be \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\`"
+          ;;
+      esac
+      ;;
+  esac
+}
+
+
+_chocomint_ok() {
+  # $1 left
+  # $2 mid
+  # $3 right
+  # $4 exitstat
+  _chocomint_print_judgement "2" "   ✔ " "$@"
+}
+
+
+_chocomint_ng() {
+  # $1 left
+  # $2 mid
+  # $3 right
+  # $4 exitstat
+  _chocomint_print_judgement "1" "   ✘ " "$@"
+}
+
+
+_chocomint_display_stdouterr() {
+  if $1; then
+    _chocomint_.echo "${CHOCOMINT_TIME_RESULT::-6} sec. failed. display 'STDOUT' and 'STDERR'."
+    if [ -s "$CHOCOMINT_CMD_OUT" ] || [ -s "$CHOCOMINT_CMD_ERR" ]; then
+      if [ -s "$CHOCOMINT_CMD_OUT" ]; then
+        _chocomint_.techo bold '``` STDOUT'
+        _chocomint_.cat $CHOCOMINT_CMD_OUT
+        _chocomint_.tput sgr0 # for reset previous output attributes
+        _chocomint_.techo bold '```'
+      else
+        _chocomint_.echo "'STDOUT' is nothing."
+      fi
+      if [ -s "$CHOCOMINT_CMD_ERR" ]; then
+        _chocomint_.techo bold '``` STDERR'
+        _chocomint_.cat $CHOCOMINT_CMD_ERR
+        _chocomint_.tput sgr0 # for reset previous output attributes
+        _chocomint_.techo bold '```'
+      else
+        _chocomint_.echo "'STDERR' is nothing."
+      fi
+    else
+      _chocomint_.techo bold "but, output is nothing."
+    fi
+  else
+    _chocomint_.echo "${CHOCOMINT_TIME_RESULT::-6} sec. succeeded."
+    ((CHOCOMINT_CMD_SUCCESS++))
+  fi
+}
+
+
+_chocomint_show_overall() {
+  tput bold
+  tput setaf 6
+  echo "$1 tests failed."
+  echo "$2/$3 tests, $4/$5 command-executions succeeded.$(tput sgr0)"
+}
+
+
+_chocomint_show_command() {
+  _chocomint_.tput bold
+  _chocomint_.techo 3 -n '=> '
+  _chocomint_.tput sgr0
+  echo "$1" |
+  sed s/^/$(tput setaf 3)$(tput bold)/ |
+  sed s/$/$(tput sgr0)/ >&3
+}

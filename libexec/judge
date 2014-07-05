@@ -38,7 +38,8 @@ judge() {
     ":" )
       case $1 in
         'status' )
-          if [ "$4" = "$3" ]; then
+          [ $3 -ge 0 ] || return 66
+          if [ $4 -eq $3 ]; then
             return 0
           else
             return 3
@@ -51,12 +52,16 @@ judge() {
             return 4
           fi
           ;;
+        * )
+          return 65
+          ;;
       esac
       ;;
     "!:" )
       case $1 in
         'status' )
-          if [ "$4" != "$3" ]; then
+          [ $3 -ge 0 ] || return 66
+          if [ $4 -ne $3 ]; then
             return 0
           else
             return 5
@@ -69,7 +74,13 @@ judge() {
             return 0
           fi
           ;;
+        * )
+          return 65
+          ;;
       esac
+      ;;
+    * )
+      return 64
       ;;
   esac
 }

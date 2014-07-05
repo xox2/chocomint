@@ -1,0 +1,18 @@
+#!/bin/bash
+# vim: ft=sh
+
+source $_CHOCOMINT_LIBEXEC_DIR/../lib/chocomint/outputs
+
+chocomint_utils.error() {
+  case $1 in
+    '64' )
+      chocomint_outputs.error "\`${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}\`: Invalid operator"
+      ;;
+    '65' )
+      chocomint_outputs.error "\`$_chocomint_left\`: Invalid test label"
+      ;;
+    '66' )
+      chocomint_outputs.error "\`$_chocomint_right\`: Invalid status code"
+      ;;
+  esac
+}

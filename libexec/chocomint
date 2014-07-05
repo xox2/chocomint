@@ -3,12 +3,12 @@
 _CHOCOMINT_NAME='chocomint.sh'
 
 _CHOCOMINT_LIBEXEC_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
-_CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"
+CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"
 
-_CHOCOMINT_CMD_OUT="/tmp/_chocomint_command_stdout.$$.log"
-_CHOCOMINT_CMD_ERR="/tmp/_chocomint_command_stderr.$$.log"
+CHOCOMINT_CMD_OUT="/tmp/_chocomint_command_stdout.$$.log"
+CHOCOMINT_CMD_ERR="/tmp/_chocomint_command_stderr.$$.log"
 
-_CHOCOMINT_CMD_SUCCESS=0
+CHOCOMINT_CMD_SUCCESS=0
 _CHOCOMINT_CMD_COUNT=0
 _CHOCOMINT_TEST_FAILURE=0
 _CHOCOMINT_TEST_SUCCESS=0
@@ -16,7 +16,8 @@ _CHOCOMINT_TEST_COUNT=0
 _CHOCOMINT_FAILURE=false
 _CHOCOMINT_TEST_EXIST=false
 
-source $_CHOCOMINT_LIBEXEC_DIR/lib/outputs
+source $_CHOCOMINT_LIBEXEC_DIR/../lib/chocomint/outputs
+source $_CHOCOMINT_LIBEXEC_DIR/../lib/chocomint/utils
 
 _chocomint_analyze_test_results() {
   # $1 exitstatus
@@ -24,30 +25,31 @@ _chocomint_analyze_test_results() {
   local _chocomint_left _chocomint_right
   ((_CHOCOMINT_CMD_COUNT++))
 
-  for _chocomint_i in $(seq 0 ${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,max]})
+  for _chocomint_i in $(seq 0 ${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,max]})
   do
-    _chocomint_left="$(eval echo "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
-    _chocomint_right="$(eval echo "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
+    _chocomint_left="$(eval echo "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
+    _chocomint_right="$(eval echo "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
     ((_CHOCOMINT_TEST_COUNT++))
 
     if $_CHOCOMINT_LIBEXEC_DIR/judge \
         "$_chocomint_left" \
-        "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
         "$1" \
-        "$_CHOCOMINT_CMD_OUT" \
-        "$_CHOCOMINT_CMD_ERR"
+        "$CHOCOMINT_CMD_OUT" \
+        "$CHOCOMINT_CMD_ERR"
     then
       _chocomint_ok \
         "$_chocomint_left" \
-        "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
         "$1"
       ((_CHOCOMINT_TEST_SUCCESS++))
     else
+      chocomint_utils.error $?
       _chocomint_ng \
         "$_chocomint_left" \
-        "${_CHOCOMINT_HASH[$_CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
         "$1"
       _chocomint_cmd_failure=true
@@ -62,31 +64,32 @@ _chocomint_analyze_test_results() {
 
 _chocomint_cache_execution_data() {
   _CHOCOMINT_LINENO_CACHE="$1"
-  _CHOCOMINT_CMD_CACHE="$2"
 
   if [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
     _CHOCOMINT_TEST_EXIST=true
-    _CHOCOMINT_TESTLINE="$1"
+    CHOCOMINT_TESTLINE="$1"
   elif [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$(($1+1))]}" = "NL" ]; then
     _CHOCOMINT_TEST_EXIST=true
-    _CHOCOMINT_TESTLINE="$(($1+1))"
+    CHOCOMINT_TESTLINE="$(($1+1))"
   else
     _CHOCOMINT_TEST_EXIST=false
   fi
 
   $_CHOCOMINT_TEST_EXIST && {
-    : > $_CHOCOMINT_CMD_OUT
-    : > $_CHOCOMINT_CMD_ERR
-    _chocomint_show_command "$_CHOCOMINT_CMD_CACHE"
+    : > $CHOCOMINT_CMD_OUT
+    : > $CHOCOMINT_CMD_ERR
+    _chocomint_show_command "$2"
   }
 }
+
 
 _chocomint_time_end() {
   local _chocomint_time_end=$(date +%s.%N)
   [ "$_CHOCOMINT_TIME_START" ] && {
-    _CHOCOMINT_TIME_RESULT=$(echo "$_chocomint_time_end - $_CHOCOMINT_TIME_START" | bc | sed -e 's/^\./0\./')
+    CHOCOMINT_TIME_RESULT=$(echo "$_chocomint_time_end - $_CHOCOMINT_TIME_START" | bc | sed -e 's/^\./0\./')
   }
 }
+
 
 _chocomint_trap() {
   # $1 line number
@@ -94,7 +97,7 @@ _chocomint_trap() {
   local _chocomint_prev_stat="$?"
   _chocomint_time_end
 
-  if [ "$2" = "$_CHOCOMINT_TARGET_FULLPATH" ]; then
+  if [ "$2" = "$CHOCOMINT_TARGET_FULLPATH" ]; then
     $_CHOCOMINT_TEST_EXIST &&
       _chocomint_analyze_test_results "$_chocomint_prev_stat"
     _chocomint_cache_execution_data "$1" "$BASH_COMMAND"
@@ -105,7 +108,7 @@ _chocomint_trap() {
 
 
 _chocomint_test_process() {
-  exec 3>&1 4>&2 1> $_CHOCOMINT_CMD_OUT 2> $_CHOCOMINT_CMD_ERR
+  exec 3>&1 4>&2 1> $CHOCOMINT_CMD_OUT 2> $CHOCOMINT_CMD_ERR
   set -T; trap '_chocomint_trap "$LINENO" "$BASH_SOURCE"' DEBUG
   source "$1"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
@@ -113,20 +116,25 @@ _chocomint_test_process() {
   $_CHOCOMINT_TEST_EXIST &&
     _chocomint_analyze_test_results "$exitstat"
   exec 1>&3- 2>&4-
-  rm "$_CHOCOMINT_CMD_OUT" "$_CHOCOMINT_CMD_ERR"
+  rm "$CHOCOMINT_CMD_OUT" "$CHOCOMINT_CMD_ERR"
 }
 
 
 _chocomint_main() {
-  [ "$_CHOCOMINT_TARGET_FULLPATH" ] || {
-    echo "no target file"
-    exit 1
+  [ "$CHOCOMINT_TARGET_FULLPATH" ] || {
+    echo "No target file"
+    exit 2
+  }
+
+  [ -f "$CHOCOMINT_TARGET_FULLPATH" ] || {
+    echo "No such a file: $CHOCOMINT_TARGET_FULLPATH"
+    exit 3
   }
 
   echo 'Parsing tests...'
   source <($_CHOCOMINT_LIBEXEC_DIR/parse "$1" || cat /dev/null) # local variable
 
-  _chocomint_title_echo "$_CHOCOMINT_NAME" "`cat $_CHOCOMINT_LIBEXEC_DIR/../VERSION`"
+  chocomint_outputs.title "$_CHOCOMINT_NAME" "`cat $_CHOCOMINT_LIBEXEC_DIR/../VERSION`"
 
   _chocomint_test_process "$1"
 
@@ -134,11 +142,11 @@ _chocomint_main() {
     "$_CHOCOMINT_TEST_FAILURE" \
     "$_CHOCOMINT_TEST_SUCCESS" \
     "$_CHOCOMINT_TEST_COUNT" \
-    "$_CHOCOMINT_CMD_SUCCESS" \
+    "$CHOCOMINT_CMD_SUCCESS" \
     "$_CHOCOMINT_CMD_COUNT"
 
   $_CHOCOMINT_FAILURE && return 1
   return 0
 }
 
-_chocomint_main "$_CHOCOMINT_TARGET_FULLPATH"
+_chocomint_main "$CHOCOMINT_TARGET_FULLPATH"

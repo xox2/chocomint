@@ -1,9 +1,9 @@
 #!/bin/bash
 # vim: ft=sh
 
-source $_CHOCOMINT_LIBEXEC_DIR/lib/outputs
+source $CHOCOMINT_LIBEXEC/lib/outputs
 
-chocomint_utils.error() {
+function chocomint_utils.error() {
   case $1 in
     '64' )
       chocomint_outputs.error "\`${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}\`: Invalid operator"

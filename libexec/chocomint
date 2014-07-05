@@ -2,7 +2,7 @@
 
 _CHOCOMINT_NAME='chocomint.sh'
 
-_CHOCOMINT_LIBEXEC_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
+CHOCOMINT_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"
 
 CHOCOMINT_CMD_OUT="/tmp/_chocomint_command_stdout.$$.log"
@@ -16,10 +16,10 @@ _CHOCOMINT_TEST_COUNT=0
 _CHOCOMINT_FAILURE=false
 _CHOCOMINT_TEST_EXIST=false
 
-source $_CHOCOMINT_LIBEXEC_DIR/lib/outputs
-source $_CHOCOMINT_LIBEXEC_DIR/lib/utils
+source $CHOCOMINT_LIBEXEC/lib/outputs
+source $CHOCOMINT_LIBEXEC/lib/utils
 
-_chocomint_analyze_test_results() {
+_chocomint_aggregate_results() {
   # $1 exitstatus
   local _chocomint_cmd_failure=false
   local _chocomint_left _chocomint_right
@@ -31,7 +31,7 @@ _chocomint_analyze_test_results() {
     _chocomint_right="$(eval echo "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
     ((_CHOCOMINT_TEST_COUNT++))
 
-    if $_CHOCOMINT_LIBEXEC_DIR/judge \
+    if $CHOCOMINT_LIBEXEC/judge \
         "$_chocomint_left" \
         "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
@@ -39,7 +39,7 @@ _chocomint_analyze_test_results() {
         "$CHOCOMINT_CMD_OUT" \
         "$CHOCOMINT_CMD_ERR"
     then
-      _chocomint_ok \
+      chocomint_outputs.ok \
         "$_chocomint_left" \
         "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
@@ -47,7 +47,7 @@ _chocomint_analyze_test_results() {
       ((_CHOCOMINT_TEST_SUCCESS++))
     else
       chocomint_utils.error $?
-      _chocomint_ng \
+      chocomint_outputs.ng \
         "$_chocomint_left" \
         "${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
@@ -58,11 +58,11 @@ _chocomint_analyze_test_results() {
     fi
   done
 
-  _chocomint_display_stdouterr "$_chocomint_cmd_failure"
+  chocomint_outputs.stdouterr "$_chocomint_cmd_failure"
 }
 
 
-_chocomint_cache_execution_data() {
+_chocomint_prepare_execution() {
   _CHOCOMINT_LINENO_CACHE="$1"
 
   if [ "${_CHOCOMINT_TEST_COMMENT_STYLE[$1]}" = "EOL" ]; then
@@ -78,15 +78,7 @@ _chocomint_cache_execution_data() {
   $_CHOCOMINT_TEST_EXIST && {
     : > $CHOCOMINT_CMD_OUT
     : > $CHOCOMINT_CMD_ERR
-    _chocomint_show_command "$2"
-  }
-}
-
-
-_chocomint_time_end() {
-  local _chocomint_time_end=$(date +%s.%N)
-  [ "$_CHOCOMINT_TIME_START" ] && {
-    CHOCOMINT_TIME_RESULT=$(echo "$_chocomint_time_end - $_CHOCOMINT_TIME_START" | bc | sed -e 's/^\./0\./')
+    chocomint_outputs.command "$2"
   }
 }
 
@@ -95,26 +87,29 @@ _chocomint_trap() {
   # $1 line number
   # $2 source path
   local _chocomint_prev_stat="$?"
-  _chocomint_time_end
+
+  [ "$_CHOCOMINT_TIME_START" ] && {
+    CHOCOMINT_TIME_RESULT=$(echo "$(date +%s.%N) - $_CHOCOMINT_TIME_START" | bc | sed -e 's/^\./0\./')
+  }
 
   if [ "$2" = "$CHOCOMINT_TARGET_FULLPATH" ]; then
     $_CHOCOMINT_TEST_EXIST &&
-      _chocomint_analyze_test_results "$_chocomint_prev_stat"
-    _chocomint_cache_execution_data "$1" "$BASH_COMMAND"
+      _chocomint_aggregate_results "$_chocomint_prev_stat"
+    _chocomint_prepare_execution "$1" "$BASH_COMMAND"
   fi
 
   _CHOCOMINT_TIME_START=$(date +%s.%N)
 }
 
 
-_chocomint_test_process() {
+_chocomint_run_test() {
   exec 3>&1 4>&2 1> $CHOCOMINT_CMD_OUT 2> $CHOCOMINT_CMD_ERR
   set -T; trap '_chocomint_trap "$LINENO" "$BASH_SOURCE"' DEBUG
   source "$1"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T
   $_CHOCOMINT_TEST_EXIST &&
-    _chocomint_analyze_test_results "$exitstat"
+    _chocomint_aggregate_results "$exitstat"
   exec 1>&3- 2>&4-
   rm "$CHOCOMINT_CMD_OUT" "$CHOCOMINT_CMD_ERR"
 }
@@ -132,13 +127,13 @@ _chocomint_main() {
   }
 
   echo 'Parsing tests...'
-  source <($_CHOCOMINT_LIBEXEC_DIR/parse "$1" || cat /dev/null) # local variable
+  source <($CHOCOMINT_LIBEXEC/parse "$1" || cat /dev/null) # local variable
 
-  chocomint_outputs.title "$_CHOCOMINT_NAME" "`cat $_CHOCOMINT_LIBEXEC_DIR/../VERSION`"
+  chocomint_outputs.title "$_CHOCOMINT_NAME" "`cat $CHOCOMINT_LIBEXEC/../VERSION`"
 
-  _chocomint_test_process "$1"
+  _chocomint_run_test "$1"
 
-  _chocomint_show_overall \
+  chocomint_outputs.overall_results \
     "$_CHOCOMINT_TEST_FAILURE" \
     "$_CHOCOMINT_TEST_SUCCESS" \
     "$_CHOCOMINT_TEST_COUNT" \

@@ -1,7 +1,14 @@
 #!/bin/bash
 # vim: ft=sh
 
-chocomint_outputs.error() {
+function _chocomint_.echo() { echo "$@" >&3; }
+function _chocomint_.cat() { cat "$@" >&3; }
+function _chocomint_.tput() { tput "$@" >&3; }
+
+function chocomint_outputs.ok() { _chocomint_.judgeout "2" "   ✔ " "$@"; }
+function chocomint_outputs.ng() { _chocomint_.judgeout "1" "   ✘ " "$@"; }
+
+function chocomint_outputs.error() {
   _chocomint_.tput bold
   _chocomint_.techo 1 "   ! ERROR: $1"
 
@@ -36,7 +43,7 @@ chocomint_outputs.error() {
 }
 
 
-chocomint_outputs.title() {
+function chocomint_outputs.title() {
   local _chocomint_name_ver=" $1 $2 "
   local _chocomint_ruler
   local _chocomint_ruler_char='+'
@@ -50,7 +57,7 @@ chocomint_outputs.title() {
 }
 
 
-_chocomint_.techo() {
+function _chocomint_.techo() {
   case $1 in
     [0-7] )
       _chocomint_.tput setaf "$1"
@@ -63,22 +70,7 @@ _chocomint_.techo() {
 }
 
 
-_chocomint_.echo() {
-  echo "$@" >&3
-}
-
-
-_chocomint_.cat() {
-  cat "$@" >&3
-}
-
-
-_chocomint_.tput() {
-  tput "$@" >&3
-}
-
-
-_chocomint_print_judgement() {
+function _chocomint_.judgeout() {
   # $1 label tput color
   # $2 label string
   # $3 left
@@ -140,27 +132,9 @@ _chocomint_print_judgement() {
 }
 
 
-_chocomint_ok() {
-  # $1 left
-  # $2 mid
-  # $3 right
-  # $4 exitstat
-  _chocomint_print_judgement "2" "   ✔ " "$@"
-}
-
-
-_chocomint_ng() {
-  # $1 left
-  # $2 mid
-  # $3 right
-  # $4 exitstat
-  _chocomint_print_judgement "1" "   ✘ " "$@"
-}
-
-
-_chocomint_display_stdouterr() {
+function chocomint_outputs.stdouterr() {
   if $1; then
-    _chocomint_.echo "${CHOCOMINT_TIME_RESULT::-6} sec. failed. display 'STDOUT' and 'STDERR'."
+    _chocomint_.echo "${CHOCOMINT_TIME_RESULT::-7} sec. failed. display 'STDOUT' and 'STDERR'."
     if [ -s "$CHOCOMINT_CMD_OUT" ] || [ -s "$CHOCOMINT_CMD_ERR" ]; then
       if [ -s "$CHOCOMINT_CMD_OUT" ]; then
         _chocomint_.techo bold '``` STDOUT'
@@ -182,13 +156,13 @@ _chocomint_display_stdouterr() {
       _chocomint_.techo bold "but, output is nothing."
     fi
   else
-    _chocomint_.echo "${CHOCOMINT_TIME_RESULT::-6} sec. succeeded."
+    _chocomint_.echo "${CHOCOMINT_TIME_RESULT::-7} sec. succeeded."
     ((CHOCOMINT_CMD_SUCCESS++))
   fi
 }
 
 
-_chocomint_show_overall() {
+function chocomint_outputs.overall_results() {
   tput bold
   tput setaf 6
   echo "$1 tests failed."
@@ -196,7 +170,7 @@ _chocomint_show_overall() {
 }
 
 
-_chocomint_show_command() {
+function chocomint_outputs.command() {
   _chocomint_.tput bold
   _chocomint_.techo 3 -n '=> '
   _chocomint_.tput sgr0

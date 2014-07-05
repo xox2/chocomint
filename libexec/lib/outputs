@@ -10,7 +10,7 @@ function chocomint_outputs.ng() { _chocomint_.judgeout "1" "   ✘ " "$@"; }
 
 function chocomint_outputs.error() {
   _chocomint_.tput bold
-  _chocomint_.techo 1 "   ! ERROR: $1"
+  _chocomint_.techo 1 -e "\n[ERROR] $1"
 
   local _chocomint_begin_col=$((CHOCOMINT_TESTLINE - 3))
   local _chocomint_end_col=$((CHOCOMINT_TESTLINE + 3))

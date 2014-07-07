@@ -101,12 +101,12 @@ function _chocomint_.judgeout() {
         ':' )
           _chocomint_.echo -n "eregex \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
-          _chocomint_.echo "\` should NOT match outputs"
+          _chocomint_.echo "\` should match outputs"
           ;;
         '!:' )
           _chocomint_.echo -n "eregex \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
-          _chocomint_.echo "\` should match outputs"
+          _chocomint_.echo "\` should NOT match outputs"
           ;;
       esac
       ;;

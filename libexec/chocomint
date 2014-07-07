@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 _CHOCOMINT_NAME='chocomint.sh'
+_CHOCOMINT_VERSION='0.1.0-rc'
 
 CHOCOMINT_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"
@@ -129,9 +130,7 @@ _chocomint_main() {
   echo 'Parsing tests...'
   source <($CHOCOMINT_LIBEXEC/parse "$1" || cat /dev/null) # local variable
 
-  chocomint_outputs.title \
-    "$_CHOCOMINT_NAME" \
-    "`cat $CHOCOMINT_LIBEXEC/../VERSION`"
+  chocomint_outputs.title "$_CHOCOMINT_NAME $_CHOCOMINT_VERSION"
 
   _chocomint_run_test "$1"
 

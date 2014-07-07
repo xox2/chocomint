@@ -44,7 +44,7 @@ function chocomint_outputs.error() {
 
 
 function chocomint_outputs.title() {
-  local _chocomint_name_ver=" $1 $2 "
+  local _chocomint_name_ver=" $* "
   local _chocomint_ruler
   local _chocomint_ruler_char='+'
   for (( _chocomint_i=0; _chocomint_i<${#_chocomint_name_ver}; _chocomint_i++ ))
@@ -132,31 +132,48 @@ function _chocomint_.judgeout() {
 }
 
 
+function _chocomint_.stdout() {
+  _chocomint_.techo bold '``` STDOUT'
+  _chocomint_.cat $CHOCOMINT_CMD_OUT
+  _chocomint_.tput sgr0 # for reset previous output attributes
+  _chocomint_.techo bold '```'
+}
+
+
+function _chocomint_.stderr() {
+  _chocomint_.techo bold '``` STDERR'
+  _chocomint_.cat $CHOCOMINT_CMD_ERR
+  _chocomint_.tput sgr0 # for reset previous output attributes
+  _chocomint_.techo bold '```'
+}
+
+
 function chocomint_outputs.stdouterr() {
+  # $1 failure flag
+  _chocomint_.echo -n "${CHOCOMINT_TIME_RESULT::-7} seconds. "
   if $1; then
-    _chocomint_.echo "${CHOCOMINT_TIME_RESULT::-7} sec. failed. display 'STDOUT' and 'STDERR'."
-    if [ -s "$CHOCOMINT_CMD_OUT" ] || [ -s "$CHOCOMINT_CMD_ERR" ]; then
-      if [ -s "$CHOCOMINT_CMD_OUT" ]; then
-        _chocomint_.techo bold '``` STDOUT'
-        _chocomint_.cat $CHOCOMINT_CMD_OUT
-        _chocomint_.tput sgr0 # for reset previous output attributes
-        _chocomint_.techo bold '```'
-      else
-        _chocomint_.echo "'STDOUT' is nothing."
-      fi
-      if [ -s "$CHOCOMINT_CMD_ERR" ]; then
-        _chocomint_.techo bold '``` STDERR'
-        _chocomint_.cat $CHOCOMINT_CMD_ERR
-        _chocomint_.tput sgr0 # for reset previous output attributes
-        _chocomint_.techo bold '```'
-      else
-        _chocomint_.echo "'STDERR' is nothing."
-      fi
+    _chocomint_.echo "failed. display 'STDOUT' and 'STDERR'."
+    if [ -s "$CHOCOMINT_CMD_OUT" ] && [ -s "$CHOCOMINT_CMD_ERR" ]; then
+      _chocomint_.echo
+      _chocomint_.stdout
+      _chocomint_.echo
+      _chocomint_.stderr
+      _chocomint_.echo
+    elif [ -s "$CHOCOMINT_CMD_OUT" ]; then
+      _chocomint_.echo "'STDERR' is nothing."
+      _chocomint_.echo
+      _chocomint_.stdout
+      _chocomint_.echo
+    elif [ -s "$CHOCOMINT_CMD_ERR" ]; then
+      _chocomint_.echo "'STDOUT' is nothing."
+      _chocomint_.echo
+      _chocomint_.stderr
+      _chocomint_.echo
     else
       _chocomint_.techo bold "but, output is nothing."
     fi
   else
-    _chocomint_.echo "${CHOCOMINT_TIME_RESULT::-7} sec. succeeded."
+    _chocomint_.echo "succeeded."
     ((CHOCOMINT_CMD_SUCCESS++))
   fi
 }
@@ -165,6 +182,7 @@ function chocomint_outputs.stdouterr() {
 function chocomint_outputs.overall_results() {
   tput bold
   tput setaf 6
+  echo
   echo "$1 tests failed."
   echo "$2/$3 tests, $4/$5 command-executions succeeded.$(tput sgr0)"
 }

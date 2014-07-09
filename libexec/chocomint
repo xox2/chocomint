@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 _CHOCOMINT_NAME='chocomint.sh'
-_CHOCOMINT_VERSION='0.1.0-rc2'
+_CHOCOMINT_VERSION='0.2.0-dev'
 
 CHOCOMINT_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"
@@ -18,7 +18,6 @@ _CHOCOMINT_FAILURE=false
 _CHOCOMINT_TEST_EXIST=false
 
 source $CHOCOMINT_LIBEXEC/lib/outputs
-source $CHOCOMINT_LIBEXEC/lib/utils
 
 _chocomint_aggregate_results() {
   # $1 exitstatus
@@ -26,6 +25,7 @@ _chocomint_aggregate_results() {
   local _chocomint_left _chocomint_right
   ((_CHOCOMINT_CMD_COUNT++))
 
+  [ "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,max]}" ] || exit 111
   for _chocomint_i in $(seq 0 ${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,max]})
   do
     _chocomint_left="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
@@ -47,7 +47,17 @@ _chocomint_aggregate_results() {
         "$1"
       ((_CHOCOMINT_TEST_SUCCESS++))
     else
-      chocomint_utils.error $?
+      case $? in
+        '64' )
+          chocomint_outputs.error "\`${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}\`: Invalid operator"
+          ;;
+        '65' )
+          chocomint_outputs.error "\`$_chocomint_left\`: Invalid test label"
+          ;;
+        '66' )
+          chocomint_outputs.error "\`$_chocomint_right\`: Invalid status code"
+          ;;
+      esac
       chocomint_outputs.ng \
         "$_chocomint_left" \
         "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \

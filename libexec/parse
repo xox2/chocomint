@@ -4,7 +4,7 @@
 declare -A CHOCOMINT_DB
 declare -a CHOCOMINT_TEST_POSITION # "NL" or "EOL"
 declare -i LINE_NUMBER=1
-declare -i TEST_NUMBER=0
+declare -i TEST_NUMBER=-1
 declare TEST_MARKER=":"
 declare PARSE_METHOD="parse_nl" # initial parse-method
 
@@ -75,14 +75,12 @@ parse_test_right() {
       PARSE_METHOD="parse_nl"
       LINE_NUMBER+=1
       TEST_COMMENT=""
-      TEST_NUMBER=0
+      TEST_NUMBER=-1
       ;;
     " "|"\t" )
-      CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
       CHOCOMINT_DB[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
       PARSE_METHOD="parse_test_blank"
       TEST_COMMENT=""
-      ((TEST_NUMBER++))
       ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
@@ -126,12 +124,15 @@ parse_test_blank() {
     " "|"\t" )
       ;;
     "" )
+      CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
+      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_NUMBER"
       PARSE_METHOD="parse_nl"
       LINE_NUMBER+=1
       TEST_COMMENT=""
-      TEST_NUMBER=0
+      TEST_NUMBER=-1
       ;;
     * )
+      ((TEST_NUMBER++))
       PARSE_METHOD="parse_test_left"
       parse_test_left "$1"
       ;;

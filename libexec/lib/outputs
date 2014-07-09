@@ -96,7 +96,7 @@ function _chocomint_.judgeout() {
           ;;
       esac
       ;;
-    'match' )
+    'output' )
       case $4 in
         ':' )
           _chocomint_.echo -n "eregex \`"

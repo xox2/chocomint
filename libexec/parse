@@ -4,7 +4,7 @@
 declare -A CHOCOMINT_DB
 declare -a CHOCOMINT_TEST_POSITION # "NL" or "EOL"
 declare -i LINE_NUMBER=1
-declare -i TEST_NUMBER=-1
+declare -i TEST_INDEX=-1
 declare TEST_MARKER=":"
 declare PARSE_METHOD="parse_nl" # initial parse-method
 
@@ -70,16 +70,16 @@ parse_test_right() {
       ;;
     "" )
       CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
-      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_NUMBER"
+      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
+      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_INDEX"
       PARSE_METHOD="parse_nl"
       LINE_NUMBER+=1
       TEST_COMMENT=""
-      TEST_NUMBER=-1
+      TEST_INDEX=-1
       ;;
     " "|"\t" )
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
-      PARSE_METHOD="parse_test_blank"
+      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
+      PARSE_METHOD="parse_test_main"
       TEST_COMMENT=""
       ;;
     * )
@@ -97,7 +97,7 @@ parse_test_mid() {
       TEST_COMMENT="!"
       ;;
     * )
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_NUMBER,mid]="$TEST_COMMENT"
+      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,mid]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_right"
       parse_test_right "$1"
@@ -108,7 +108,7 @@ parse_test_mid() {
 parse_test_left() {
   case $1 in
     "!"|"="|":" )
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_NUMBER,left]="$TEST_COMMENT"
+      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,left]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_mid"
       parse_test_mid "$1"
@@ -119,20 +119,20 @@ parse_test_left() {
   esac
 }
 
-parse_test_blank() {
+parse_test_main() {
   case $1 in
     " "|"\t" )
       ;;
     "" )
       CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
-      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_NUMBER"
+      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_INDEX"
       PARSE_METHOD="parse_nl"
       LINE_NUMBER+=1
       TEST_COMMENT=""
-      TEST_NUMBER=-1
+      TEST_INDEX=-1
       ;;
     * )
-      ((TEST_NUMBER++))
+      ((TEST_INDEX++))
       PARSE_METHOD="parse_test_left"
       parse_test_left "$1"
       ;;
@@ -142,7 +142,7 @@ parse_test_blank() {
 parse_hash() {
   case $1 in
     "$TEST_MARKER" )
-      PARSE_METHOD="parse_test_blank"
+      PARSE_METHOD="parse_test_main"
       ;;
     "" )
       LINE_NUMBER+=1

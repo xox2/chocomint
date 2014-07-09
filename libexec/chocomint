@@ -25,7 +25,6 @@ _chocomint_aggregate_results() {
   local _chocomint_left _chocomint_right
   ((_CHOCOMINT_CMD_COUNT++))
 
-  [ "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,max]}" ] || exit 111
   for _chocomint_i in $(seq 0 ${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,max]})
   do
     _chocomint_left="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"

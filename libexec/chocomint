@@ -16,6 +16,7 @@ _CHOCOMINT_TEST_SUCCESS=0
 _CHOCOMINT_TEST_COUNT=0
 _CHOCOMINT_FAILURE=false
 _CHOCOMINT_TEST_EXIST=false
+_CHOCOMINT_TIME_START=''
 
 source $CHOCOMINT_LIBEXEC/lib/outputs
 
@@ -75,10 +76,10 @@ _chocomint_aggregate_results() {
 _chocomint_prepare_execution() {
   _CHOCOMINT_LINENO_CACHE="$1"
 
-  if [ "${CHOCOMINT_TEST_POSITION[$1]}" = "EOL" ]; then
+  if [ "${CHOCOMINT_TEST_POSITION[$1]-}" = "EOL" ]; then
     _CHOCOMINT_TEST_EXIST=true
     CHOCOMINT_TESTLINE="$1"
-  elif [ "${CHOCOMINT_TEST_POSITION[$(($1+1))]}" = "NL" ]; then
+  elif [ "${CHOCOMINT_TEST_POSITION[$(($1+1))]-}" = "NL" ]; then
     _CHOCOMINT_TEST_EXIST=true
     CHOCOMINT_TESTLINE="$(($1+1))"
   else

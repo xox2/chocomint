@@ -36,9 +36,7 @@ _chocomint_aggregate_results() {
         "$_chocomint_left" \
         "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
-        "$1" \
-        "$CHOCOMINT_CMD_OUT" \
-        "$CHOCOMINT_CMD_ERR"
+        "$1"
     then
       chocomint_outputs.ok \
         "$_chocomint_left" \

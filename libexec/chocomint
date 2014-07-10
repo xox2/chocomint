@@ -32,7 +32,7 @@ _chocomint_aggregate_results() {
     _chocomint_right="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
     ((_CHOCOMINT_TEST_COUNT++))
 
-    if $CHOCOMINT_LIBEXEC/judge \
+    if source $CHOCOMINT_LIBEXEC/judge \
         "$_chocomint_left" \
         "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
         "$_chocomint_right" \
@@ -47,17 +47,6 @@ _chocomint_aggregate_results() {
         "$1"
       ((_CHOCOMINT_TEST_SUCCESS++))
     else
-      case $? in
-        '64' )
-          chocomint_outputs.error "\`${_CHOCOMINT_HASH[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}\`: Invalid operator"
-          ;;
-        '65' )
-          chocomint_outputs.error "\`$_chocomint_left\`: Invalid test label"
-          ;;
-        '66' )
-          chocomint_outputs.error "\`$_chocomint_right\`: Invalid status code"
-          ;;
-      esac
       chocomint_outputs.ng \
         "$_chocomint_left" \
         "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \

@@ -22,37 +22,40 @@ source $CHOCOMINT_LIBEXEC/lib/outputs
 
 _chocomint_aggregate_results() {
   # $1 exitstatus
-  local _chocomint_cmd_failure=false
-  local _chocomint_left _chocomint_right
   ((_CHOCOMINT_CMD_COUNT++))
+  local _chocomint_cmd_failure=false
+  local _chocomint_left
+  local _chocomint_mid
+  local _chocomint_right
 
   for _chocomint_i in $(seq 0 ${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,max]})
   do
-    _chocomint_left="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
-    _chocomint_right="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
     ((_CHOCOMINT_TEST_COUNT++))
+    _chocomint_left="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
+    _chocomint_mid="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}")"
+    _chocomint_right="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
 
     if source $CHOCOMINT_LIBEXEC/judge \
         "$_chocomint_left" \
-        "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "$_chocomint_mid" \
         "$_chocomint_right" \
         "$1"
     then
+      ((_CHOCOMINT_TEST_SUCCESS++))
       chocomint_outputs.ok \
         "$_chocomint_left" \
-        "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "$_chocomint_mid" \
         "$_chocomint_right" \
         "$1"
-      ((_CHOCOMINT_TEST_SUCCESS++))
     else
+      ((_CHOCOMINT_TEST_FAILURE++))
       chocomint_outputs.ng \
         "$_chocomint_left" \
-        "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "$_chocomint_mid" \
         "$_chocomint_right" \
         "$1"
       _chocomint_cmd_failure=true
       _CHOCOMINT_FAILURE=true
-      ((_CHOCOMINT_TEST_FAILURE++))
     fi
   done
 
@@ -114,6 +117,9 @@ _chocomint_run_test() {
 
 
 _chocomint_main() {
+  local _chocomint_parsing_results
+  local _chocomint_parsing_exit_status
+
   [ "$CHOCOMINT_TARGET_FULLPATH" ] || {
     echo "No target file"
     exit 2
@@ -125,7 +131,10 @@ _chocomint_main() {
   }
 
   echo 'Parsing tests...'
-  source <($CHOCOMINT_LIBEXEC/parse "$1" || cat /dev/null) # local variable
+  _chocomint_parsing_results="$($CHOCOMINT_LIBEXEC/parse "$1")"
+  _chocomint_parsing_exit_status=$?
+  [ $_chocomint_parsing_exit_status -eq 0 ] || exit $_chocomint_parsing_exit_status
+  source <(echo "$_chocomint_parsing_results") # local variable
 
   chocomint_outputs.title "$_CHOCOMINT_NAME $_CHOCOMINT_VERSION"
 

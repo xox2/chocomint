@@ -289,14 +289,10 @@ parse_nl() {
   esac
 }
 
-expose_variable() {
-  declare -p CHOCOMINT_DB > /dev/null 2>&1 || exit 1
-  declare -p CHOCOMINT_TEST_POSITION
-  declare -p CHOCOMINT_DB
-}
-
 main() {
-  local file=$1 line char
+  local file=$1
+  local line
+  local char
 
   while IFS= read -r line; do
     while IFS= read -r -n 1 char; do
@@ -304,7 +300,9 @@ main() {
     done < <(echo "$line")
   done < $file
 
-  expose_variable
+  declare -p CHOCOMINT_DB > /dev/null 2>&1 || exit 1
+  declare -p CHOCOMINT_TEST_POSITION
+  declare -p CHOCOMINT_DB
 }
 
 main "$@"

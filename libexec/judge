@@ -36,7 +36,6 @@ _chocomint_judge() {
     ":" )
       case $1 in
         'status' )
-          [ $3 -ge 0 ] || chocomint_outputs.error "\`$3\`: Invalid status code"
           if [ $4 -eq $3 ]; then
             return 0
           else
@@ -50,15 +49,11 @@ _chocomint_judge() {
             return 4
           fi
           ;;
-        * )
-          chocomint_outputs.error "\`$1\`: Invalid test label"
-          ;;
       esac
       ;;
     "!:" )
       case $1 in
         'status' )
-          [ $3 -ge 0 ] || chocomint_outputs.error "\`$3\`: Invalid status code"
           if [ $4 -ne $3 ]; then
             return 0
           else
@@ -72,13 +67,7 @@ _chocomint_judge() {
             return 0
           fi
           ;;
-        * )
-          chocomint_outputs.error "\`$1\`: Invalid test label"
-          ;;
       esac
-      ;;
-    * )
-      chocomint_outputs.error "\`$2\`: Invalid operator"
       ;;
   esac
 }

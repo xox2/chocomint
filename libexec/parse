@@ -7,6 +7,67 @@ declare -i LINE_NUMBER=1
 declare -i TEST_INDEX=-1
 declare TEST_MARKER=":"
 declare PARSE_METHOD="parse_nl" # initial parse-method
+declare ERROR=false
+
+source $CHOCOMINT_LIBEXEC/lib/outputs
+
+error() {
+  echo "`tput bold``tput setaf 1`[ERROR] $1`tput sgr0`"
+
+  local begin_col=$((LINE_NUMBER - 3))
+  local end_col=$((LINE_NUMBER + 3))
+  local file_max_lines=`cat "$CHOCOMINT_TARGET_FULLPATH" | wc -l`
+
+  [ $begin_col -lt 1 ] && begin_col=1
+  [ $end_col -gt $file_max_lines ] && end_col=$file_max_lines
+
+  local cols_count=$begin_col
+  local padding=${#end_col}
+
+  echo -e "in \`$CHOCOMINT_TARGET_FULLPATH\`"
+  echo
+  while read -r line; do
+    if [ $cols_count -eq $LINE_NUMBER ]; then
+      echo -n '->'
+      echo " `printf "%${padding}d" $cols_count` |  `tput setaf 1`$line`tput sgr0`"
+    else
+      echo -n '  '
+      echo " `printf "%${padding}d" $cols_count` |  $line"
+    fi
+    ((cols_count++))
+  done < <(sed -n "${begin_col},${end_col}p" "$CHOCOMINT_TARGET_FULLPATH")
+  echo
+
+  ERROR=true
+}
+
+valid() {
+  local left=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,left]}
+  local mid=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,mid]}
+  local right=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]}
+
+  case $mid in
+    '='|'!=' )
+      :
+      ;;
+    ':'|'!:' )
+      case $left in
+        'status' )
+          [ $right -ge 0 ] > /dev/null 2>&1 || error "\`$right\`: Invalid status code"
+          ;;
+        'output' )
+          :
+          ;;
+        * )
+          error "\`$left\`: Invalid test label"
+          ;;
+      esac
+      ;;
+    * )
+      error "\`$mid\`: Invalid operator"
+      ;;
+  esac
+}
 
 parse_test_dq_bs() {
   case $1 in
@@ -72,6 +133,7 @@ parse_test_right() {
       CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
       CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
       CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_INDEX"
+      valid
       PARSE_METHOD="parse_nl"
       LINE_NUMBER+=1
       TEST_COMMENT=""
@@ -79,6 +141,7 @@ parse_test_right() {
       ;;
     " "|"\t" )
       CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
+      valid
       PARSE_METHOD="parse_test_main"
       TEST_COMMENT=""
       ;;
@@ -94,7 +157,7 @@ parse_test_mid() {
       TEST_COMMENT="$TEST_COMMENT""$1"
       ;;
     "!" )
-      TEST_COMMENT="!"
+      TEST_COMMENT="$TEST_COMMENT""!"
       ;;
     * )
       CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,mid]="$TEST_COMMENT"
@@ -300,9 +363,14 @@ main() {
     done < <(echo "$line")
   done < $file
 
+  $ERROR && {
+    echo "`tput bold``tput setaf 1`aborted...`tput sgr0`"
+    exit 1
+  }
+
   declare -p CHOCOMINT_DB > /dev/null 2>&1 || exit 1
-  declare -p CHOCOMINT_TEST_POSITION
-  declare -p CHOCOMINT_DB
+  declare -p CHOCOMINT_TEST_POSITION > $CHOCOMINT_TEST_POSITION_FILE
+  declare -p CHOCOMINT_DB            > $CHOCOMINT_DB_FILE
 }
 
 main "$@"

@@ -9,10 +9,8 @@ declare TEST_MARKER=":"
 declare PARSE_METHOD="parse_nl" # initial parse-method
 declare ERROR=false
 
-source $CHOCOMINT_LIBEXEC/lib/outputs
-
 error() {
-  echo "`tput bold``tput setaf 1`[ERROR] $1`tput sgr0`"
+  echo "`tput bold``tput setaf 1`[ERROR](${LINE_NUMBER}L) $1`tput sgr0`"
 
   local begin_col=$((LINE_NUMBER - 3))
   local end_col=$((LINE_NUMBER + 3))
@@ -53,18 +51,18 @@ valid() {
     ':'|'!:' )
       case $left in
         'status' )
-          [ $right -ge 0 ] > /dev/null 2>&1 || error "\`$right\`: Invalid status code"
+          [ $right -ge 0 ] > /dev/null 2>&1 || error "\`$right\`: Invalid Status Code"
           ;;
         'output' )
           :
           ;;
         * )
-          error "\`$left\`: Invalid test label"
+          error "\`$left\`: Invalid Resource Type"
           ;;
       esac
       ;;
     * )
-      error "\`$mid\`: Invalid operator"
+      error "\`$mid\`: Invalid Matcher"
       ;;
   esac
 }
@@ -368,7 +366,8 @@ main() {
     exit 1
   }
 
-  declare -p CHOCOMINT_DB > /dev/null 2>&1 || exit 1
+  declare -p CHOCOMINT_TEST_POSITION > /dev/null 2>&1 || exit 1
+  declare -p CHOCOMINT_DB            > /dev/null 2>&1 || exit 1
   declare -p CHOCOMINT_TEST_POSITION > $CHOCOMINT_TEST_POSITION_FILE
   declare -p CHOCOMINT_DB            > $CHOCOMINT_DB_FILE
 }

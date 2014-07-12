@@ -8,40 +8,6 @@ function _chocomint_.tput() { tput "$@" >&3; }
 function chocomint_outputs.ok() { _chocomint_.judgeout "2" "   ✔ " "$@"; }
 function chocomint_outputs.ng() { _chocomint_.judgeout "1" "   ✘ " "$@"; }
 
-function chocomint_outputs.error() {
-  _chocomint_.tput bold
-  _chocomint_.techo 1 -e "\n[ERROR] $1"
-
-  local _chocomint_begin_col=$((CHOCOMINT_TESTLINE - 3))
-  local _chocomint_end_col=$((CHOCOMINT_TESTLINE + 3))
-  local _chocomint_file_max_lines=`cat "$CHOCOMINT_TARGET_FULLPATH" | wc -l`
-
-  [ $_chocomint_begin_col -lt 1 ] && _chocomint_begin_col=1
-  [ $_chocomint_end_col -gt $_chocomint_file_max_lines ] &&
-    _chocomint_end_col=$_chocomint_file_max_lines
-
-  local _chocomint_cols_count=$_chocomint_begin_col
-  local _chocomint_padding=${#_chocomint_end_col}
-
-  _chocomint_.echo -e "\nin \`$CHOCOMINT_TARGET_FULLPATH\`"
-  while read -r line; do
-    if [ $_chocomint_cols_count -eq $CHOCOMINT_TESTLINE ]; then
-      _chocomint_.echo -n '->'
-      _chocomint_.echo " `printf "%${_chocomint_padding}d" $_chocomint_cols_count` |  `tput setaf 1`$line`tput sgr0`"
-    else
-      _chocomint_.echo -n '  '
-      _chocomint_.echo " `printf "%${_chocomint_padding}d" $_chocomint_cols_count` |  $line"
-    fi
-    ((_chocomint_cols_count++))
-  done < <(sed -n "${_chocomint_begin_col},${_chocomint_end_col}p" "$CHOCOMINT_TARGET_FULLPATH")
-  _chocomint_.echo
-
-  _chocomint_.tput bold
-  _chocomint_.techo 1 "...aborted."
-
-  exit 1
-}
-
 
 function chocomint_outputs.title() {
   local _chocomint_name_ver=" $* "

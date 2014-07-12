@@ -53,7 +53,7 @@ valid() {
         'status' )
           [ $right -ge 0 ] > /dev/null 2>&1 || error "\`$right\`: Invalid Status Code"
           ;;
-        'output' )
+        'output'|'stdout'|'stderr' )
           :
           ;;
         * )

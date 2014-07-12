@@ -76,6 +76,34 @@ function _chocomint_.judgeout() {
           ;;
       esac
       ;;
+    'stdout' )
+      case $4 in
+        ':' )
+          _chocomint_.echo -n "eregex \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should match STDOUT"
+          ;;
+        '!:' )
+          _chocomint_.echo -n "eregex \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should NOT match STDOUT"
+          ;;
+      esac
+      ;;
+    'stderr' )
+      case $4 in
+        ':' )
+          _chocomint_.echo -n "eregex \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should match STDERR"
+          ;;
+        '!:' )
+          _chocomint_.echo -n "eregex \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should NOT match STDERR"
+          ;;
+      esac
+      ;;
     * ) # judge variables
       case $4 in
         '=' )
@@ -118,7 +146,7 @@ function chocomint_outputs.stdouterr() {
   # $1 failure flag
   _chocomint_.echo -n "${CHOCOMINT_TIME_RESULT::-7} seconds. "
   if $1; then
-    _chocomint_.echo "failed. display 'STDOUT' and 'STDERR'."
+    _chocomint_.echo "failed."
     if [ -s "$CHOCOMINT_CMD_OUT" ] && [ -s "$CHOCOMINT_CMD_ERR" ]; then
       _chocomint_.echo
       _chocomint_.stdout
@@ -136,7 +164,7 @@ function chocomint_outputs.stdouterr() {
       _chocomint_.stderr
       _chocomint_.echo
     else
-      _chocomint_.techo bold "but, output is nothing."
+      _chocomint_.techo bold "output is nothing."
     fi
   else
     _chocomint_.echo "succeeded."

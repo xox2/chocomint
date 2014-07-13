@@ -133,7 +133,6 @@ parse_test_right() {
       CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_INDEX"
       valid
       PARSE_METHOD="parse_nl"
-      LINE_NUMBER+=1
       TEST_COMMENT=""
       TEST_INDEX=-1
       ;;
@@ -191,7 +190,6 @@ parse_test_main() {
       CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
       CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_INDEX"
       PARSE_METHOD="parse_nl"
-      LINE_NUMBER+=1
       TEST_COMMENT=""
       TEST_INDEX=-1
       ;;
@@ -209,7 +207,6 @@ parse_hash() {
       PARSE_METHOD="parse_test_main"
       ;;
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -221,7 +218,6 @@ parse_hash() {
 parse_dq_bs() {
   case $1 in
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_dq"
       ;;
     * )
@@ -239,7 +235,6 @@ parse_dq() {
       PARSE_METHOD="parse_main"
       ;;
     "" )
-      LINE_NUMBER+=1
       ;;
     * )
       :
@@ -253,7 +248,6 @@ parse_sq() {
       PARSE_METHOD="parse_main"
       ;;
     "" )
-      LINE_NUMBER+=1
       ;;
     * )
       :
@@ -264,7 +258,6 @@ parse_sq() {
 parse_bs() {
   case $1 in
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_main"
       ;;
     * )
@@ -289,7 +282,6 @@ parse_main() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -316,7 +308,6 @@ parse_nl_space() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -344,7 +335,6 @@ parse_nl() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -362,6 +352,7 @@ main() {
     while IFS= read -r -n 1 char; do
       $PARSE_METHOD "$char"
     done < <(echo "$line")
+    ((LINE_NUMBER++))
   done < $file
 
   $ERROR && {

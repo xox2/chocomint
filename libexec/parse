@@ -45,10 +45,10 @@ valid() {
   local right=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]}
 
   case $mid in
-    '='|'!=' )
+    '='|'!='|'=~'|'!=~' )
       :
       ;;
-    ':'|'!:' )
+    ':'|'!:'|':~'|'!:~' )
       case $left in
         'status' )
           [ $right -ge 0 ] > /dev/null 2>&1 || error "\`$right\`: Invalid Status Code"
@@ -156,6 +156,9 @@ parse_test_mid() {
       ;;
     "!" )
       TEST_COMMENT="$TEST_COMMENT""!"
+      ;;
+    '~' )
+      TEST_COMMENT="$TEST_COMMENT"'~'
       ;;
     * )
       CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,mid]="$TEST_COMMENT"

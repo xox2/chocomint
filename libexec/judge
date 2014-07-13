@@ -4,12 +4,14 @@
 _chocomint_match_file() {
   # $1 right string
   local _chocomint_matching=false
-  local _chocomint_v="$1"
-  shift
+  local _chocomint_opt="$1"
+  local _chocomint_string="$2"
+  shift 2
 
-  for _chocomint_i in "$@"
+  for _chocomint_file in "$@"
   do
-    if egrep -q "$_chocomint_v" "$_chocomint_i"; then
+    if grep $_chocomint_opt -q "$_chocomint_string" "$_chocomint_file"
+    then
       _chocomint_matching=true
     fi
   done
@@ -37,7 +39,11 @@ _chocomint_judge() {
         return 1
       fi
       ;;
-    ":" )
+    '=~' )
+      ;;
+    '!=~' )
+      ;;
+    ':'|':~' )
       case $1 in
         'status' )
           if [ $4 -eq $3 ]; then
@@ -47,21 +53,25 @@ _chocomint_judge() {
           fi
           ;;
         'output' )
-          if _chocomint_match_file "$3" "$CHOCOMINT_CMD_OUT" "$CHOCOMINT_CMD_ERR"; then
+          [ "$2" = ':~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
+          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_OUT" "$CHOCOMINT_CMD_ERR"
+          then
             return 0
           else
             return 1
           fi
           ;;
         'stdout' )
-          if _chocomint_match_file "$3" "$CHOCOMINT_CMD_OUT"; then
+          [ "$2" = ':~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
+          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_OUT"; then
             return 0
           else
             return 1
           fi
           ;;
         'stderr' )
-          if _chocomint_match_file "$3" "$CHOCOMINT_CMD_ERR"; then
+          [ "$2" = ':~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
+          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_ERR"; then
             return 0
           else
             return 1
@@ -69,7 +79,7 @@ _chocomint_judge() {
           ;;
       esac
       ;;
-    "!:" )
+    '!:'|'!:~' )
       case $1 in
         'status' )
           if [ $4 -ne $3 ]; then
@@ -79,21 +89,24 @@ _chocomint_judge() {
           fi
           ;;
         'output' )
-          if _chocomint_match_file "$3" "$CHOCOMINT_CMD_OUT" "$CHOCOMINT_CMD_ERR"; then
+          [ "$2" = '!:~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
+          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_OUT" "$CHOCOMINT_CMD_ERR"; then
             return 1
           else
             return 0
           fi
           ;;
         'stdout' )
-          if _chocomint_match_file "$3" "$CHOCOMINT_CMD_OUT"; then
+          [ "$2" = '!:~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
+          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_OUT"; then
             return 1
           else
             return 0
           fi
           ;;
         'stderr' )
-          if _chocomint_match_file "$3" "$CHOCOMINT_CMD_ERR"; then
+          [ "$2" = '!:~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
+          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_ERR"; then
             return 1
           else
             return 0

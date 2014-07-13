@@ -65,12 +65,22 @@ function _chocomint_.judgeout() {
     'output' )
       case $4 in
         ':' )
-          _chocomint_.echo -n "eregex \`"
+          _chocomint_.echo -n "fixed-strings \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
           _chocomint_.echo "\` should match outputs"
           ;;
         '!:' )
-          _chocomint_.echo -n "eregex \`"
+          _chocomint_.echo -n "fixed-strings \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should NOT match outputs"
+          ;;
+        ':~' )
+          _chocomint_.echo -n "extended-regexp \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should match outputs"
+          ;;
+        '!:~' )
+          _chocomint_.echo -n "extended-regexp \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
           _chocomint_.echo "\` should NOT match outputs"
           ;;
@@ -79,12 +89,22 @@ function _chocomint_.judgeout() {
     'stdout' )
       case $4 in
         ':' )
-          _chocomint_.echo -n "eregex \`"
+          _chocomint_.echo -n "fixed-strings \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
           _chocomint_.echo "\` should match STDOUT"
           ;;
         '!:' )
-          _chocomint_.echo -n "eregex \`"
+          _chocomint_.echo -n "fixed-strings \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should NOT match STDOUT"
+          ;;
+        ':~' )
+          _chocomint_.echo -n "extended-regexp \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should match STDOUT"
+          ;;
+        '!:~' )
+          _chocomint_.echo -n "extended-regexp \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
           _chocomint_.echo "\` should NOT match STDOUT"
           ;;
@@ -93,12 +113,22 @@ function _chocomint_.judgeout() {
     'stderr' )
       case $4 in
         ':' )
-          _chocomint_.echo -n "eregex \`"
+          _chocomint_.echo -n "fixed-strings \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
           _chocomint_.echo "\` should match STDERR"
           ;;
         '!:' )
-          _chocomint_.echo -n "eregex \`"
+          _chocomint_.echo -n "fixed-strings \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should NOT match STDERR"
+          ;;
+        ':~' )
+          _chocomint_.echo -n "extended-regexp \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\` should match STDERR"
+          ;;
+        '!:~' )
+          _chocomint_.echo -n "extended-regexp \`"
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
           _chocomint_.echo "\` should NOT match STDERR"
           ;;

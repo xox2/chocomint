@@ -205,14 +205,14 @@ function chocomint_outputs.stdouterr() {
 
 function chocomint_outputs.overall_results() {
   echo
-  tput bold
   if [ $1 -eq 0 ]; then
-    tput setaf 2
-    echo "$3 tests, $5 command-executions all succeeded.$(tput sgr0)"
+    tput bold
+    echo "`tput setaf 2`$3 tests, $5 command-executions all succeeded.$(tput sgr0)"
   else
-    tput setaf 1
-    echo "$1 tests failed."
-    echo "$2/$3 tests, $4/$5 command-executions succeeded.$(tput sgr0)"
+    tput bold
+    echo "`tput setaf 1`$1 tests failed.`tput sgr0`"
+    tput bold
+    echo "`tput setaf 1`$2/$3 tests, $4/$5 command-executions succeeded.$(tput sgr0)"
   fi
 }
 

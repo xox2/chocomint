@@ -31,7 +31,6 @@ error() {
     if [ $cols_count -eq $LINE_NUMBER ]; then
       echo -n '->'
       echo " `printf "%${padding}d" $cols_count` |  `tput setaf 1`$line`tput sgr0`"
-      printf "%$((OFFSET_NUMBER + padding + 7))s\n" "^"
     else
       echo -n '  '
       echo " `printf "%${padding}d" $cols_count` |  $line"
@@ -175,14 +174,8 @@ parse_test_right() {
 
 parse_test_mid() {
   case $1 in
-    "="|":" )
+    '='|':'|'!'|'~' )
       TEST_COMMENT="$TEST_COMMENT""$1"
-      ;;
-    "!" )
-      TEST_COMMENT="$TEST_COMMENT""!"
-      ;;
-    '~' )
-      TEST_COMMENT="$TEST_COMMENT"'~'
       ;;
     * )
       CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,mid]="$TEST_COMMENT"

@@ -4,9 +4,76 @@
 declare -A CHOCOMINT_DB
 declare -a CHOCOMINT_TEST_POSITION # "NL" or "EOL"
 declare -i LINE_NUMBER=1
-declare -i TEST_NUMBER=0
+declare -i OFFSET_NUMBER=1
+declare -i TEST_INDEX=-1
 declare TEST_MARKER=":"
 declare PARSE_METHOD="parse_nl" # initial parse-method
+declare ERROR=false
+
+error() {
+  echo "`tput bold``tput setaf 1`[PARSER ERROR]`tput sgr0`"
+  echo "`tput bold`$1`tput sgr0`"
+
+  local begin_col=$((LINE_NUMBER - 3))
+  local end_col=$((LINE_NUMBER + 3))
+  local file_max_lines=`cat "$CHOCOMINT_TARGET_FULLPATH" | wc -l`
+  local offset=""
+
+  [ $begin_col -lt 1 ] && begin_col=1
+  [ $end_col -gt $file_max_lines ] && end_col=$file_max_lines
+
+  local cols_count=$begin_col
+  local padding=${#end_col}
+
+  echo -e "in \`$CHOCOMINT_TARGET_FULLPATH\` (${LINE_NUMBER}L)"
+  echo
+  while read -r line; do
+    if [ $cols_count -eq $LINE_NUMBER ]; then
+      echo -n '->'
+      echo " `printf "%${padding}d" $cols_count` |  `tput setaf 1`$line`tput sgr0`"
+    else
+      echo -n '  '
+      echo " `printf "%${padding}d" $cols_count` |  $line"
+    fi
+    ((cols_count++))
+  done < <(sed -n "${begin_col},${end_col}p" "$CHOCOMINT_TARGET_FULLPATH")
+  echo
+
+  ERROR=true
+}
+
+valid() {
+  local left=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,left]}
+  local mid=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,mid]}
+  local right=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]}
+
+  case $mid in
+    '='|'!='|'=~'|'!=~' )
+      :
+      ;;
+    ':'|'!:'|':~'|'!:~' )
+      case $left in
+        'status' )
+          case $mid in
+            ':~'|'!:~' )
+              error "\`$mid\`: Invalid Matcher for 'status'"
+              ;;
+          esac
+          [ $right -ge 0 ] > /dev/null 2>&1 || error "\`$right\`: Invalid Status Code"
+          ;;
+        'output'|'stdout'|'stderr' )
+          :
+          ;;
+        * )
+          error "\`$left\`: Invalid Resource Type"
+          ;;
+      esac
+      ;;
+    * )
+      error "\`$mid\`: Invalid Matcher"
+      ;;
+  esac
+}
 
 parse_test_dq_bs() {
   case $1 in
@@ -21,11 +88,17 @@ parse_test_dq() {
   case $1 in
     '"' )
       TEST_COMMENT="$TEST_COMMENT""\""
-      PARSE_METHOD="parse_test_right"
+      PARSE_METHOD=$PARENT_PARSE_METHOD
       ;;
     "\\" )
       TEST_COMMENT="$TEST_COMMENT""\\"
       PARSE_METHOD="parse_test_dq_bs"
+      ;;
+    "" )
+      error "\`$TEST_COMMENT\`: Quote is not closed."
+      PARSE_METHOD="parse_nl"
+      TEST_COMMENT=""
+      PARENT_PARSE_METHOD=""
       ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
@@ -37,7 +110,13 @@ parse_test_sq() {
   case $1 in
     "'" )
       TEST_COMMENT="$TEST_COMMENT""'"
-      PARSE_METHOD="parse_test_right"
+      PARSE_METHOD=$PARENT_PARSE_METHOD
+      ;;
+    "" )
+      error "\`$TEST_COMMENT\`: Quote is not closed."
+      PARSE_METHOD="parse_nl"
+      TEST_COMMENT=""
+      PARENT_PARSE_METHOD=""
       ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
@@ -49,12 +128,13 @@ parse_test_bs() {
   case $1 in
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
-      PARSE_METHOD="parse_test_right"
+      PARSE_METHOD=$PARENT_PARSE_METHOD
       ;;
   esac
 }
 
 parse_test_right() {
+  PARENT_PARSE_METHOD="$FUNCNAME"
   case $1 in
     '"' )
       TEST_COMMENT="$TEST_COMMENT""\""
@@ -69,20 +149,27 @@ parse_test_right() {
       PARSE_METHOD="parse_test_bs"
       ;;
     "" )
+      [ "$TEST_COMMENT" = "" ] && {
+        error "\`$TEST_COMMENT\`: No Test Contents >> EOL is here."
+      }
       CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
-      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_NUMBER"
+      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
+      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_INDEX"
+      valid
       PARSE_METHOD="parse_nl"
-      LINE_NUMBER+=1
       TEST_COMMENT=""
-      TEST_NUMBER=0
+      PARENT_PARSE_METHOD=""
       ;;
     " "|"\t" )
-      CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_NUMBER,right]="$TEST_COMMENT"
-      PARSE_METHOD="parse_test_blank"
+      [ "$TEST_COMMENT" = "" ] && {
+        error "\`$TEST_COMMENT\`: No Test Contents >> Is there an illegal blank character?"
+        return
+      }
+      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
+      valid
+      PARSE_METHOD="parse_test_main"
       TEST_COMMENT=""
-      ((TEST_NUMBER++))
+      PARENT_PARSE_METHOD=""
       ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
@@ -92,14 +179,11 @@ parse_test_right() {
 
 parse_test_mid() {
   case $1 in
-    "="|":" )
+    '='|':'|'!'|'~' )
       TEST_COMMENT="$TEST_COMMENT""$1"
       ;;
-    "!" )
-      TEST_COMMENT="!"
-      ;;
     * )
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_NUMBER,mid]="$TEST_COMMENT"
+      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,mid]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_right"
       parse_test_right "$1"
@@ -108,12 +192,29 @@ parse_test_mid() {
 }
 
 parse_test_left() {
+  PARENT_PARSE_METHOD="$FUNCNAME"
   case $1 in
+    '"' )
+      TEST_COMMENT="$TEST_COMMENT""\""
+      PARSE_METHOD="parse_test_dq"
+      ;;
+    "'" )
+      TEST_COMMENT="$TEST_COMMENT""'"
+      PARSE_METHOD="parse_test_sq"
+      ;;
+    "\\" )
+      TEST_COMMENT="$TEST_COMMENT""\\"
+      PARSE_METHOD="parse_test_bs"
+      ;;
     "!"|"="|":" )
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_NUMBER,left]="$TEST_COMMENT"
+      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,left]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_mid"
       parse_test_mid "$1"
+      ;;
+    ' '|'\t' )
+      TEST_COMMENT="$TEST_COMMENT""$1"
+      error "\`$TEST_COMMENT\`: Invalid Resource Type Syntax >> Contain an illegal blank character?"
       ;;
     * )
       TEST_COMMENT="$TEST_COMMENT""$1"
@@ -121,17 +222,19 @@ parse_test_left() {
   esac
 }
 
-parse_test_blank() {
+parse_test_main() {
   case $1 in
     " "|"\t" )
+      :
       ;;
     "" )
+      CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
+      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_INDEX"
       PARSE_METHOD="parse_nl"
-      LINE_NUMBER+=1
       TEST_COMMENT=""
-      TEST_NUMBER=0
       ;;
     * )
+      ((TEST_INDEX++))
       PARSE_METHOD="parse_test_left"
       parse_test_left "$1"
       ;;
@@ -141,10 +244,9 @@ parse_test_blank() {
 parse_hash() {
   case $1 in
     "$TEST_MARKER" )
-      PARSE_METHOD="parse_test_blank"
+      PARSE_METHOD="parse_test_main"
       ;;
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -156,7 +258,6 @@ parse_hash() {
 parse_dq_bs() {
   case $1 in
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_dq"
       ;;
     * )
@@ -174,7 +275,6 @@ parse_dq() {
       PARSE_METHOD="parse_main"
       ;;
     "" )
-      LINE_NUMBER+=1
       ;;
     * )
       :
@@ -188,7 +288,6 @@ parse_sq() {
       PARSE_METHOD="parse_main"
       ;;
     "" )
-      LINE_NUMBER+=1
       ;;
     * )
       :
@@ -199,7 +298,6 @@ parse_sq() {
 parse_bs() {
   case $1 in
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_main"
       ;;
     * )
@@ -224,7 +322,6 @@ parse_main() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -251,7 +348,6 @@ parse_nl_space() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -279,7 +375,6 @@ parse_nl() {
       PARSE_METHOD="parse_dq"
       ;;
     "" )
-      LINE_NUMBER+=1
       PARSE_METHOD="parse_nl"
       ;;
     * )
@@ -288,22 +383,30 @@ parse_nl() {
   esac
 }
 
-expose_variable() {
-  declare -p CHOCOMINT_DB > /dev/null 2>&1 || exit 1
-  declare -p CHOCOMINT_TEST_POSITION
-  declare -p CHOCOMINT_DB
-}
-
 main() {
-  local file=$1 line char
+  local file=$1
+  local line
+  local char
 
   while IFS= read -r line; do
     while IFS= read -r -n 1 char; do
       $PARSE_METHOD "$char"
+      ((OFFSET_NUMBER++))
     done < <(echo "$line")
+    OFFSET_NUMBER=1
+    TEST_INDEX=-1 # reset index. '-1' means that there is no test.
+    ((LINE_NUMBER++))
   done < $file
 
-  expose_variable
+  $ERROR && {
+    echo "`tput bold``tput setaf 1`aborted...`tput sgr0`"
+    exit 1
+  }
+
+  declare -p CHOCOMINT_TEST_POSITION > /dev/null 2>&1 || exit 1
+  declare -p CHOCOMINT_DB            > /dev/null 2>&1 || exit 1
+  declare -p CHOCOMINT_TEST_POSITION > $CHOCOMINT_TEST_POSITION_FILE
+  declare -p CHOCOMINT_DB            > $CHOCOMINT_DB_FILE
 }
 
 main "$@"

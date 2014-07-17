@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
 _CHOCOMINT_NAME='chocomint.sh'
-_CHOCOMINT_VERSION='0.1.0-rc2'
+_CHOCOMINT_VERSION='0.2.0-dev'
 
-CHOCOMINT_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
-CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"
+export CHOCOMINT_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
+export CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"
+
+export CHOCOMINT_TEST_POSITION_FILE="/tmp/_chocomint_test_pos.$$"
+export CHOCOMINT_DB_FILE="/tmp/_chocomint_test_db.$$"
 
 CHOCOMINT_CMD_OUT="/tmp/_chocomint_command_stdout.$$.log"
 CHOCOMINT_CMD_ERR="/tmp/_chocomint_command_stderr.$$.log"
@@ -16,46 +19,46 @@ _CHOCOMINT_TEST_SUCCESS=0
 _CHOCOMINT_TEST_COUNT=0
 _CHOCOMINT_FAILURE=false
 _CHOCOMINT_TEST_EXIST=false
+_CHOCOMINT_TIME_START=''
 
 source $CHOCOMINT_LIBEXEC/lib/outputs
-source $CHOCOMINT_LIBEXEC/lib/utils
 
 _chocomint_aggregate_results() {
   # $1 exitstatus
-  local _chocomint_cmd_failure=false
-  local _chocomint_left _chocomint_right
   ((_CHOCOMINT_CMD_COUNT++))
+  local _chocomint_cmd_failure=false
+  local _chocomint_left
+  local _chocomint_mid
+  local _chocomint_right
 
   for _chocomint_i in $(seq 0 ${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,max]})
   do
-    _chocomint_left="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
-    _chocomint_right="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
     ((_CHOCOMINT_TEST_COUNT++))
+    _chocomint_left="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
+    _chocomint_mid="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}")"
+    _chocomint_right="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
 
-    if $CHOCOMINT_LIBEXEC/judge \
+    if source $CHOCOMINT_LIBEXEC/judge \
         "$_chocomint_left" \
-        "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
-        "$_chocomint_right" \
-        "$1" \
-        "$CHOCOMINT_CMD_OUT" \
-        "$CHOCOMINT_CMD_ERR"
-    then
-      chocomint_outputs.ok \
-        "$_chocomint_left" \
-        "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "$_chocomint_mid" \
         "$_chocomint_right" \
         "$1"
+    then
       ((_CHOCOMINT_TEST_SUCCESS++))
+      chocomint_outputs.ok \
+        "$_chocomint_left" \
+        "$_chocomint_mid" \
+        "$_chocomint_right" \
+        "$1"
     else
-      chocomint_utils.error $?
+      ((_CHOCOMINT_TEST_FAILURE++))
       chocomint_outputs.ng \
         "$_chocomint_left" \
-        "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}" \
+        "$_chocomint_mid" \
         "$_chocomint_right" \
         "$1"
       _chocomint_cmd_failure=true
       _CHOCOMINT_FAILURE=true
-      ((_CHOCOMINT_TEST_FAILURE++))
     fi
   done
 
@@ -66,10 +69,10 @@ _chocomint_aggregate_results() {
 _chocomint_prepare_execution() {
   _CHOCOMINT_LINENO_CACHE="$1"
 
-  if [ "${CHOCOMINT_TEST_POSITION[$1]}" = "EOL" ]; then
+  if [ "${CHOCOMINT_TEST_POSITION[$1]-}" = "EOL" ]; then
     _CHOCOMINT_TEST_EXIST=true
     CHOCOMINT_TESTLINE="$1"
-  elif [ "${CHOCOMINT_TEST_POSITION[$(($1+1))]}" = "NL" ]; then
+  elif [ "${CHOCOMINT_TEST_POSITION[$(($1+1))]-}" = "NL" ]; then
     _CHOCOMINT_TEST_EXIST=true
     CHOCOMINT_TESTLINE="$(($1+1))"
   else
@@ -112,11 +115,17 @@ _chocomint_run_test() {
   $_CHOCOMINT_TEST_EXIST &&
     _chocomint_aggregate_results "$exitstat"
   exec 1>&3- 2>&4-
-  rm "$CHOCOMINT_CMD_OUT" "$CHOCOMINT_CMD_ERR"
+  rm "$CHOCOMINT_CMD_OUT" \
+     "$CHOCOMINT_CMD_ERR" \
+     "$CHOCOMINT_TEST_POSITION_FILE" \
+     "$CHOCOMINT_DB_FILE"
 }
 
 
 _chocomint_main() {
+  local _chocomint_parsing_results
+  local _chocomint_parsing_exit_status
+
   [ "$CHOCOMINT_TARGET_FULLPATH" ] || {
     echo "No target file"
     exit 2
@@ -128,7 +137,9 @@ _chocomint_main() {
   }
 
   echo 'Parsing tests...'
-  source <($CHOCOMINT_LIBEXEC/parse "$1" || cat /dev/null) # local variable
+  $CHOCOMINT_LIBEXEC/parse "$1" || exit $?
+  source $CHOCOMINT_TEST_POSITION_FILE
+  source $CHOCOMINT_DB_FILE
 
   chocomint_outputs.title "$_CHOCOMINT_NAME $_CHOCOMINT_VERSION"
 
@@ -141,7 +152,7 @@ _chocomint_main() {
     "$CHOCOMINT_CMD_SUCCESS" \
     "$_CHOCOMINT_CMD_COUNT"
 
-  $_CHOCOMINT_FAILURE && return 1
+  $_CHOCOMINT_FAILURE && return $_CHOCOMINT_TEST_FAILURE
   return 0
 }
 

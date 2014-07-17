@@ -152,7 +152,7 @@ _chocomint_main() {
     "$CHOCOMINT_CMD_SUCCESS" \
     "$_CHOCOMINT_CMD_COUNT"
 
-  $_CHOCOMINT_FAILURE && return 1
+  $_CHOCOMINT_FAILURE && return $_CHOCOMINT_TEST_FAILURE
   return 0
 }
 

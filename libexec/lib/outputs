@@ -150,6 +150,20 @@ function _chocomint_.judgeout() {
           _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
           _chocomint_.echo "\`"
           ;;
+        '=~' )
+          _chocomint_.echo -n "value \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$3"
+          _chocomint_.echo -n "\` should match extended-regexp \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\`"
+          ;;
+        '!=~' )
+          _chocomint_.echo -n "value \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$3"
+          _chocomint_.echo -n "\` should NOT match extended-regexp \`"
+          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.echo "\`"
+          ;;
       esac
       ;;
   esac

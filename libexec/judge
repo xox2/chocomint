@@ -40,8 +40,20 @@ _chocomint_judge() {
       fi
       ;;
     '=~' )
+      if echo "$1" | grep -E -q "$3"
+      then
+        return 0
+      else
+        return 1
+      fi
       ;;
     '!=~' )
+      if echo "$1" | grep -E -q "$3"
+      then
+        return 1
+      else
+        return 0
+      fi
       ;;
     ':'|':~' )
       case $1 in

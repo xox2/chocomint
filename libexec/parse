@@ -54,6 +54,11 @@ valid() {
     ':'|'!:'|':~'|'!:~' )
       case $left in
         'status' )
+          case $mid in
+            ':~'|'!:~' )
+              error "\`$mid\`: Invalid Matcher for 'status'"
+              ;;
+          esac
           [ $right -ge 0 ] > /dev/null 2>&1 || error "\`$right\`: Invalid Status Code"
           ;;
         'output'|'stdout'|'stderr' )

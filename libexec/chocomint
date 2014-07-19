@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 _CHOCOMINT_NAME='chocomint.sh'
-_CHOCOMINT_VERSION='0.2.0-rc'
+_CHOCOMINT_VERSION='0.3.0-dev'
 
 export CHOCOMINT_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 export CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"

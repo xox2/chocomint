@@ -68,6 +68,20 @@ function _chocomint_.judgeout() {
       ;;
     'output' )
       case $4 in
+        '::' )
+          case $5 in
+            'None' )
+              _chocomint_.echo "outputs should be nothing"
+              ;;
+          esac
+          ;;
+        '!::' )
+          case $5 in
+            'None' )
+              _chocomint_.echo "outputs should NOT be nothing"
+              ;;
+          esac
+          ;;
         ':' )
           _chocomint_.echo -n "fixed-strings \`"
           _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
@@ -92,6 +106,20 @@ function _chocomint_.judgeout() {
       ;;
     'stdout' )
       case $4 in
+        '::' )
+          case $5 in
+            'None' )
+              _chocomint_.echo "STDOUT should be nothing"
+              ;;
+          esac
+          ;;
+        '!::' )
+          case $5 in
+            'None' )
+              _chocomint_.echo "STDOUT should NOT be nothing"
+              ;;
+          esac
+          ;;
         ':' )
           _chocomint_.echo -n "fixed-strings \`"
           _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
@@ -116,6 +144,20 @@ function _chocomint_.judgeout() {
       ;;
     'stderr' )
       case $4 in
+        '::' )
+          case $5 in
+            'None' )
+              _chocomint_.echo "STDERR should be nothing"
+              ;;
+          esac
+          ;;
+        '!::' )
+          case $5 in
+            'None' )
+              _chocomint_.echo "STDERR should NOT be nothing"
+              ;;
+          esac
+          ;;
         ':' )
           _chocomint_.echo -n "fixed-strings \`"
           _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"

@@ -24,14 +24,18 @@ function chocomint_outputs.title() {
 
 
 function _chocomint_.techo() {
-  case $1 in
-    [0-7] )
-      _chocomint_.tput setaf "$1"
-      ;;
-    'bold' )
-      _chocomint_.tput bold
-      ;;
-  esac
+  while [ "$1" != "--" ]
+  do
+    case $1 in
+      [0-7] )
+        _chocomint_.tput setaf "$1"
+        ;;
+      'bold' )
+        _chocomint_.tput bold
+        ;;
+    esac
+    shift
+  done
   _chocomint_.echo "${@:2}$(tput sgr0)"
 }
 
@@ -44,21 +48,21 @@ function _chocomint_.judgeout() {
   # $5 right
   # $6 exitstat
   local _chocomint_opt_tput="5"
-  _chocomint_.techo "$1" -n "$2" # 'ok' or 'ng'
+  _chocomint_.techo "$1" -- -n "$2" # 'ok' or 'ng'
   case $3 in
     'status' )
       case $4 in
         ':' )
           _chocomint_.echo -n "status "
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$6"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$6"
           _chocomint_.echo -n " should be "
-          _chocomint_.techo "$_chocomint_opt_tput" "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- "$5"
           ;;
         '!:' )
           _chocomint_.echo -n "status "
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$6"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$6"
           _chocomint_.echo -n " should NOT be "
-          _chocomint_.techo "$_chocomint_opt_tput" "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- "$5"
           ;;
       esac
       ;;
@@ -66,22 +70,22 @@ function _chocomint_.judgeout() {
       case $4 in
         ':' )
           _chocomint_.echo -n "fixed-strings \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should match outputs"
           ;;
         '!:' )
           _chocomint_.echo -n "fixed-strings \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should NOT match outputs"
           ;;
         ':~' )
           _chocomint_.echo -n "extended-regexp \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should match outputs"
           ;;
         '!:~' )
           _chocomint_.echo -n "extended-regexp \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should NOT match outputs"
           ;;
       esac
@@ -90,22 +94,22 @@ function _chocomint_.judgeout() {
       case $4 in
         ':' )
           _chocomint_.echo -n "fixed-strings \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should match STDOUT"
           ;;
         '!:' )
           _chocomint_.echo -n "fixed-strings \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should NOT match STDOUT"
           ;;
         ':~' )
           _chocomint_.echo -n "extended-regexp \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should match STDOUT"
           ;;
         '!:~' )
           _chocomint_.echo -n "extended-regexp \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should NOT match STDOUT"
           ;;
       esac
@@ -114,22 +118,22 @@ function _chocomint_.judgeout() {
       case $4 in
         ':' )
           _chocomint_.echo -n "fixed-strings \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should match STDERR"
           ;;
         '!:' )
           _chocomint_.echo -n "fixed-strings \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should NOT match STDERR"
           ;;
         ':~' )
           _chocomint_.echo -n "extended-regexp \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should match STDERR"
           ;;
         '!:~' )
           _chocomint_.echo -n "extended-regexp \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\` should NOT match STDERR"
           ;;
       esac
@@ -138,30 +142,30 @@ function _chocomint_.judgeout() {
       case $4 in
         '=' )
           _chocomint_.echo -n "value \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$3"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$3"
           _chocomint_.echo -n "\` should be \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\`"
           ;;
         '!=' )
           _chocomint_.echo -n "value \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$3"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$3"
           _chocomint_.echo -n "\` should NOT be \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\`"
           ;;
         '=~' )
           _chocomint_.echo -n "value \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$3"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$3"
           _chocomint_.echo -n "\` should match extended-regexp \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\`"
           ;;
         '!=~' )
           _chocomint_.echo -n "value \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$3"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$3"
           _chocomint_.echo -n "\` should NOT match extended-regexp \`"
-          _chocomint_.techo "$_chocomint_opt_tput" -n "$5"
+          _chocomint_.techo "$_chocomint_opt_tput" -- -n "$5"
           _chocomint_.echo "\`"
           ;;
       esac
@@ -171,18 +175,18 @@ function _chocomint_.judgeout() {
 
 
 function _chocomint_.stdout() {
-  _chocomint_.techo bold '``` STDOUT'
+  _chocomint_.techo bold -- '``` STDOUT'
   _chocomint_.cat $CHOCOMINT_CMD_OUT
   _chocomint_.tput sgr0 # for reset previous output attributes
-  _chocomint_.techo bold '```'
+  _chocomint_.techo bold -- '```'
 }
 
 
 function _chocomint_.stderr() {
-  _chocomint_.techo bold '``` STDERR'
+  _chocomint_.techo bold -- '``` STDERR'
   _chocomint_.cat $CHOCOMINT_CMD_ERR
   _chocomint_.tput sgr0 # for reset previous output attributes
-  _chocomint_.techo bold '```'
+  _chocomint_.techo bold -- '```'
 }
 
 
@@ -208,7 +212,7 @@ function chocomint_outputs.stdouterr() {
       _chocomint_.stderr
       _chocomint_.echo
     else
-      _chocomint_.techo bold "output is nothing."
+      _chocomint_.techo bold -- "output is nothing."
     fi
   else
     _chocomint_.echo "succeeded."
@@ -219,23 +223,18 @@ function chocomint_outputs.stdouterr() {
 
 function chocomint_outputs.overall_results() {
   echo
+  tput bold
   if [ $1 -eq 0 ]; then
-    tput bold
-    echo "`tput setaf 2`$3 tests, $5 command-executions all succeeded.$(tput sgr0)"
+    echo "$(tput setaf 2)$3 tests, $5 command-executions all succeeded.$(tput sgr0)"
   else
+    echo "$(tput setaf 1)$1 tests failed.$(tput sgr0)"
     tput bold
-    echo "`tput setaf 1`$1 tests failed.`tput sgr0`"
-    tput bold
-    echo "`tput setaf 1`$2/$3 tests, $4/$5 command-executions succeeded.$(tput sgr0)"
+    echo "$(tput setaf 1)$2/$3 tests, $4/$5 command-executions succeeded.$(tput sgr0)"
   fi
 }
 
 
 function chocomint_outputs.command() {
-  _chocomint_.tput bold
-  _chocomint_.techo 3 -n '=> '
-  _chocomint_.tput sgr0
-  echo "$1" |
-  sed s/^/$(tput setaf 3)$(tput bold)/ |
-  sed s/$/$(tput sgr0)/ >&3
+  _chocomint_.techo bold 3 -- -n '>> '
+  echo "$1" | sed s/^/$(tput setaf 3)/ | sed s/$/$(tput sgr0)/ >&3
 }

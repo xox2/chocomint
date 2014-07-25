@@ -93,7 +93,13 @@ _chocomint_trap() {
   local _chocomint_prev_stat="$?"
 
   [ "$_CHOCOMINT_TIME_START" ] && {
-    CHOCOMINT_TIME_RESULT=$(echo "$(date +%s.%N) - $_CHOCOMINT_TIME_START" | bc | sed -e 's/^\./0\./')
+    $CHOCOMINT_BC_COMMAND_EXIST && {
+      CHOCOMINT_TIME_RESULT=$(
+        echo "$(date +%s.%N) - $_CHOCOMINT_TIME_START" |
+        bc |
+        sed -e 's/^\./0\./'
+      )
+    }
   }
 
   if [ "$2" = "$CHOCOMINT_TARGET_FULLPATH" ]; then
@@ -135,6 +141,28 @@ _chocomint_main() {
     echo "No such a file: $CHOCOMINT_TARGET_FULLPATH"
     exit 3
   }
+
+  if type tput > /dev/null 2>&1
+  then
+    _CHOCOMINT_TPUT_COMMAND_EXIST=true
+    export CHOCOMINT_TPUT="tput"
+  else
+    echo "WARN: \"tput\" command is not found"
+    echo "WARN: run without coloring"
+    echo
+    _CHOCOMINT_TPUT_COMMAND_EXIST=false
+    export CHOCOMINT_TPUT="true"
+  fi
+
+  if type bc > /dev/null 2>&1
+  then
+    export CHOCOMINT_BC_COMMAND_EXIST=true
+  else
+    echo "WARN: \"bc\" command is not found"
+    echo "WARN: unable to display the execution time of commands"
+    echo
+    export CHOCOMINT_BC_COMMAND_EXIST=false
+  fi
 
   echo 'Parsing tests...'
   $CHOCOMINT_LIBEXEC/parse "$1" || exit $?

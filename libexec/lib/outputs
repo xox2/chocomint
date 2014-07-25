@@ -4,11 +4,10 @@
 function _chocomint_.echo() { echo "$@" >&3; }
 function _chocomint_.print() { echo -n "$@" >&3; }
 function _chocomint_.cat() { cat "$@" >&3; }
-function _chocomint_.tput() { tput "$@" >&3; }
+function _chocomint_.tput() { $CHOCOMINT_TPUT "$@" >&3; }
 
 function chocomint_outputs.ok() { _chocomint_.judgeout "2" "   ✔ " "$@"; }
 function chocomint_outputs.ng() { _chocomint_.judgeout "1" "   ✘ " "$@"; }
-
 
 function chocomint_outputs.title() {
   local _chocomint_name_ver=" $* "
@@ -37,7 +36,7 @@ function _chocomint_.tprint() {
     esac
     shift
   done
-  _chocomint_.print "${@:2}$(tput sgr0)"
+  _chocomint_.print "${@:2}$($CHOCOMINT_TPUT sgr0)"
 }
 
 
@@ -199,7 +198,8 @@ function _chocomint_.stderr() {
 
 function chocomint_outputs.stdouterr() {
   # $1 failure flag
-  _chocomint_.print "${CHOCOMINT_TIME_RESULT::-7} seconds. "
+  $CHOCOMINT_BC_COMMAND_EXIST &&
+    _chocomint_.print "${CHOCOMINT_TIME_RESULT::-7} seconds. "
   if $1; then
     _chocomint_.echo "failed."
     if [ -s "$CHOCOMINT_CMD_OUT" ] && [ -s "$CHOCOMINT_CMD_ERR" ]; then
@@ -231,18 +231,18 @@ function chocomint_outputs.stdouterr() {
 
 function chocomint_outputs.overall_results() {
   echo
-  tput bold
+  $CHOCOMINT_TPUT bold
   if [ $1 -eq 0 ]; then
-    echo "$(tput setaf 2)$3 tests, $5 command-executions all succeeded.$(tput sgr0)"
+    echo "$($CHOCOMINT_TPUT setaf 2)$3 tests, $5 command-executions all succeeded.$($CHOCOMINT_TPUT sgr0)"
   else
-    echo "$(tput setaf 1)$1 tests failed.$(tput sgr0)"
-    tput bold
-    echo "$(tput setaf 1)$2/$3 tests, $4/$5 command-executions succeeded.$(tput sgr0)"
+    echo "$($CHOCOMINT_TPUT setaf 1)$1 tests failed.$($CHOCOMINT_TPUT sgr0)"
+    $CHOCOMINT_TPUT bold
+    echo "$($CHOCOMINT_TPUT setaf 1)$2/$3 tests, $4/$5 command-executions succeeded.$($CHOCOMINT_TPUT sgr0)"
   fi
 }
 
 
 function chocomint_outputs.command() {
   _chocomint_.tprint bold 3 -- '>> '
-  echo "$1" | sed s/^/$(tput setaf 3)/ | sed s/$/$(tput sgr0)/ >&3
+  echo "$1" | sed s/^/$($CHOCOMINT_TPUT setaf 3)/ | sed s/$/$($CHOCOMINT_TPUT sgr0)/ >&3
 }

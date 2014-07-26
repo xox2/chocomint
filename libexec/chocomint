@@ -102,7 +102,7 @@ _chocomint_trap() {
     }
   }
 
-  if [ "$2" = "$CHOCOMINT_TARGET_FULLPATH" ]; then
+  if [ $3 -eq $_CHOCOMINT_TARGETFILE_STACK_LEVEL ]; then
     $_CHOCOMINT_TEST_EXIST &&
       _chocomint_aggregate_results "$_chocomint_prev_stat"
     _chocomint_prepare_execution "$1" "$BASH_COMMAND"
@@ -114,7 +114,8 @@ _chocomint_trap() {
 
 _chocomint_run_test() {
   exec 3>&1 4>&2 1> $CHOCOMINT_CMD_OUT 2> $CHOCOMINT_CMD_ERR
-  set -T; trap '_chocomint_trap "$LINENO" "$BASH_SOURCE"' DEBUG
+  set -T; trap '_chocomint_trap "$LINENO" "$BASH_SOURCE" "${#FUNCNAME[*]}"' DEBUG
+  _CHOCOMINT_TARGETFILE_STACK_LEVEL=$((${#FUNCNAME[*]} + 1))
   source "$1"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T

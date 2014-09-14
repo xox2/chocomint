@@ -21,7 +21,7 @@ _CHM_FAILURE=false
 _CHM_TEST_EXIST=false
 _CHM_TIME_START=''
 
-source $_CHM_LIBEXEC/lib/outputs
+source $_CHM_LIBEXEC/chocomint-lib/outputs
 
 _chm_aggregate_results() {
   # $1 exitstatus
@@ -38,7 +38,7 @@ _chm_aggregate_results() {
     _chm_mid="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},mid]}")"
     _chm_right="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},right]}")"
 
-    if source $_CHM_LIBEXEC/judge "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
+    if source $_CHM_LIBEXEC/chocomint-judge "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
     then
       ((_CHM_TEST_SUCCESS++))
       _chm_outputs.ok "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
@@ -154,7 +154,7 @@ _chm_main() {
   fi
 
   echo 'Parsing tests...'
-  $_CHM_LIBEXEC/parse "$1" || exit $?
+  $_CHM_LIBEXEC/chocomint-parse "$1" || exit $?
   source $_CHM_TEST_POSITION_FILE
   source $_CHM_DB_FILE
 

@@ -63,7 +63,7 @@ $ chocomint test.sh
 - If all tests are __successful__, chocomint will return __0__.
 - If one or more tests __failed__, chocomint will return __1__.
 
-````
+```
 $ ./test.sh
 Parsing tests...
 +++++++++++++++++++++++
@@ -78,9 +78,9 @@ Parsing tests...
 0.00 seconds. failed.
 'STDERR' is nothing.
 
-``` STDOUT
+>>> STDOUT BEGIN
 Hello
-```
+>>> STDOUT END
 
 ==> dummy_func
    ✔ fixed-strings `error` should match STDERR
@@ -100,7 +100,7 @@ Hello
 
 1 tests failed.
 9/10 tests, 5/6 commands succeeded.
-````
+```
 
 ## Installation
 

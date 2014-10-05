@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 # vim: ft=sh
 
-_chocomint_match_file() {
+_chm_match_file() {
   # $1 right string
-  local _chocomint_matching=false
-  local _chocomint_opt="$1"
-  local _chocomint_string="$2"
+  local _chm_matching=false
+  local _chm_opt="$1"
+  local _chm_string="$2"
   shift 2
 
-  for _chocomint_file in "$@"
+  for _chm_file in "$@"
   do
-    if grep $_chocomint_opt -q "$_chocomint_string" "$_chocomint_file"
+    if grep $_chm_opt -q "$_chm_string" "$_chm_file"
     then
-      _chocomint_matching=true
+      _chm_matching=true
     fi
   done
 
-  $_chocomint_matching && return 0 || return 1
+  $_chm_matching && return 0 || return 1
 }
 
-_chocomint_judge() {
+_chm_judge() {
   # $1 left string
   # $2 middle string
   # $3 right string
@@ -116,8 +116,8 @@ _chocomint_judge() {
           fi
           ;;
         'output' )
-          [ "$2" = ':~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
-          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_OUT" "$CHOCOMINT_CMD_ERR"
+          [ "$2" = ':~' ] && local _chm_opt='-E' || local _chm_opt='-F'
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT" "$_CHM_CMD_ERR"
           then
             return 0
           else
@@ -125,16 +125,16 @@ _chocomint_judge() {
           fi
           ;;
         'stdout' )
-          [ "$2" = ':~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
-          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_OUT"; then
+          [ "$2" = ':~' ] && local _chm_opt='-E' || local _chm_opt='-F'
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT"; then
             return 0
           else
             return 1
           fi
           ;;
         'stderr' )
-          [ "$2" = ':~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
-          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_ERR"; then
+          [ "$2" = ':~' ] && local _chm_opt='-E' || local _chm_opt='-F'
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_ERR"; then
             return 0
           else
             return 1
@@ -152,24 +152,24 @@ _chocomint_judge() {
           fi
           ;;
         'output' )
-          [ "$2" = '!:~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
-          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_OUT" "$CHOCOMINT_CMD_ERR"; then
+          [ "$2" = '!:~' ] && local _chm_opt='-E' || local _chm_opt='-F'
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT" "$_CHM_CMD_ERR"; then
             return 1
           else
             return 0
           fi
           ;;
         'stdout' )
-          [ "$2" = '!:~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
-          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_OUT"; then
+          [ "$2" = '!:~' ] && local _chm_opt='-E' || local _chm_opt='-F'
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT"; then
             return 1
           else
             return 0
           fi
           ;;
         'stderr' )
-          [ "$2" = '!:~' ] && local _chocomint_opt='-E' || local _chocomint_opt='-F'
-          if _chocomint_match_file $_chocomint_opt "$3" "$CHOCOMINT_CMD_ERR"; then
+          [ "$2" = '!:~' ] && local _chm_opt='-E' || local _chm_opt='-F'
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_ERR"; then
             return 1
           else
             return 0
@@ -180,4 +180,4 @@ _chocomint_judge() {
   esac
 }
 
-_chocomint_judge "$@"
+_chm_judge "$@"

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # vim: ft=sh
 
-declare -A CHOCOMINT_DB
-declare -a CHOCOMINT_TEST_POSITION # "NL" or "EOL"
+declare -A _CHM_DB
+declare -a _CHM_TEST_POSITION # "NL" or "EOL"
 declare -i LINE_NUMBER=1
 declare -i OFFSET_NUMBER=1
 declare -i TEST_INDEX=-1
@@ -16,7 +16,7 @@ error() {
 
   local begin_col=$((LINE_NUMBER - 3))
   local end_col=$((LINE_NUMBER + 3))
-  local file_max_lines=`cat "$CHOCOMINT_TARGET_FULLPATH" | wc -l`
+  local file_max_lines=`cat "$_CHM_TARGET_FULLPATH" | wc -l`
   local offset=""
 
   [ $begin_col -lt 1 ] && begin_col=1
@@ -25,7 +25,7 @@ error() {
   local cols_count=$begin_col
   local padding=${#end_col}
 
-  echo -e "in \`$CHOCOMINT_TARGET_FULLPATH\` (${LINE_NUMBER}L)"
+  echo -e "in \`$_CHM_TARGET_FULLPATH\` (${LINE_NUMBER}L)"
   echo
   while read -r line; do
     if [ $cols_count -eq $LINE_NUMBER ]; then
@@ -36,16 +36,16 @@ error() {
       echo " `printf "%${padding}d" $cols_count` |  $line"
     fi
     ((cols_count++))
-  done < <(sed -n "${begin_col},${end_col}p" "$CHOCOMINT_TARGET_FULLPATH")
+  done < <(sed -n "${begin_col},${end_col}p" "$_CHM_TARGET_FULLPATH")
   echo
 
   ERROR=true
 }
 
 valid() {
-  local left=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,left]}
-  local mid=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,mid]}
-  local right=${CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]}
+  local left=${_CHM_DB[$LINE_NUMBER,$TEST_INDEX,left]}
+  local mid=${_CHM_DB[$LINE_NUMBER,$TEST_INDEX,mid]}
+  local right=${_CHM_DB[$LINE_NUMBER,$TEST_INDEX,right]}
 
   case $mid in
     '='|'!='|'=~'|'!=~' )
@@ -163,9 +163,9 @@ parse_test_right() {
       [ "$TEST_COMMENT" = "" ] && {
         error "\`$TEST_COMMENT\`: No Test Contents >> EOL is here."
       }
-      CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
-      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_INDEX"
+      _CHM_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
+      _CHM_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
+      _CHM_DB[$LINE_NUMBER,max]="$TEST_INDEX"
       valid
       PARSE_METHOD="parse_nl"
       TEST_COMMENT=""
@@ -176,7 +176,7 @@ parse_test_right() {
         error "\`$TEST_COMMENT\`: No Test Contents >> Is there an illegal blank character?"
         return
       }
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
+      _CHM_DB[$LINE_NUMBER,$TEST_INDEX,right]="$TEST_COMMENT"
       valid
       PARSE_METHOD="parse_test_main"
       TEST_COMMENT=""
@@ -194,7 +194,7 @@ parse_test_mid() {
       TEST_COMMENT="$TEST_COMMENT""$1"
       ;;
     * )
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,mid]="$TEST_COMMENT"
+      _CHM_DB[$LINE_NUMBER,$TEST_INDEX,mid]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_right"
       parse_test_right "$1"
@@ -218,7 +218,7 @@ parse_test_left() {
       PARSE_METHOD="parse_test_bs"
       ;;
     "!"|"="|":" )
-      CHOCOMINT_DB[$LINE_NUMBER,$TEST_INDEX,left]="$TEST_COMMENT"
+      _CHM_DB[$LINE_NUMBER,$TEST_INDEX,left]="$TEST_COMMENT"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_mid"
       parse_test_mid "$1"
@@ -239,8 +239,8 @@ parse_test_main() {
       :
       ;;
     "" )
-      CHOCOMINT_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
-      CHOCOMINT_DB[$LINE_NUMBER,max]="$TEST_INDEX"
+      _CHM_TEST_POSITION[LINE_NUMBER]="$COMMENT_IN"
+      _CHM_DB[$LINE_NUMBER,max]="$TEST_INDEX"
       PARSE_METHOD="parse_nl"
       TEST_COMMENT=""
       ;;
@@ -414,16 +414,16 @@ main() {
     exit 1
   }
 
-  declare -p CHOCOMINT_TEST_POSITION > /dev/null 2>&1 || {
+  declare -p _CHM_TEST_POSITION > /dev/null 2>&1 || {
     echo "Test is not defined"
     exit 1
   }
-  declare -p CHOCOMINT_DB            > /dev/null 2>&1 || {
+  declare -p _CHM_DB            > /dev/null 2>&1 || {
     echo "Test is not defined"
     exit 1
   }
-  declare -p CHOCOMINT_TEST_POSITION > $CHOCOMINT_TEST_POSITION_FILE
-  declare -p CHOCOMINT_DB            > $CHOCOMINT_DB_FILE
+  declare -p _CHM_TEST_POSITION > $_CHM_TEST_POSITION_FILE
+  declare -p _CHM_DB            > $_CHM_DB_FILE
 }
 
 main "$@"

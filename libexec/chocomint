@@ -1,187 +1,176 @@
 #!/usr/bin/env bash
 
-_CHOCOMINT_NAME='chocomint.sh'
-_CHOCOMINT_VERSION='0.3.0-dev'
+_CHM_NAME='chocomint.sh'
+_CHM_VERSION='0.3.0-dev'
 
-export CHOCOMINT_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
-export CHOCOMINT_TARGET_FULLPATH="$(readlink -f -- "$1")"
+export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
+export _CHM_TARGET_FULLPATH="$(readlink -f -- "$1")"
 
-export CHOCOMINT_TEST_POSITION_FILE="/tmp/_chocomint_test_pos.$$"
-export CHOCOMINT_DB_FILE="/tmp/_chocomint_test_db.$$"
+export _CHM_TEST_POSITION_FILE="/tmp/_chm_test_pos.$$"
+export _CHM_DB_FILE="/tmp/_chm_test_db.$$"
 
-CHOCOMINT_CMD_OUT="/tmp/_chocomint_command_stdout.$$.log"
-CHOCOMINT_CMD_ERR="/tmp/_chocomint_command_stderr.$$.log"
+_CHM_CMD_OUT="/tmp/_chm_command_stdout.$$.log"
+_CHM_CMD_ERR="/tmp/_chm_command_stderr.$$.log"
 
-CHOCOMINT_CMD_SUCCESS=0
-_CHOCOMINT_CMD_COUNT=0
-_CHOCOMINT_TEST_FAILURE=0
-_CHOCOMINT_TEST_SUCCESS=0
-_CHOCOMINT_TEST_COUNT=0
-_CHOCOMINT_FAILURE=false
-_CHOCOMINT_TEST_EXIST=false
-_CHOCOMINT_TIME_START=''
+_CHM_CMD_SUCCESS=0
+_CHM_CMD_COUNT=0
+_CHM_TEST_FAILURE=0
+_CHM_TEST_SUCCESS=0
+_CHM_TEST_COUNT=0
+_CHM_FAILURE=false
+_CHM_TEST_EXIST=false
+_CHM_TIME_START=''
 
-source $CHOCOMINT_LIBEXEC/lib/outputs
+source $_CHM_LIBEXEC/chocomint-lib/outputs
 
-_chocomint_aggregate_results() {
+_chm_aggregate_results() {
   # $1 exitstatus
-  ((_CHOCOMINT_CMD_COUNT++))
-  local _chocomint_cmd_failure=false
-  local _chocomint_left
-  local _chocomint_mid
-  local _chocomint_right
+  ((_CHM_CMD_COUNT++))
+  local _chm_cmd_failure=false
+  local _chm_left
+  local _chm_mid
+  local _chm_right
 
-  for _chocomint_i in $(seq 0 ${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,max]})
+  for _chm_i in $(seq 0 ${_CHM_DB[$_CHM_TESTLINE,max]})
   do
-    ((_CHOCOMINT_TEST_COUNT++))
-    _chocomint_left="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,left]}")"
-    _chocomint_mid="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,mid]}")"
-    _chocomint_right="$(eval echo "${CHOCOMINT_DB[$CHOCOMINT_TESTLINE,$_chocomint_i,right]}")"
+    ((_CHM_TEST_COUNT++))
+    _chm_left="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},left]}")"
+    _chm_mid="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},mid]}")"
+    _chm_right="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},right]}")"
 
-    if source $CHOCOMINT_LIBEXEC/judge \
-        "$_chocomint_left" \
-        "$_chocomint_mid" \
-        "$_chocomint_right" \
-        "$1"
+    if source $_CHM_LIBEXEC/chocomint-judge "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
     then
-      ((_CHOCOMINT_TEST_SUCCESS++))
-      chocomint_outputs.ok \
-        "$_chocomint_left" \
-        "$_chocomint_mid" \
-        "$_chocomint_right" \
-        "$1"
+      ((_CHM_TEST_SUCCESS++))
+      _chm_outputs.ok "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
     else
-      ((_CHOCOMINT_TEST_FAILURE++))
-      chocomint_outputs.ng \
-        "$_chocomint_left" \
-        "$_chocomint_mid" \
-        "$_chocomint_right" \
-        "$1"
-      _chocomint_cmd_failure=true
-      _CHOCOMINT_FAILURE=true
+      ((_CHM_TEST_FAILURE++))
+      _chm_outputs.ng "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
+      _chm_cmd_failure=true
+      _CHM_FAILURE=true
     fi
   done
 
-  chocomint_outputs.stdouterr "$_chocomint_cmd_failure"
+  _chm_outputs.stdouterr "$_chm_cmd_failure"
 }
 
 
-_chocomint_prepare_execution() {
-  _CHOCOMINT_LINENO_CACHE="$1"
+_chm_prepare_execution() {
+  _CHM_LINENO_CACHE="$1"
 
-  if [ "${CHOCOMINT_TEST_POSITION[$1]-}" = "EOL" ]; then
-    _CHOCOMINT_TEST_EXIST=true
-    CHOCOMINT_TESTLINE="$1"
-  elif [ "${CHOCOMINT_TEST_POSITION[$(($1+1))]-}" = "NL" ]; then
-    _CHOCOMINT_TEST_EXIST=true
-    CHOCOMINT_TESTLINE="$(($1+1))"
+  if [ "${_CHM_TEST_POSITION[$1]-}" = "EOL" ]; then
+    _CHM_TEST_EXIST=true
+    _CHM_TESTLINE="$1"
+  elif [ "${_CHM_TEST_POSITION[$((${1}+1))]-}" = "NL" ]; then
+    _CHM_TEST_EXIST=true
+    _CHM_TESTLINE="$((${1}+1))"
   else
-    _CHOCOMINT_TEST_EXIST=false
+    _CHM_TEST_EXIST=false
   fi
 
-  $_CHOCOMINT_TEST_EXIST && {
-    : > $CHOCOMINT_CMD_OUT
-    : > $CHOCOMINT_CMD_ERR
-    chocomint_outputs.command "$2"
+  $_CHM_TEST_EXIST && {
+    : > $_CHM_CMD_OUT
+    : > $_CHM_CMD_ERR
+    _chm_outputs.command "$2"
   }
 }
 
 
-_chocomint_trap() {
+_chm_trap() {
   # $1 line number
   # $2 source path
-  local _chocomint_prev_stat="$?"
+  local _chm_prev_stat="$?"
 
-  [ "$_CHOCOMINT_TIME_START" ] && {
-    $CHOCOMINT_BC_COMMAND_EXIST && {
-      CHOCOMINT_TIME_RESULT=$(
-        echo "$(date +%s.%N) - $_CHOCOMINT_TIME_START" |
+  [ "$_CHM_TIME_START" ] && {
+    $_CHM_BC_COMMAND_EXIST && {
+      _CHM_TIME_RESULT=$(
+        echo "$(date +%s.%N) - $_CHM_TIME_START" |
         bc |
         sed -e 's/^\./0\./'
       )
     }
   }
 
-  if [ "$2" = "$CHOCOMINT_TARGET_FULLPATH" ]; then
-    $_CHOCOMINT_TEST_EXIST &&
-      _chocomint_aggregate_results "$_chocomint_prev_stat"
-    _chocomint_prepare_execution "$1" "$BASH_COMMAND"
+  if [ $3 -eq $_CHM_TARGETFILE_STACK_LEVEL ]; then
+    $_CHM_TEST_EXIST &&
+      _chm_aggregate_results "$_chm_prev_stat"
+    _chm_prepare_execution "$1" "$BASH_COMMAND"
   fi
 
-  _CHOCOMINT_TIME_START=$(date +%s.%N)
+  _CHM_TIME_START=$(date +%s.%N)
 }
 
 
-_chocomint_run_test() {
-  exec 3>&1 4>&2 1> $CHOCOMINT_CMD_OUT 2> $CHOCOMINT_CMD_ERR
-  set -T; trap '_chocomint_trap "$LINENO" "$BASH_SOURCE"' DEBUG
+_chm_run_test() {
+  exec 3>&1 4>&2 1> $_CHM_CMD_OUT 2> $_CHM_CMD_ERR
+  set -T; trap '_chm_trap "$LINENO" "$BASH_SOURCE" "${#FUNCNAME[*]}"' DEBUG
+  _CHM_TARGETFILE_STACK_LEVEL=$((${#FUNCNAME[*]} + 1))
   source "$1"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T
-  $_CHOCOMINT_TEST_EXIST &&
-    _chocomint_aggregate_results "$exitstat"
+  $_CHM_TEST_EXIST &&
+    _chm_aggregate_results "$exitstat"
   exec 1>&3- 2>&4-
-  rm "$CHOCOMINT_CMD_OUT" \
-     "$CHOCOMINT_CMD_ERR" \
-     "$CHOCOMINT_TEST_POSITION_FILE" \
-     "$CHOCOMINT_DB_FILE"
+  rm "$_CHM_CMD_OUT" \
+     "$_CHM_CMD_ERR" \
+     "$_CHM_TEST_POSITION_FILE" \
+     "$_CHM_DB_FILE"
 }
 
 
-_chocomint_main() {
-  local _chocomint_parsing_results
-  local _chocomint_parsing_exit_status
+_chm_main() {
+  local _chm_parsing_results
+  local _chm_parsing_exit_status
 
-  [ "$CHOCOMINT_TARGET_FULLPATH" ] || {
+  [ "$_CHM_TARGET_FULLPATH" ] || {
     echo "No target file"
     exit 2
   }
 
-  [ -f "$CHOCOMINT_TARGET_FULLPATH" ] || {
-    echo "No such a file: $CHOCOMINT_TARGET_FULLPATH"
+  [ -f "$_CHM_TARGET_FULLPATH" ] || {
+    echo "No such a file: $_CHM_TARGET_FULLPATH"
     exit 3
   }
 
   if type tput > /dev/null 2>&1
   then
-    _CHOCOMINT_TPUT_COMMAND_EXIST=true
-    export CHOCOMINT_TPUT="tput"
+    _CHM_TPUT_COMMAND_EXIST=true
+    export _CHM_TPUT="tput"
   else
     echo "WARN: \"tput\" command is not found"
     echo "WARN: run without coloring"
     echo
-    _CHOCOMINT_TPUT_COMMAND_EXIST=false
-    export CHOCOMINT_TPUT="true"
+    _CHM_TPUT_COMMAND_EXIST=false
+    export _CHM_TPUT="true"
   fi
 
   if type bc > /dev/null 2>&1
   then
-    export CHOCOMINT_BC_COMMAND_EXIST=true
+    export _CHM_BC_COMMAND_EXIST=true
   else
     echo "WARN: \"bc\" command is not found"
     echo "WARN: unable to display the execution time of commands"
     echo
-    export CHOCOMINT_BC_COMMAND_EXIST=false
+    export _CHM_BC_COMMAND_EXIST=false
   fi
 
   echo 'Parsing tests...'
-  $CHOCOMINT_LIBEXEC/parse "$1" || exit $?
-  source $CHOCOMINT_TEST_POSITION_FILE
-  source $CHOCOMINT_DB_FILE
+  $_CHM_LIBEXEC/chocomint-parse "$1" || exit $?
+  source $_CHM_TEST_POSITION_FILE
+  source $_CHM_DB_FILE
 
-  chocomint_outputs.title "$_CHOCOMINT_NAME $_CHOCOMINT_VERSION"
+  _chm_outputs.title "$_CHM_NAME $_CHM_VERSION"
 
-  _chocomint_run_test "$1"
+  _chm_run_test "$1"
 
-  chocomint_outputs.overall_results \
-    "$_CHOCOMINT_TEST_FAILURE" \
-    "$_CHOCOMINT_TEST_SUCCESS" \
-    "$_CHOCOMINT_TEST_COUNT" \
-    "$CHOCOMINT_CMD_SUCCESS" \
-    "$_CHOCOMINT_CMD_COUNT"
+  _chm_outputs.overall_results \
+    "$_CHM_TEST_FAILURE" \
+    "$_CHM_TEST_SUCCESS" \
+    "$_CHM_TEST_COUNT" \
+    "$_CHM_CMD_SUCCESS" \
+    "$_CHM_CMD_COUNT"
 
-  $_CHOCOMINT_FAILURE && return $_CHOCOMINT_TEST_FAILURE
+  $_CHM_FAILURE && return 1
   return 0
 }
 
-_chocomint_main "$CHOCOMINT_TARGET_FULLPATH"
+_chm_main "$_CHM_TARGET_FULLPATH"

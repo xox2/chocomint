@@ -70,6 +70,20 @@ function _chm_.judgeout() {
       ;;
     'output' )
       case $4 in
+        '::' )
+          case $5 in
+            'None' )
+              _chm_.echo "outputs should be nothing"
+              ;;
+          esac
+          ;;
+        '!::' )
+          case $5 in
+            'None' )
+              _chm_.echo "outputs should NOT be nothing"
+              ;;
+          esac
+          ;;
         ':' )
           _chm_.print "fixed-strings \`"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
@@ -94,6 +108,20 @@ function _chm_.judgeout() {
       ;;
     'stdout' )
       case $4 in
+        '::' )
+          case $5 in
+            'None' )
+              _chm_.echo "STDOUT should be nothing"
+              ;;
+          esac
+          ;;
+        '!::' )
+          case $5 in
+            'None' )
+              _chm_.echo "STDOUT should NOT be nothing"
+              ;;
+          esac
+          ;;
         ':' )
           _chm_.print "fixed-strings \`"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
@@ -118,6 +146,20 @@ function _chm_.judgeout() {
       ;;
     'stderr' )
       case $4 in
+        '::' )
+          case $5 in
+            'None' )
+              _chm_.echo "STDERR should be nothing"
+              ;;
+          esac
+          ;;
+        '!::' )
+          case $5 in
+            'None' )
+              _chm_.echo "STDERR should NOT be nothing"
+              ;;
+          esac
+          ;;
         ':' )
           _chm_.print "fixed-strings \`"
           _chm_.tprint "$_chm_opt_tput" -- "$5"

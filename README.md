@@ -118,34 +118,51 @@ Identifier of beginning the test comment is `#:`
 
 ### Resource
 
-| Resource Type    | Resource Identifier | Description
-|------------------|---------------------|-------------
-| _Status_         | `status`            | Exit status code
-| _Output_         | `output`            | Standard output and Standard Error output
-|                  | `stdout`            | Standard output Only
-|                  | `stderr`            | Standard Error output Only
-| _Plain Strings_  | _(none)_            | Plain strings of Bash
+#### Status
+
+| Resource Identifier | Description
+|---------------------|-------------
+| `status`            | Exit status code
+
+#### Output
+
+| Resource Identifier | Description
+|---------------------|-------------
+| `output`            | Standard output and Standard Error output
+| `stdout`            | Standard output Only
+| `stderr`            | Standard Error output Only
+
+#### Plain Strings
+
+Plain strings of Bash. It's `'   '` or `"   "`.
 
 ### Matcher
 
-| Status Matcher | Description                         | Example       |
-|----------------|-------------------------------------|---------------|
-| `:`            | Exit code is equal to the value     | `status:0`    |
-| `!:`           | Exit code is NOT equal to the value | `status!:127` |
+#### Status
 
-| Output Matcher | Description                 | Example
-|----------------|-----------------------------|-------------
-| `:`            | match fixed strings         | `output:'foo bar'`
-| `:~`           | match extended regexp       | `stdout:~'std.*'`
-| `!:`           | NOT match fixed strings     | `stderr!:'hoge hoge'`
-| `!:~`          | NOT match extended regexp   | `output!:~'reg.xp'`
+| Matcher | Description                         | Example                   |
+|---------|-------------------------------------|---------------------------|
+| `:`     | Exit code is equal to the value     | `status:0`                |
+| `!:`    | Exit code is NOT equal to the value | `status!:127`             |
 
-| Plain Strings Matcher | Description                | Example
-|-----------------------|----------------------------|--------------
-| `=`                   | match fixed strings        | `"a $bee c"='a b c'`
-| `=~`                  | match extended regexp      | `"a $bee c"=~'a.*c'`
-| `!=`                  | NOT match fixed strings    | `"a $bee foo"!='b a foo'`
-| `!=~`                 | NOT match extended regexp  | `"a $bee bar"!=~'b.*bar'`
+#### Output
+
+| Matcher  | Description                         | Example                   |
+|----------|-------------------------------------|---------------------------|
+| `:`      | match fixed strings                 | `output:'foo bar'`
+| `:~`     | match extended regexp               | `stdout:~'std.*'`
+| `!:`     | NOT match fixed strings             | `stderr!:'hoge hoge'`
+| `!:~`    | NOT match extended regexp           | `output!:~'reg.xp'`
+| `::None` | outputs noting                      | `output::None`
+
+#### Plain Strings
+
+| Matcher | Description                         | Example                   |
+|---------|-------------------------------------|---------------------------|
+| `=`     | match fixed strings                 | `"a $bee c"='a b c'`
+| `=~`    | match extended regexp               | `"a $bee c"=~'a.*c'`
+| `!=`    | NOT match fixed strings             | `"a $bee foo"!='b a foo'`
+| `!=~`   | NOT match extended regexp           | `"a $bee bar"!=~'b.*bar'`
 
 ## Requirement
 

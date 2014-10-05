@@ -120,21 +120,36 @@ Identifier of beginning the test comment is `#:`
 
 #### Status
 
-| Resource Identifier | Description
-|---------------------|-------------
-| `status`            | Exit status code
+| Identifier | Description
+|------------|-------------
+| `status`   | Exit status code
+
+``` bash
+# Example:
+false #: status:1
+```
 
 #### Output
 
-| Resource Identifier | Description
-|---------------------|-------------
-| `output`            | Standard output and Standard Error output
-| `stdout`            | Standard output Only
-| `stderr`            | Standard Error output Only
+| Identifier | Description
+|------------|-------------
+| `output`   | Standard output and Standard Error output
+| `stdout`   | Standard output Only
+| `stderr`   | Standard Error output Only
+
+``` bash
+# Example:
+echo 'hello' #: stdout:'hello'
+```
 
 #### Plain Strings
 
-Plain strings of Bash. It's `'   '` or `"   "`.
+Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`. Of course, you can include variables to these strings. `"it is ${any_variable}"`
+
+``` bash
+# Example:
+name=${USER} #: "${name}"='bob'
+```
 
 ### Matcher
 
@@ -153,7 +168,7 @@ Plain strings of Bash. It's `'   '` or `"   "`.
 | `:~`     | match extended regexp               | `stdout:~'std.*'`
 | `!:`     | NOT match fixed strings             | `stderr!:'hoge hoge'`
 | `!:~`    | NOT match extended regexp           | `output!:~'reg.xp'`
-| `::None` | outputs noting                      | `output::None`
+| `::None` | outputs NOTHING                     | `output::None`
 
 #### Plain Strings
 

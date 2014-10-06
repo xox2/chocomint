@@ -56,7 +56,7 @@ valid() {
         'status' )
           case $mid in
             ':~'|'!:~' )
-              error "\`$mid\`: Invalid Matcher for 'status'"
+              error "\`$mid\`: Invalid Matcher. Resource Type is 'status' here"
               ;;
           esac
           [ $right -ge 0 ] > /dev/null 2>&1 || error "\`$right\`: Invalid Status Code"
@@ -69,7 +69,7 @@ valid() {
                   :
                   ;;
                 * )
-                  error "\`$right\`: Invalid Resource Status"
+                  error "\`$right\`: Invalid Keyword"
                   ;;
               esac
               ;;

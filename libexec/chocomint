@@ -117,17 +117,15 @@ _chm_run_test() {
 }
 
 
-_chm_main() {
-  local _chm_parsing_results
-  local _chm_parsing_exit_status
-
-  [ "$_CHM_TARGET_FULLPATH" ] || {
+_chm_first_check() {
+  # $1 target fullpath
+  [ "$1" ] || {
     echo "No target file"
     exit 2
   }
 
-  [ -f "$_CHM_TARGET_FULLPATH" ] || {
-    echo "No such a file: $_CHM_TARGET_FULLPATH"
+  [ -f "$1" ] || {
+    echo "No such a file: $1"
     exit 3
   }
 
@@ -152,6 +150,15 @@ _chm_main() {
     echo
     export _CHM_BC_COMMAND_EXIST=false
   fi
+}
+
+
+_chm_main() {
+  # $1 target fullpath
+  local _chm_parsing_results
+  local _chm_parsing_exit_status
+
+  _chm_first_check "$1"
 
   echo 'Parsing tests...'
   $_CHM_LIBEXEC/chocomint-parse "$1" || exit $?

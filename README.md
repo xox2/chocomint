@@ -168,7 +168,10 @@ name=${USER} #: "${name}"='bob'
 | `:~`     | match extended regexp               | `stdout:~'std.*'`
 | `!:`     | NOT match fixed strings             | `stderr!:'hoge hoge'`
 | `!:~`    | NOT match extended regexp           | `output!:~'reg.xp'`
-| `::None` | outputs NOTHING                     | `output::None`
+
+| Matcher  | Keyword | Description     | Example         |
+|----------|---------|-----------------|-----------------|
+| `::`     | `None`  | outputs NOTHING | `output::None`
 
 #### Plain Strings
 

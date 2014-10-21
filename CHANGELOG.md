@@ -2,7 +2,8 @@
 
 ## 0.3.0 ()
 
-- Add `::` Matcher, `None` Keyword
+- Add `::None` Matcher
+- Allow multiple files inputs
 
 ## 0.2.2 (2014-09-21)
 

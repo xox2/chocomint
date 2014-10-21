@@ -58,6 +58,12 @@ or run `chocomint` directly.
 $ chocomint test.sh
 ```
 
+You can input multiple files.
+
+```
+$ chocomint test_a test_b test_c
+```
+
 #### Results
 
 - If all tests are __successful__, chocomint will return __0__.

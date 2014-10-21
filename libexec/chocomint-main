@@ -103,7 +103,9 @@ _chm_run_test() {
 
 
 _chm_parse(){
-  echo "Parsing tests... \"$1\""
+  echo
+  echo " * Parsing tests... \"$1\""
+  echo
   ${_CHM_LIBEXEC}/chocomint-parse "$1" || exit $?
 }
 

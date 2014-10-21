@@ -3,12 +3,13 @@
 
 declare -A _CHM_DB
 declare -a _CHM_TEST_POSITION # "NL" or "EOL"
-declare -i LINE_NUMBER=1
-declare -i OFFSET_NUMBER=1
-declare -i TEST_INDEX=-1
-declare TEST_MARKER=":"
-declare PARSE_METHOD="parse_nl" # initial parse-method
-declare ERROR=false
+
+LINE_NUMBER=1
+OFFSET_NUMBER=1
+TEST_INDEX=-1
+TEST_MARKER=":"
+PARSE_METHOD="parse_nl" # initial parse-method
+ERROR=false
 
 error() {
   echo "`tput bold``tput setaf 1`[PARSER ERROR]`tput sgr0`"

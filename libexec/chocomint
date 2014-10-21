@@ -3,13 +3,10 @@
 _CHM_NAME='chocomint.sh'
 _CHM_VERSION='0.3.0-dev'
 
-export _CHM_TARGET_FULLPATH="$(readlink -f -- "$1")"
 export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
-
 source ${_CHM_LIBEXEC}/chocomint-lib/outputs
 
 export _CHM_TEST_RESULTS_FILE="/tmp/_chm_test_results.$$"
-
 # variables in _CHM_TEST_RESULTS_FILE
 export _CHM_TEST_FAILURE=0
 export _CHM_TEST_SUCCESS=0
@@ -19,7 +16,7 @@ export _CHM_CMD_COUNT=0
 export _CHM_FAILURE=false
 
 
-_chm_first_check() {
+_chm_system_check() {
   #
   # "tput" exist check
   #
@@ -50,34 +47,42 @@ _chm_first_check() {
 
 _chm_file_check() {
   # $1 target fullpath
-
-  [ "$1" ] || {
-    echo "No target file"
-    exit 2
-  }
-
   [ -f "$1" ] || {
-    echo "No such a file: $1"
+    echo "No such a file: $1" 1>&2
     exit 3
   }
 }
 
 
 _chm_main() {
-  # $1 target fullpath
+  [ "$1" ] || {
+    echo "No target file" 1>&2
+    exit 2
+  }
 
-  _chm_first_check
+  _chm_system_check
 
   _chm_outputs.title "${_CHM_NAME} ${_CHM_VERSION}"
 
-  _chm_file_check "$1"
+  for i in "$@"
+  do
+    local _chm_fullpath_list=("${_chm_fullpath_list[@]}" "$(readlink -f -- "${i}")")
+  done
 
-  ${_CHM_LIBEXEC}/chocomint-main "$1"
+  for i in "${_chm_fullpath_list[@]}"
+  do
+    _chm_file_check "${i}"
+  done
 
-  [ -f "${_CHM_TEST_RESULTS_FILE}" ] && {
-    source ${_CHM_TEST_RESULTS_FILE}
-    rm ${_CHM_TEST_RESULTS_FILE}
-  }
+  for i in "${_chm_fullpath_list[@]}"
+  do
+    ${_CHM_LIBEXEC}/chocomint-main "${i}"
+
+    [ -f "${_CHM_TEST_RESULTS_FILE}" ] && {
+      source ${_CHM_TEST_RESULTS_FILE}
+      rm ${_CHM_TEST_RESULTS_FILE}
+    }
+  done
 
   _chm_outputs.overall_results \
     "${_CHM_TEST_FAILURE}"     \
@@ -89,4 +94,4 @@ _chm_main() {
   ${_CHM_FAILURE} && return 1 || return 0
 }
 
-_chm_main "${_CHM_TARGET_FULLPATH}"
+_chm_main "$@"

@@ -24,6 +24,57 @@ _chm_judge() {
   # $2 middle string
   # $3 right string
   # $4 exit status
+  case $1 in
+    'output' )
+      case $2 in
+        '::'|'!::' )
+          case $3 in
+            'None' )
+              if [ ! -s "$CHOCOMINT_CMD_OUT" ] && [ ! -s "$CHOCOMINT_CMD_ERR" ]
+              then
+                [ "$2" = '::' ] && return 0 || return 1
+              else
+                [ "$2" = '::' ] && return 1 || return 0
+              fi
+              ;;
+          esac
+          ;;
+      esac
+      ;;
+    'stdout' )
+      case $2 in
+        '::'|'!::' )
+          case $3 in
+            'None' )
+              if [ ! -s "$CHOCOMINT_CMD_OUT" ]
+              then
+                [ "$2" = '::' ] && return 0 || return 1
+              else
+                [ "$2" = '::' ] && return 1 || return 0
+              fi
+              ;;
+          esac
+          ;;
+      esac
+      ;;
+    'stderr' )
+      case $2 in
+        '::'|'!::' )
+          case $3 in
+            'None' )
+              if [ ! -s "$CHOCOMINT_CMD_ERR" ]
+              then
+                [ "$2" = '::' ] && return 0 || return 1
+              else
+                [ "$2" = '::' ] && return 1 || return 0
+              fi
+              ;;
+          esac
+          ;;
+      esac
+      ;;
+  esac
+
   case $2 in
     "=" )
       if [ "$1" = "$3" ]; then

@@ -21,7 +21,7 @@ Add test comments `#:` on Bash script.
 # test.sh
 
 ###
-### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE TESTS.
+### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE ALL TESTS.
 ###
 function dummy_func() {
   echo 'out error' 1>&2
@@ -58,6 +58,12 @@ or run `chocomint` directly.
 $ chocomint test.sh
 ```
 
+You can input multiple files.
+
+```
+$ chocomint test_a test_b test_c
+```
+
 #### Results
 
 - If all tests are __successful__, chocomint will return __0__.
@@ -65,17 +71,19 @@ $ chocomint test.sh
 
 ```
 $ ./test.sh
-Parsing tests...
-+++++++++++++++++++++++
- chocomint.sh 0.2.1-rc
-+++++++++++++++++++++++
+++++++++++++++++++++++++
+ chocomint.sh 0.3.0-dev
+++++++++++++++++++++++++
+
+ * Parsing tests... "/home/vagrant/github/chocomint.sh/tests/test.sh"
+
 ==> true
    ✔ status 0 should be 0
 0.00 seconds. succeeded.
 ==> echo "Hello"
    ✘ fixed-strings `hello` should match STDOUT
    ✔ status 0 should NOT be 1
-0.00 seconds. failed.
+0.01 seconds. failed.
 'STDERR' is nothing.
 
 >>> STDOUT BEGIN
@@ -118,34 +126,69 @@ Identifier of beginning the test comment is `#:`
 
 ### Resource
 
-| Resource Type    | Resource Identifier | Description
-|------------------|---------------------|-------------
-| _Status_         | `status`            | Exit status code
-| _Output_         | `output`            | Standard output and Standard Error output
-|                  | `stdout`            | Standard output Only
-|                  | `stderr`            | Standard Error output Only
-| _Plain Strings_  | _(none)_            | Plain strings of Bash
+#### Status
+
+| Identifier | Description
+|------------|-------------
+| `status`   | Exit status code
+
+``` bash
+# Example:
+false #: status:1
+```
+
+#### Output
+
+| Identifier | Description
+|------------|-------------
+| `output`   | Standard output and Standard Error output
+| `stdout`   | Standard output Only
+| `stderr`   | Standard Error output Only
+
+``` bash
+# Example:
+echo 'hello' #: stdout:'hello'
+```
+
+#### Plain Strings
+
+Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`. Of course, you can include variables to these strings. `"it is ${any_variable}"`
+
+``` bash
+# Example:
+name=${USER} #: "${name}"='bob'
+```
 
 ### Matcher
 
-| Status Matcher | Description                         | Example       |
-|----------------|-------------------------------------|---------------|
-| `:`            | Exit code is equal to the value     | `status:0`    |
-| `!:`           | Exit code is NOT equal to the value | `status!:127` |
+#### Status
 
-| Output Matcher | Description                 | Example
-|----------------|-----------------------------|-------------
-| `:`            | match fixed strings         | `output:'foo bar'`
-| `:~`           | match extended regexp       | `stdout:~'std.*'`
-| `!:`           | NOT match fixed strings     | `stderr!:'hoge hoge'`
-| `!:~`          | NOT match extended regexp   | `output!:~'reg.xp'`
+| Matcher | Description                         | Example                   |
+|---------|-------------------------------------|---------------------------|
+| `:`     | Exit code is equal to the value     | `status:0`                |
+| `!:`    | Exit code is NOT equal to the value | `status!:127`             |
 
-| Plain Strings Matcher | Description                | Example
-|-----------------------|----------------------------|--------------
-| `=`                   | match fixed strings        | `"a $bee c"='a b c'`
-| `=~`                  | match extended regexp      | `"a $bee c"=~'a.*c'`
-| `!=`                  | NOT match fixed strings    | `"a $bee foo"!='b a foo'`
-| `!=~`                 | NOT match extended regexp  | `"a $bee bar"!=~'b.*bar'`
+#### Output
+
+| Matcher  | Description                         | Example                   |
+|----------|-------------------------------------|---------------------------|
+| `:`      | match fixed strings                 | `output:'foo bar'`
+| `:~`     | match extended regexp               | `stdout:~'std.*'`
+| `!:`     | NOT match fixed strings             | `stderr!:'hoge hoge'`
+| `!:~`    | NOT match extended regexp           | `output!:~'reg.xp'`
+
+| Matcher  | Keyword | Description     | Example         |
+|----------|---------|-----------------|-----------------|
+| `::`     | `None`  | outputs NOTHING | `output::None`
+
+#### Plain Strings
+
+| Matcher | Description                         | Example                   |
+|---------|-------------------------------------|---------------------------|
+| `=`     | match fixed strings                 | `"a $bee c"='a b c'`
+| `=~`    | match extended regexp               | `"a $bee c"=~'a.*c'`
+| `!=`    | NOT match fixed strings             | `"a $bee foo"!='b a foo'`
+| `!=~`   | NOT match extended regexp           | `"a $bee bar"!=~'b.*bar'`
 
 ## Requirement
 
@@ -154,7 +197,16 @@ Identifier of beginning the test comment is `#:`
 
 ## License
 
-[The MIT License](https://github.com/tcnksm/tool/blob/master/LICENCE)
+[The MIT License](http://opensource.org/licenses/MIT)
+
+## Contribution
+
+1. Fork it
+2. Create a feature branch
+3. Commit your changes
+4. Rebase your local changes against the master branch
+5. Push to the branch
+6. Create new Pull Request
 
 ## Author
 

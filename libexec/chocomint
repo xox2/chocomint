@@ -1,148 +1,38 @@
 #!/usr/bin/env bash
 
 _CHM_NAME='chocomint.sh'
-_CHM_VERSION='0.2.2'
+_CHM_VERSION='0.3.0-dev'
 
 export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
-export _CHM_TARGET_FULLPATH="$(readlink -f -- "$1")"
+source ${_CHM_LIBEXEC}/chocomint-lib/outputs
 
-export _CHM_TEST_POSITION_FILE="/tmp/_chm_test_pos.$$"
-export _CHM_DB_FILE="/tmp/_chm_test_db.$$"
-
-_CHM_CMD_OUT="/tmp/_chm_command_stdout.$$.log"
-_CHM_CMD_ERR="/tmp/_chm_command_stderr.$$.log"
-
-_CHM_CMD_SUCCESS=0
-_CHM_CMD_COUNT=0
-_CHM_TEST_FAILURE=0
-_CHM_TEST_SUCCESS=0
-_CHM_TEST_COUNT=0
-_CHM_FAILURE=false
-_CHM_TEST_EXIST=false
-_CHM_TIME_START=''
-
-source $_CHM_LIBEXEC/chocomint-lib/outputs
-
-_chm_aggregate_results() {
-  # $1 exitstatus
-  ((_CHM_CMD_COUNT++))
-  local _chm_cmd_failure=false
-  local _chm_left
-  local _chm_mid
-  local _chm_right
-
-  for _chm_i in $(seq 0 ${_CHM_DB[$_CHM_TESTLINE,max]})
-  do
-    ((_CHM_TEST_COUNT++))
-    _chm_left="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},left]}")"
-    _chm_mid="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},mid]}")"
-    _chm_right="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},right]}")"
-
-    if source $_CHM_LIBEXEC/chocomint-judge "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
-    then
-      ((_CHM_TEST_SUCCESS++))
-      _chm_outputs.ok "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
-    else
-      ((_CHM_TEST_FAILURE++))
-      _chm_outputs.ng "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
-      _chm_cmd_failure=true
-      _CHM_FAILURE=true
-    fi
-  done
-
-  _chm_outputs.stdouterr "$_chm_cmd_failure"
-}
+export _CHM_TEST_RESULTS_FILE="/tmp/_chm_test_results.$$"
+# variables in _CHM_TEST_RESULTS_FILE
+export _CHM_TEST_FAILURE=0
+export _CHM_TEST_SUCCESS=0
+export _CHM_TEST_COUNT=0
+export _CHM_CMD_SUCCESS=0
+export _CHM_CMD_COUNT=0
+export _CHM_FAILURE=false
 
 
-_chm_prepare_execution() {
-  _CHM_LINENO_CACHE="$1"
-
-  if [ "${_CHM_TEST_POSITION[$1]-}" = "EOL" ]; then
-    _CHM_TEST_EXIST=true
-    _CHM_TESTLINE="$1"
-  elif [ "${_CHM_TEST_POSITION[$((${1}+1))]-}" = "NL" ]; then
-    _CHM_TEST_EXIST=true
-    _CHM_TESTLINE="$((${1}+1))"
-  else
-    _CHM_TEST_EXIST=false
-  fi
-
-  $_CHM_TEST_EXIST && {
-    : > $_CHM_CMD_OUT
-    : > $_CHM_CMD_ERR
-    _chm_outputs.command "$2"
-  }
-}
-
-
-_chm_trap() {
-  # $1 line number
-  # $2 source path
-  local _chm_prev_stat="$?"
-
-  [ "$_CHM_TIME_START" ] && {
-    $_CHM_BC_COMMAND_EXIST && {
-      _CHM_TIME_RESULT=$(
-        echo "$(date +%s.%N) - $_CHM_TIME_START" |
-        bc |
-        sed -e 's/^\./0\./'
-      )
-    }
-  }
-
-  if [ $3 -eq $_CHM_TARGETFILE_STACK_LEVEL ]; then
-    $_CHM_TEST_EXIST &&
-      _chm_aggregate_results "$_chm_prev_stat"
-    _chm_prepare_execution "$1" "$BASH_COMMAND"
-  fi
-
-  _CHM_TIME_START=$(date +%s.%N)
-}
-
-
-_chm_run_test() {
-  exec 3>&1 4>&2 1> $_CHM_CMD_OUT 2> $_CHM_CMD_ERR
-  set -T; trap '_chm_trap "$LINENO" "$BASH_SOURCE" "${#FUNCNAME[*]}"' DEBUG
-  _CHM_TARGETFILE_STACK_LEVEL=$((${#FUNCNAME[*]} + 1))
-  source "$1"; local exitstat=$?
-  # if the last command has a test, execute the analysis here.
-  trap DEBUG; set +T
-  $_CHM_TEST_EXIST &&
-    _chm_aggregate_results "$exitstat"
-  exec 1>&3- 2>&4-
-  rm "$_CHM_CMD_OUT" \
-     "$_CHM_CMD_ERR" \
-     "$_CHM_TEST_POSITION_FILE" \
-     "$_CHM_DB_FILE"
-}
-
-
-_chm_main() {
-  local _chm_parsing_results
-  local _chm_parsing_exit_status
-
-  [ "$_CHM_TARGET_FULLPATH" ] || {
-    echo "No target file"
-    exit 2
-  }
-
-  [ -f "$_CHM_TARGET_FULLPATH" ] || {
-    echo "No such a file: $_CHM_TARGET_FULLPATH"
-    exit 3
-  }
-
+_chm_system_check() {
+  #
+  # "tput" exist check
+  #
   if type tput > /dev/null 2>&1
   then
-    _CHM_TPUT_COMMAND_EXIST=true
     export _CHM_TPUT="tput"
   else
     echo "WARN: \"tput\" command is not found"
     echo "WARN: run without coloring"
     echo
-    _CHM_TPUT_COMMAND_EXIST=false
     export _CHM_TPUT="true"
   fi
 
+  #
+  # "bc" exist check
+  #
   if type bc > /dev/null 2>&1
   then
     export _CHM_BC_COMMAND_EXIST=true
@@ -152,25 +42,56 @@ _chm_main() {
     echo
     export _CHM_BC_COMMAND_EXIST=false
   fi
-
-  echo 'Parsing tests...'
-  $_CHM_LIBEXEC/chocomint-parse "$1" || exit $?
-  source $_CHM_TEST_POSITION_FILE
-  source $_CHM_DB_FILE
-
-  _chm_outputs.title "$_CHM_NAME $_CHM_VERSION"
-
-  _chm_run_test "$1"
-
-  _chm_outputs.overall_results \
-    "$_CHM_TEST_FAILURE" \
-    "$_CHM_TEST_SUCCESS" \
-    "$_CHM_TEST_COUNT" \
-    "$_CHM_CMD_SUCCESS" \
-    "$_CHM_CMD_COUNT"
-
-  $_CHM_FAILURE && return 1
-  return 0
 }
 
-_chm_main "$_CHM_TARGET_FULLPATH"
+
+_chm_file_check() {
+  # $1 target fullpath
+  [ -f "$1" ] || {
+    echo "No such a file: $1" 1>&2
+    exit 3
+  }
+}
+
+
+_chm_main() {
+  [ "$1" ] || {
+    echo "No target file" 1>&2
+    exit 2
+  }
+
+  _chm_system_check
+
+  _chm_outputs.title "${_CHM_NAME} ${_CHM_VERSION}"
+
+  for i in "$@"
+  do
+    local _chm_fullpath_list=("${_chm_fullpath_list[@]}" "$(readlink -f -- "${i}")")
+  done
+
+  for i in "${_chm_fullpath_list[@]}"
+  do
+    _chm_file_check "${i}"
+  done
+
+  for i in "${_chm_fullpath_list[@]}"
+  do
+    ${_CHM_LIBEXEC}/chocomint-main "${i}"
+
+    [ -f "${_CHM_TEST_RESULTS_FILE}" ] && {
+      source ${_CHM_TEST_RESULTS_FILE}
+      rm ${_CHM_TEST_RESULTS_FILE}
+    }
+  done
+
+  _chm_outputs.overall_results \
+    "${_CHM_TEST_FAILURE}"     \
+    "${_CHM_TEST_SUCCESS}"     \
+    "${_CHM_TEST_COUNT}"       \
+    "${_CHM_CMD_SUCCESS}"      \
+    "${_CHM_CMD_COUNT}"
+
+  ${_CHM_FAILURE} && return 1 || return 0
+}
+
+_chm_main "$@"

@@ -3,12 +3,13 @@
 
 declare -A _CHM_DB
 declare -a _CHM_TEST_POSITION # "NL" or "EOL"
-declare -i LINE_NUMBER=1
-declare -i OFFSET_NUMBER=1
-declare -i TEST_INDEX=-1
-declare TEST_MARKER=":"
-declare PARSE_METHOD="parse_nl" # initial parse-method
-declare ERROR=false
+
+LINE_NUMBER=1
+OFFSET_NUMBER=1
+TEST_INDEX=-1
+TEST_MARKER=":"
+PARSE_METHOD="parse_nl" # initial parse-method
+ERROR=false
 
 error() {
   echo "`tput bold``tput setaf 1`[PARSER ERROR]`tput sgr0`"
@@ -16,7 +17,7 @@ error() {
 
   local begin_col=$((LINE_NUMBER - 3))
   local end_col=$((LINE_NUMBER + 3))
-  local file_max_lines=`cat "$_CHM_TARGET_FULLPATH" | wc -l`
+  local file_max_lines=`cat "$TARGET_FULLPATH" | wc -l`
   local offset=""
 
   [ $begin_col -lt 1 ] && begin_col=1
@@ -25,7 +26,7 @@ error() {
   local cols_count=$begin_col
   local padding=${#end_col}
 
-  echo -e "in \`$_CHM_TARGET_FULLPATH\` (${LINE_NUMBER}L)"
+  echo -e "in \`$TARGET_FULLPATH\` (${LINE_NUMBER}L)"
   echo
   while read -r line; do
     if [ $cols_count -eq $LINE_NUMBER ]; then
@@ -36,7 +37,7 @@ error() {
       echo " `printf "%${padding}d" $cols_count` |  $line"
     fi
     ((cols_count++))
-  done < <(sed -n "${begin_col},${end_col}p" "$_CHM_TARGET_FULLPATH")
+  done < <(sed -n "${begin_col},${end_col}p" "$TARGET_FULLPATH")
   echo
 
   ERROR=true
@@ -51,18 +52,29 @@ valid() {
     '='|'!='|'=~'|'!=~' )
       :
       ;;
-    ':'|'!:'|':~'|'!:~' )
+    ':'|'!:'|':~'|'!:~'|'::'|'!::' )
       case $left in
         'status' )
           case $mid in
             ':~'|'!:~' )
-              error "\`$mid\`: Invalid Matcher for 'status'"
+              error "\`$mid\`: Invalid Matcher. Resource Type is 'status' here"
               ;;
           esac
           [ $right -ge 0 ] > /dev/null 2>&1 || error "\`$right\`: Invalid Status Code"
           ;;
         'output'|'stdout'|'stderr' )
-          :
+          case $mid in
+            '::'|'!::' )
+              case $right in
+                'None' )
+                  :
+                  ;;
+                * )
+                  error "\`$right\`: Invalid Keyword"
+                  ;;
+              esac
+              ;;
+          esac
           ;;
         * )
           error "\`$left\`: Invalid Resource Type"
@@ -384,7 +396,7 @@ parse_nl() {
 }
 
 main() {
-  local file=$1
+  TARGET_FULLPATH=$1
   local line
   local char
 
@@ -396,7 +408,7 @@ main() {
     OFFSET_NUMBER=1
     TEST_INDEX=-1 # reset index. '-1' means that there is no test.
     ((LINE_NUMBER++))
-  done < $file
+  done < $TARGET_FULLPATH
 
   $ERROR && {
     echo "`tput bold``tput setaf 1`aborted...`tput sgr0`"

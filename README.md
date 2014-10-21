@@ -21,7 +21,7 @@ Add test comments `#:` on Bash script.
 # test.sh
 
 ###
-### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE TESTS.
+### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE ALL TESTS.
 ###
 function dummy_func() {
   echo 'out error' 1>&2
@@ -198,6 +198,15 @@ name=${USER} #: "${name}"='bob'
 ## License
 
 [The MIT License](https://github.com/tcnksm/tool/blob/master/LICENCE)
+
+## Contribution
+
+1. Fork it
+2. Create a feature branch
+3. Commit your changes
+4. Rebase your local changes against the master branch
+5. Push to the branch
+6. Create new Pull Request
 
 ## Author
 

@@ -1,6 +1,6 @@
 # ChangeLog
 
-## 0.3.0 ()
+## 0.3.0 (2014-10-22)
 
 - Add `::` Matcher, `None` Keyword
 - Allow multiple files inputs

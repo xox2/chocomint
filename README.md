@@ -65,17 +65,19 @@ $ chocomint test.sh
 
 ```
 $ ./test.sh
-Parsing tests...
-+++++++++++++++++++++++
- chocomint.sh 0.2.1-rc
-+++++++++++++++++++++++
+++++++++++++++++++++++++
+ chocomint.sh 0.3.0-dev
+++++++++++++++++++++++++
+
+ * Parsing tests... "/home/vagrant/github/chocomint.sh/tests/test.sh"
+
 ==> true
    ✔ status 0 should be 0
 0.00 seconds. succeeded.
 ==> echo "Hello"
    ✘ fixed-strings `hello` should match STDOUT
    ✔ status 0 should NOT be 1
-0.00 seconds. failed.
+0.01 seconds. failed.
 'STDERR' is nothing.
 
 >>> STDOUT BEGIN

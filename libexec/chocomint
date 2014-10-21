@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 _CHM_NAME='chocomint.sh'
-_CHM_VERSION='0.3.0-dev'
+_CHM_VERSION='0.3.0'
 
 export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 source ${_CHM_LIBEXEC}/chocomint-lib/outputs

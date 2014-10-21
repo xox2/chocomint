@@ -197,7 +197,7 @@ name=${USER} #: "${name}"='bob'
 
 ## License
 
-[The MIT License](https://github.com/tcnksm/tool/blob/master/LICENCE)
+[The MIT License](http://opensource.org/licenses/MIT)
 
 ## Contribution
 

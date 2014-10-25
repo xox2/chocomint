@@ -76,7 +76,7 @@ _chm_main() {
 
   for i in "${_chm_fullpath_list[@]}"
   do
-    ${_CHM_LIBEXEC}/chocomint-main "${i}"
+    ${_CHM_LIBEXEC}/chocomint-main "${i}" || exit $?
 
     [ -f "${_CHM_TEST_RESULTS_FILE}" ] && {
       source ${_CHM_TEST_RESULTS_FILE}

@@ -9,7 +9,7 @@ OFFSET_NUMBER=1
 TEST_INDEX=-1
 TEST_MARKER=":"
 PARSE_METHOD="parse_nl" # initial parse-method
-ERROR=false
+PARSE_ERROR=false
 
 error() {
   echo "`tput bold``tput setaf 1`[PARSER ERROR]`tput sgr0`"
@@ -40,7 +40,7 @@ error() {
   done < <(sed -n "${begin_col},${end_col}p" "$TARGET_FULLPATH")
   echo
 
-  ERROR=true
+  PARSE_ERROR=true
 }
 
 valid() {
@@ -395,6 +395,11 @@ parse_nl() {
   esac
 }
 
+abort() {
+  echo "`tput bold``tput setaf 1`${1}`tput sgr0`" 1>&2
+  exit 1
+}
+
 main() {
   TARGET_FULLPATH=$1
   local line
@@ -410,19 +415,18 @@ main() {
     ((LINE_NUMBER++))
   done < $TARGET_FULLPATH
 
-  $ERROR && {
-    echo "`tput bold``tput setaf 1`aborted...`tput sgr0`"
-    exit 1
+  ${PARSE_ERROR} && {
+    abort "raised parser error..."
   }
 
   declare -p _CHM_TEST_POSITION > /dev/null 2>&1 || {
-    echo "Test is not defined"
-    exit 1
+    abort "test is not defined..."
   }
+
   declare -p _CHM_DB            > /dev/null 2>&1 || {
-    echo "Test is not defined"
-    exit 1
+    abort "test is not defined..."
   }
+
   declare -p _CHM_TEST_POSITION > $_CHM_TEST_POSITION_FILE
   declare -p _CHM_DB            > $_CHM_DB_FILE
 }

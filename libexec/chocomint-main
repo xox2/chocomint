@@ -21,46 +21,46 @@ _chm_aggregate_results() {
   local _chm_mid
   local _chm_right
 
-  for _chm_i in $(seq 0 ${_CHM_DB[$_CHM_TESTLINE,max]})
+  for _chm_i in $(seq 0 ${_CHM_DB[${TARGET_FULLPATH},${_CHM_TESTLINE},max]})
   do
     ((_CHM_TEST_COUNT++))
-    _chm_left="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},left]}")"
-    _chm_mid="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},mid]}")"
-    _chm_right="$(eval echo "${_CHM_DB[${_CHM_TESTLINE},${_chm_i},right]}")"
+    _chm_left="$(eval echo "${_CHM_DB[${TARGET_FULLPATH},${_CHM_TESTLINE},${_chm_i},left]}")"
+    _chm_mid="$(eval echo "${_CHM_DB[${TARGET_FULLPATH},${_CHM_TESTLINE},${_chm_i},mid]}")"
+    _chm_right="$(eval echo "${_CHM_DB[${TARGET_FULLPATH},${_CHM_TESTLINE},${_chm_i},right]}")"
 
-    if source $_CHM_LIBEXEC/chocomint-judge "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
+    if source ${_CHM_LIBEXEC}/chocomint-judge "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
     then
       ((_CHM_TEST_SUCCESS++))
-      _chm_outputs.ok "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
+      _chm_outputs.ok "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
     else
       ((_CHM_TEST_FAILURE++))
-      _chm_outputs.ng "$_chm_left" "$_chm_mid" "$_chm_right" "$1"
+      _chm_outputs.ng "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
       _chm_cmd_failure=true
       _CHM_FAILURE=true
     fi
   done
 
-  _chm_outputs.stdouterr "$_chm_cmd_failure"
+  _chm_outputs.stdouterr "${_chm_cmd_failure}"
 }
 
 
 _chm_prepare_execution() {
-  _CHM_LINENO_CACHE="$1"
+  _CHM_LINENO_CACHE="${1}"
 
-  if [ "${_CHM_TEST_POSITION[$1]-}" = "EOL" ]; then
+  if [ "${_CHM_TEST_POSITION[${TARGET_FULLPATH},${1}]-}" = "EOL" ]; then
     _CHM_TEST_EXIST=true
-    _CHM_TESTLINE="$1"
-  elif [ "${_CHM_TEST_POSITION[$((${1}+1))]-}" = "NL" ]; then
+    _CHM_TESTLINE="${1}"
+  elif [ "${_CHM_TEST_POSITION[${TARGET_FULLPATH},$((${1}+1))]-}" = "NL" ]; then
     _CHM_TEST_EXIST=true
     _CHM_TESTLINE="$((${1}+1))"
   else
     _CHM_TEST_EXIST=false
   fi
 
-  $_CHM_TEST_EXIST && {
-    : > $_CHM_CMD_OUT
-    : > $_CHM_CMD_ERR
-    _chm_outputs.command "$2"
+  ${_CHM_TEST_EXIST} && {
+    : > ${_CHM_CMD_OUT}
+    : > ${_CHM_CMD_ERR}
+    _chm_outputs.command "${2}"
   }
 }
 
@@ -70,19 +70,19 @@ _chm_trap() {
   # $2 source path
   local _chm_prev_stat="$?"
 
-  [ "$_CHM_TIME_START" ] && {
-    $_CHM_BC_COMMAND_EXIST && {
+  [ "${_CHM_TIME_START}" ] && {
+    ${_CHM_BC_COMMAND_EXIST} && {
       _CHM_TIME_RESULT=$(
-        echo "$(date +%s.%N) - $_CHM_TIME_START" |
+        echo "$(date +%s.%N) - ${_CHM_TIME_START}" |
         bc                                       |
         sed -e 's/^\./0\./'
       )
     }
   }
 
-  if [ $3 -eq $_CHM_TARGETFILE_STACK_LEVEL ]; then
-    $_CHM_TEST_EXIST && _chm_aggregate_results "$_chm_prev_stat"
-    _chm_prepare_execution "$1" "$BASH_COMMAND"
+  if [ ${3} -eq ${_CHM_TARGETFILE_STACK_LEVEL} ]; then
+    ${_CHM_TEST_EXIST} && _chm_aggregate_results "${_chm_prev_stat}"
+    _chm_prepare_execution "${1}" "${BASH_COMMAND}"
   fi
 
   _CHM_TIME_START=$(date +%s.%N)
@@ -90,34 +90,35 @@ _chm_trap() {
 
 
 _chm_run_test() {
-  exec 3>&1 4>&2 1> $_CHM_CMD_OUT 2> $_CHM_CMD_ERR
-  set -T; trap '_chm_trap "$LINENO" "$BASH_SOURCE" "${#FUNCNAME[*]}"' DEBUG
+  exec 3>&1 4>&2 1> ${_CHM_CMD_OUT} 2> ${_CHM_CMD_ERR}
+  set -T; trap '_chm_trap "${LINENO}" "${BASH_SOURCE}" "${#FUNCNAME[*]}"' DEBUG
   _CHM_TARGETFILE_STACK_LEVEL=$((${#FUNCNAME[*]} + 1))
-  source "$1"; local exitstat=$?
+  source "${1}"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T
-  $_CHM_TEST_EXIST && _chm_aggregate_results "$exitstat"
+  ${_CHM_TEST_EXIST} && _chm_aggregate_results "${exitstat}"
   exec 1>&3- 2>&4-
-  rm "$_CHM_CMD_OUT" "$_CHM_CMD_ERR"
+  rm "${_CHM_CMD_OUT}" "${_CHM_CMD_ERR}"
 }
 
 
 _chm_parse(){
   echo
-  echo " * Parsing tests... \"$1\""
+  echo " * Parsing tests... \"${1}\""
   echo
-  ${_CHM_LIBEXEC}/chocomint-parse "$1" || exit $?
+  ${_CHM_LIBEXEC}/chocomint-parse "${1}" || exit $?
 }
 
 
 _chm_main() {
-  _chm_parse "$1"
+  TARGET_FULLPATH="${1}"
+  _chm_parse "${TARGET_FULLPATH}"
 
   # source here. because defined local variable
   source ${_CHM_TEST_POSITION_FILE} && rm ${_CHM_TEST_POSITION_FILE}
   source ${_CHM_DB_FILE} && rm ${_CHM_DB_FILE}
 
-  _chm_run_test "$1"
+  _chm_run_test "${TARGET_FULLPATH}"
 
   declare -p _CHM_TEST_FAILURE >  ${_CHM_TEST_RESULTS_FILE}
   declare -p _CHM_TEST_SUCCESS >> ${_CHM_TEST_RESULTS_FILE}
@@ -127,4 +128,4 @@ _chm_main() {
   declare -p _CHM_FAILURE      >> ${_CHM_TEST_RESULTS_FILE}
 }
 
-_chm_main "$1"
+_chm_main "$@"

@@ -3,9 +3,6 @@
 
 source ${_CHM_LIBEXEC}/chocomint-lib/outputs
 
-export _CHM_TEST_POSITION_FILE="/tmp/_chm_test_pos.$$"
-export _CHM_DB_FILE="/tmp/_chm_test_db.$$"
-
 _CHM_CMD_OUT="/tmp/_chm_command_stdout.$$.log"
 _CHM_CMD_ERR="/tmp/_chm_command_stderr.$$.log"
 
@@ -102,21 +99,11 @@ _chm_run_test() {
 }
 
 
-_chm_parse(){
-  echo
-  echo " * Parsing tests... \"${1}\""
-  echo
-  ${_CHM_LIBEXEC}/chocomint-parse "${1}" || exit $?
-}
-
-
 _chm_main() {
   TARGET_FULLPATH="${1}"
-  _chm_parse "${TARGET_FULLPATH}"
 
-  # source here. because defined local variable
-  source ${_CHM_TEST_POSITION_FILE} && rm ${_CHM_TEST_POSITION_FILE}
-  source ${_CHM_DB_FILE} && rm ${_CHM_DB_FILE}
+  source ${_CHM_TEST_POSITION_FILE}
+  source ${_CHM_DB_FILE}
 
   _chm_run_test "${TARGET_FULLPATH}"
 

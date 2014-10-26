@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 # vim: ft=sh
 
-declare -A _CHM_DB
-declare -A _CHM_TEST_POSITION # "NL" or "EOL"
+if [ -f "${_CHM_TEST_POSITION_FILE}" ]; then
+  source "${_CHM_TEST_POSITION_FILE}"
+else
+  declare -A _CHM_TEST_POSITION # "NL" or "EOL"
+fi
+
+if [ -f "${_CHM_DB_FILE}" ]; then
+  source "${_CHM_DB_FILE}"
+else
+  declare -A _CHM_DB
+fi
 
 LINE_NUMBER=1
 OFFSET_NUMBER=1
@@ -10,6 +19,7 @@ TEST_INDEX=-1
 TEST_MARKER=":"
 PARSE_METHOD="parse_nl" # initial parse-method
 PARSE_ERROR=false
+TEST_EXIST=false
 
 error() {
   echo "`tput bold``tput setaf 1`[PARSER ERROR]`tput sgr0`"
@@ -167,6 +177,7 @@ parse_test_right() {
       _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
       _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
       _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},max]="${TEST_INDEX}"
+      TEST_EXIST=true
       valid
       PARSE_METHOD="parse_nl"
       TEST_COMMENT=""
@@ -419,11 +430,7 @@ main() {
     abort "raised parser error..."
   }
 
-  declare -p _CHM_TEST_POSITION > /dev/null 2>&1 || {
-    abort "test is not defined..."
-  }
-
-  declare -p _CHM_DB            > /dev/null 2>&1 || {
+  ${TEST_EXIST} || {
     abort "test is not defined..."
   }
 

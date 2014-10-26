@@ -3,6 +3,9 @@
 _CHM_NAME='chocomint.sh'
 _CHM_VERSION='0.3.0'
 
+export _CHM_TEST_POSITION_FILE="/tmp/_chm_test_pos.$$"
+export _CHM_DB_FILE="/tmp/_chm_test_db.$$"
+
 export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 source ${_CHM_LIBEXEC}/chocomint-lib/outputs
 
@@ -72,6 +75,8 @@ _chm_main() {
   for i in "${_chm_fullpath_list[@]}"
   do
     _chm_file_check "${i}"
+    echo " * Parsing tests... \"${i}\""
+    ${_CHM_LIBEXEC}/chocomint-parse "${i}" || exit $?
   done
 
   for i in "${_chm_fullpath_list[@]}"
@@ -83,6 +88,9 @@ _chm_main() {
       rm ${_CHM_TEST_RESULTS_FILE}
     }
   done
+
+  rm ${_CHM_TEST_POSITION_FILE}
+  rm ${_CHM_DB_FILE}
 
   _chm_outputs.overall_results \
     "${_CHM_TEST_FAILURE}"     \

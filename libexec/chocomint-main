@@ -3,13 +3,6 @@
 
 source ${_CHM_LIBEXEC}/chocomint-lib/outputs
 
-_CHM_CMD_OUT="/tmp/_chm_command_stdout.$$.log"
-_CHM_CMD_ERR="/tmp/_chm_command_stderr.$$.log"
-
-_CHM_TEST_EXIST=false
-_CHM_TIME_START=''
-
-
 _chm_aggregate_results() {
   # $1 exitstatus
   ((_CHM_CMD_COUNT++))
@@ -100,12 +93,20 @@ _chm_run_test() {
 
 
 _chm_main() {
-  TARGET_FULLPATH="${1}"
-
   source ${_CHM_TEST_POSITION_FILE}
   source ${_CHM_DB_FILE}
 
-  _chm_run_test "${TARGET_FULLPATH}"
+  for i in "$@"
+  do
+    _CHM_TEST_EXIST=false
+    _CHM_TIME_START=''
+    TARGET_FULLPATH="${i}"
+
+    echo
+    echo "### ${TARGET_FULLPATH}"
+    echo
+    _chm_run_test "${TARGET_FULLPATH}"
+  done
 
   declare -p _CHM_TEST_FAILURE >  ${_CHM_TEST_RESULTS_FILE}
   declare -p _CHM_TEST_SUCCESS >> ${_CHM_TEST_RESULTS_FILE}

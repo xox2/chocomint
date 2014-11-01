@@ -1,6 +1,25 @@
 #!/bin/bash
 # vim: ft=sh
 
+function _chm_.draw_line() {
+  local _chm_cols=`tput cols`
+  local _chm_line
+  for (( _chm_i=0; _chm_i<$_chm_cols; _chm_i++ ))
+  do
+    _chm_line="${_chm_line}${1}"
+  done
+  echo "${_chm_line}"
+}
+
+function _chm_outputs.section() {
+  echo
+  _chm_.draw_line "-"
+  echo " ${1}"
+  _chm_.draw_line "-"
+}
+
+###
+
 function _chm_.echo() { echo "$@" >&3; }
 function _chm_.print() { echo -n "$@" >&3; }
 function _chm_.cat() { cat "$@" >&3; }
@@ -10,16 +29,9 @@ function _chm_outputs.ok() { _chm_.judgeout "2" "   ✔ " "$@"; }
 function _chm_outputs.ng() { _chm_.judgeout "1" "   ✘ " "$@"; }
 
 function _chm_outputs.title() {
-  local _chm_name_ver=" $* "
-  local _chm_ruler
-  local _chm_ruler_char='+'
-  for (( _chm_i=0; _chm_i<${#_chm_name_ver}; _chm_i++ ))
-  do
-    _chm_ruler="${_chm_ruler}${_chm_ruler_char}"
-  done
-  echo "$_chm_ruler"
-  echo "$_chm_name_ver"
-  echo "$_chm_ruler"
+  _chm_.draw_line "+"
+  echo " $* "
+  _chm_.draw_line "+"
 }
 
 
@@ -285,6 +297,6 @@ function _chm_outputs.overall_results() {
 
 
 function _chm_outputs.command() {
-  _chm_.tprint bold 3 -- '==> '
-  echo "$1" | sed s/^/$($_CHM_TPUT setaf 3)/ | sed s/$/$($_CHM_TPUT sgr0)/ >&3
+  _chm_.tprint bold 3 -- "${1}"
+  echo "${2}" | sed s/^/$($_CHM_TPUT setaf 3)/ | sed s/$/$($_CHM_TPUT sgr0)/ >&3
 }

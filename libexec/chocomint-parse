@@ -55,7 +55,7 @@ valid() {
               error "\"${mid}\": invalid matcher"
               ;;
           esac
-          [ ${right} -ge 0 ] > /dev/null 2>&1 || error "\"${right}\": invalid status"
+          [ ${right} -ge 0 ] > /dev/null 2>&1 || error "\"${right}\": invalid status code"
           ;;
         'output'|'stdout'|'stderr' )
           case ${mid} in
@@ -155,27 +155,20 @@ parse_test_right() {
       TEST_COMMENT="${TEST_COMMENT}""\\"
       PARSE_METHOD="parse_test_bs"
       ;;
+    " "|"\t" )
+      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
+      valid
+      PARSE_METHOD="parse_test_main"
+      TEST_COMMENT=""
+      PARENT_PARSE_METHOD=""
+      ;;
     "" )
-      [ "${TEST_COMMENT}" = "" ] && {
-        error "\"${TEST_COMMENT}\": invalid value"
-      }
       _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
       _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
       _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},max]="${TEST_INDEX}"
       TEST_EXIST=true
       valid
       PARSE_METHOD="parse_nl"
-      TEST_COMMENT=""
-      PARENT_PARSE_METHOD=""
-      ;;
-    " "|"\t" )
-      [ "${TEST_COMMENT}" = "" ] && {
-        error "\"${TEST_COMMENT}\": invalid value"
-        return
-      }
-      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
-      valid
-      PARSE_METHOD="parse_test_main"
       TEST_COMMENT=""
       PARENT_PARSE_METHOD=""
       ;;
@@ -189,6 +182,18 @@ parse_test_mid() {
   case ${1} in
     '='|':'|'!'|'~' )
       TEST_COMMENT="${TEST_COMMENT}""${1}"
+      ;;
+    " "|"\t" )
+      error "\"${TEST_COMMENT}\": empty value"
+      PARSE_METHOD="parse_test_main"
+      TEST_COMMENT=""
+      PARENT_PARSE_METHOD=""
+      ;;
+    "" )
+      error "\"${TEST_COMMENT}\": empty value"
+      PARSE_METHOD="parse_nl"
+      TEST_COMMENT=""
+      PARENT_PARSE_METHOD=""
       ;;
     * )
       _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},mid]="${TEST_COMMENT}"
@@ -221,8 +226,16 @@ parse_test_left() {
       parse_test_mid "${1}"
       ;;
     ' '|'\t' )
-      TEST_COMMENT="${TEST_COMMENT}""${1}"
-      error "\"${TEST_COMMENT}\": invalid resource"
+      error "\"${TEST_COMMENT}\": invalid token"
+      PARSE_METHOD="parse_test_main"
+      TEST_COMMENT=""
+      PARENT_PARSE_METHOD=""
+      ;;
+    '' )
+      error "\"${TEST_COMMENT}\": invalid token"
+      PARSE_METHOD="parse_nl"
+      TEST_COMMENT=""
+      PARENT_PARSE_METHOD=""
       ;;
     * )
       TEST_COMMENT="${TEST_COMMENT}""${1}"
@@ -419,7 +432,7 @@ main() {
     PARSE_METHOD="parse_nl" # initial parse-method
     TEST_EXIST=false
 
-    echo "Parsing: \"${i}\""
+    echo "==> Parsing: \"${i}\""
     parse "${i}"
 
     ${TEST_EXIST} || {

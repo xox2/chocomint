@@ -253,7 +253,7 @@ function _chm_.stderr() {
 function _chm_outputs.stdouterr() {
   # $1 failure flag
   $_CHM_BC_COMMAND_EXIST &&
-    _chm_.print "${_CHM_TIME_RESULT::-7} seconds. "
+    _chm_.print "${_CHM_TIME_RESULT} seconds. "
   if $1; then
     _chm_.echo "failed."
     if [ -s "$_CHM_CMD_OUT" ] && [ -s "$_CHM_CMD_ERR" ]; then

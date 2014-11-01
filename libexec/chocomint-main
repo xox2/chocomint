@@ -60,11 +60,7 @@ _chm_trap() {
 
   [ "${_CHM_TIME_START}" ] && {
     ${_CHM_BC_COMMAND_EXIST} && {
-      _CHM_TIME_RESULT=$(
-        echo "$(date +%s.%N) - ${_CHM_TIME_START}" |
-        bc                                       |
-        sed -e 's/^\./0\./'
-      )
+      _CHM_TIME_RESULT=$(( $(date +%s) - ${_CHM_TIME_START} ))
     }
   }
 
@@ -73,7 +69,7 @@ _chm_trap() {
     _chm_prepare_execution "${1}" "${BASH_COMMAND}"
   fi
 
-  _CHM_TIME_START=$(date +%s.%N)
+  _CHM_TIME_START=$(date +%s)
 }
 
 

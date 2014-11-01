@@ -10,7 +10,7 @@ _tput() { $_CHM_TPUT "$@"; }
 
 error() {
   echo -n "`_tput bold``_tput setaf 1`Parse error:`_tput sgr0` "
-  echo "${1} (${LINE_NUMBER}L)"
+  echo "${1} (L${LINE_NUMBER})"
 
   local begin_col=$((LINE_NUMBER - 3))
   local end_col=$((LINE_NUMBER + 3))

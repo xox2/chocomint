@@ -48,7 +48,7 @@ _chm_prepare_execution() {
   ${_CHM_TEST_EXIST} && {
     : > ${_CHM_CMD_OUT}
     : > ${_CHM_CMD_ERR}
-    _chm_outputs.command "${1}L: " "${2}"
+    _chm_outputs.command "L${1}: " "${2}"
   }
 }
 

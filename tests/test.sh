@@ -1,7 +1,9 @@
 #!/usr/bin/env chocomint
 # test.sh
 
-# you must define a function before tests if you use
+###
+### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE ALL TESTS.
+###
 function dummy_func() {
   echo 'out error' 1>&2
   echo 'out stdout'

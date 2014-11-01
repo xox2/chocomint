@@ -71,18 +71,18 @@ $ chocomint test1 test2 test3
 
 ```
 $ chocomint test.sh
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  chocomint.sh 0.3.5
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ==> Parsing: "/home/vagrant/github/chocomint.sh/tests/test.sh"
 
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
  [1/1] /home/vagrant/github/chocomint.sh/tests/test.sh
----------------------------------------------------------------------------
-11L: true
+-------------------------------------------------------------------------------------
+13L: true
    ✔ status 0 should be 0
 0.00 seconds. succeeded.
-13L: echo "Hello"
+15L: echo "Hello"
    ✘ fixed-strings `hello` should match STDOUT
    ✔ status 0 should NOT be 1
 0.00 seconds. failed.
@@ -92,19 +92,19 @@ $ chocomint test.sh
 Hello
 >>> STDOUT END
 
-16L: dummy_func
+18L: dummy_func
    ✔ fixed-strings `error` should match STDERR
    ✔ extended-regexp `.*std.*` should match STDOUT
    ✔ status 3 should be 3
    ✔ status 3 should NOT be 0
 0.00 seconds. succeeded.
-21L: echo $i
+23L: echo $i
    ✔ fixed-strings `1` should match STDOUT
 0.00 seconds. succeeded.
-21L: echo $i
+23L: echo $i
    ✔ fixed-strings `2` should match STDOUT
 0.00 seconds. succeeded.
-21L: echo $i
+23L: echo $i
    ✔ fixed-strings `3` should match STDOUT
 0.00 seconds. succeeded.
 

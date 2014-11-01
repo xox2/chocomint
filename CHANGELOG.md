@@ -1,9 +1,10 @@
 # ChangeLog
 
-## 0.3.5 ()
+## 0.3.5 (2014-11-01)
 
 - Organize the logic for multiple file input
 - Display command line number
+- Fix bugs for Parser error
 
 ## 0.3.0 (2014-10-22)
 

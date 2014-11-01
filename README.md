@@ -61,7 +61,7 @@ $ chocomint test.sh
 You can input multiple files.
 
 ```
-$ chocomint test_a test_b test_c
+$ chocomint test1 test2 test3
 ```
 
 #### Results
@@ -70,39 +70,41 @@ $ chocomint test_a test_b test_c
 - If one or more tests __failed__, chocomint will return __1__.
 
 ```
-$ ./test.sh
-++++++++++++++++++++++++
- chocomint.sh 0.3.0-dev
-++++++++++++++++++++++++
+$ chocomint test.sh
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ chocomint.sh 0.3.5
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+==> Parsing: "/home/vagrant/github/chocomint.sh/tests/test.sh"
 
- * Parsing tests... "/home/vagrant/github/chocomint.sh/tests/test.sh"
-
-==> true
+---------------------------------------------------------------------------
+ [1/1] /home/vagrant/github/chocomint.sh/tests/test.sh
+---------------------------------------------------------------------------
+11L: true
    ✔ status 0 should be 0
 0.00 seconds. succeeded.
-==> echo "Hello"
+13L: echo "Hello"
    ✘ fixed-strings `hello` should match STDOUT
    ✔ status 0 should NOT be 1
-0.01 seconds. failed.
+0.00 seconds. failed.
 'STDERR' is nothing.
 
 >>> STDOUT BEGIN
 Hello
 >>> STDOUT END
 
-==> dummy_func
+16L: dummy_func
    ✔ fixed-strings `error` should match STDERR
    ✔ extended-regexp `.*std.*` should match STDOUT
    ✔ status 3 should be 3
    ✔ status 3 should NOT be 0
 0.00 seconds. succeeded.
-==> echo $i
+21L: echo $i
    ✔ fixed-strings `1` should match STDOUT
 0.00 seconds. succeeded.
-==> echo $i
+21L: echo $i
    ✔ fixed-strings `2` should match STDOUT
 0.00 seconds. succeeded.
-==> echo $i
+21L: echo $i
    ✔ fixed-strings `3` should match STDOUT
 0.00 seconds. succeeded.
 

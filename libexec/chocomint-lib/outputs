@@ -2,7 +2,10 @@
 # vim: ft=sh
 
 function _chm_.draw_line() {
-  local _chm_cols=`tput cols`
+  local _chm_cols=`$_CHM_TPUT cols`
+  [ "$_chm_cols" ] || {
+    _chm_cols=40
+  }
   local _chm_line
   for (( _chm_i=0; _chm_i<$_chm_cols; _chm_i++ ))
   do

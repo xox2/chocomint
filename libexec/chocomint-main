@@ -59,9 +59,7 @@ _chm_trap() {
   local _chm_prev_stat="$?"
 
   [ "${_CHM_TIME_START}" ] && {
-    ${_CHM_BC_COMMAND_EXIST} && {
-      _CHM_TIME_RESULT=$(( $(date +%s) - ${_CHM_TIME_START} ))
-    }
+    _CHM_TIME_RESULT=$(( $(date +%s) - ${_CHM_TIME_START} ))
   }
 
   if [ ${3} -eq ${_CHM_TARGETFILE_STACK_LEVEL} ]; then

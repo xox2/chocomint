@@ -37,19 +37,6 @@ _chm_system_check() {
     echo
     export _CHM_TPUT="true"
   fi
-
-  #
-  # "bc" exist check
-  #
-  if type bc > /dev/null 2>&1
-  then
-    export _CHM_BC_COMMAND_EXIST=true
-  else
-    echo "WARN: \"bc\" command is not found"
-    echo "WARN: unable to display the execution time of commands"
-    echo
-    export _CHM_BC_COMMAND_EXIST=false
-  fi
 }
 
 

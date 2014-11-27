@@ -11,23 +11,26 @@ _chm_aggregate_results() {
   local _chm_mid
   local _chm_right
 
-  for _chm_i in $(seq 0 ${_CHM_DB[${_CHM_FULLPATH},${_CHM_TESTLINE},max_test_index]})
+  for _chm_line in "${_CHM_TESTLINE_LIST[@]}"
   do
-    ((_CHM_TEST_COUNT++))
-    _chm_left="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_CHM_TESTLINE},${_chm_i},left]}")"
-    _chm_mid="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_CHM_TESTLINE},${_chm_i},mid]}")"
-    _chm_right="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_CHM_TESTLINE},${_chm_i},right]}")"
+    for _chm_i in $(seq 0 ${_CHM_DB[${_CHM_FULLPATH},${_chm_line},max_test_index]})
+    do
+      ((_CHM_TEST_COUNT++))
+      _chm_left="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},${_chm_i},left]}")"
+      _chm_mid="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},${_chm_i},mid]}")"
+      _chm_right="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},${_chm_i},right]}")"
 
-    if source ${_CHM_LIBEXEC}/chocomint-judge "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
-    then
-      ((_CHM_TEST_SUCCESS++))
-      _chm_outputs.ok "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
-    else
-      ((_CHM_TEST_FAILURE++))
-      _chm_outputs.ng "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
-      _chm_cmd_failure=true
-      _CHM_FAILURE=true
-    fi
+      if source ${_CHM_LIBEXEC}/chocomint-judge "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
+      then
+        ((_CHM_TEST_SUCCESS++))
+        _chm_outputs.ok "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
+      else
+        ((_CHM_TEST_FAILURE++))
+        _chm_outputs.ng "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
+        _chm_cmd_failure=true
+        _CHM_FAILURE=true
+      fi
+    done
   done
 
   $_chm_cmd_failure || ((_CHM_CMD_SUCCESS++))
@@ -36,14 +39,27 @@ _chm_aggregate_results() {
 }
 
 
+_chm_prepare_execution-search_continuous_testline() {
+  # $1 line number
+  local _chm_i=1
+  while [ "${_CHM_TEST_POSITION[${_CHM_FULLPATH},$((${1}+${_chm_i}))]-}" = 'NL' ]
+  do
+    _CHM_TESTLINE_LIST=("${_CHM_TESTLINE_LIST[@]}" "$((${1}+${_chm_i}))")
+    ((_chm_i++))
+  done
+}
+
+
 _chm_prepare_execution() {
   # $1 line number
   if [ "${_CHM_TEST_POSITION[${_CHM_FULLPATH},${1}]-}" = "EOL" ]; then
     _CHM_TEST_EXIST=true
-    _CHM_TESTLINE="${1}"
+    _CHM_TESTLINE_LIST=("${1}")
+    _chm_prepare_execution-search_continuous_testline "${1}"
   elif [ "${_CHM_TEST_POSITION[${_CHM_FULLPATH},$((${1}+1))]-}" = "NL" ]; then
     _CHM_TEST_EXIST=true
-    _CHM_TESTLINE="$((${1}+1))"
+    _CHM_TESTLINE_LIST=()
+    _chm_prepare_execution-search_continuous_testline "${1}"
   else
     _CHM_TEST_EXIST=false
   fi

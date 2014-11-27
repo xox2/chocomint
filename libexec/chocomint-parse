@@ -446,8 +446,8 @@ main() {
 
   declare -p _CHM_TEST_POSITION > ${_CHM_TEST_POSITION_FILE}
   declare -p _CHM_DB            > ${_CHM_DB_FILE}
-  declare -p _CHM_TEST_POSITION | sed 's/ \[/\n[/g' | sort
-  declare -p _CHM_DB | sed 's/ \[/\n[/g' | sort
+  #declare -p _CHM_TEST_POSITION | sed 's/ \[/\n[/g' | sort
+  #declare -p _CHM_DB | sed 's/ \[/\n[/g' | sort
 }
 
 main "$@"

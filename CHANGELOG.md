@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 0.3.6 ()
+
+- Change to be displayed all of the output
+- Change the display format
+
 ## 0.3.5 (2014-11-01)
 
 - Organize the logic for multiple file input

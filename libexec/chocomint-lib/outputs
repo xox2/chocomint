@@ -1,8 +1,11 @@
 #!/bin/bash
 # vim: ft=sh
 
+_CHM_OK_STRING=${_CHM_OK_STRING:-'[success] '}
+_CHM_NG_STRING=${_CHM_NG_STRING:-'[failure] '}
+
 function _chm_.draw_line() {
-  local _chm_cols=`$_CHM_TPUT cols`
+  local _chm_cols=$($_CHM_TPUT cols)
   [ "$_chm_cols" ] || {
     _chm_cols=40
   }
@@ -28,8 +31,8 @@ function _chm_.print() { echo -n "$@" >&3; }
 function _chm_.cat() { cat "$@" >&3; }
 function _chm_.tput() { $_CHM_TPUT "$@" >&3; }
 
-function _chm_outputs.ok() { _chm_.judgeout "2" "   ✔ " "$@"; }
-function _chm_outputs.ng() { _chm_.judgeout "1" "   ✘ " "$@"; }
+function _chm_outputs.ok() { _chm_.judgeout "2" "$_CHM_OK_STRING" "$@"; }
+function _chm_outputs.ng() { _chm_.judgeout "1" "$_CHM_NG_STRING" "$@"; }
 
 function _chm_outputs.title() {
   _chm_.draw_line "+"
@@ -100,24 +103,24 @@ function _chm_.judgeout() {
           esac
           ;;
         ':' )
-          _chm_.print "fixed-strings \`"
+          _chm_.print "fixed-strings '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should match outputs"
+          _chm_.echo "' should match outputs"
           ;;
         '!:' )
-          _chm_.print "fixed-strings \`"
+          _chm_.print "fixed-strings '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should NOT match outputs"
+          _chm_.echo "' should NOT match outputs"
           ;;
         ':~' )
-          _chm_.print "extended-regexp \`"
+          _chm_.print "extended-regexp '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should match outputs"
+          _chm_.echo "' should match outputs"
           ;;
         '!:~' )
-          _chm_.print "extended-regexp \`"
+          _chm_.print "extended-regexp '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should NOT match outputs"
+          _chm_.echo "' should NOT match outputs"
           ;;
       esac
       ;;
@@ -138,24 +141,24 @@ function _chm_.judgeout() {
           esac
           ;;
         ':' )
-          _chm_.print "fixed-strings \`"
+          _chm_.print "fixed-strings '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should match STDOUT"
+          _chm_.echo "' should match STDOUT"
           ;;
         '!:' )
-          _chm_.print "fixed-strings \`"
+          _chm_.print "fixed-strings '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should NOT match STDOUT"
+          _chm_.echo "' should NOT match STDOUT"
           ;;
         ':~' )
-          _chm_.print "extended-regexp \`"
+          _chm_.print "extended-regexp '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should match STDOUT"
+          _chm_.echo "' should match STDOUT"
           ;;
         '!:~' )
-          _chm_.print "extended-regexp \`"
+          _chm_.print "extended-regexp '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should NOT match STDOUT"
+          _chm_.echo "' should NOT match STDOUT"
           ;;
       esac
       ;;
@@ -176,56 +179,56 @@ function _chm_.judgeout() {
           esac
           ;;
         ':' )
-          _chm_.print "fixed-strings \`"
+          _chm_.print "fixed-strings '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should match STDERR"
+          _chm_.echo "' should match STDERR"
           ;;
         '!:' )
-          _chm_.print "fixed-strings \`"
+          _chm_.print "fixed-strings '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should NOT match STDERR"
+          _chm_.echo "' should NOT match STDERR"
           ;;
         ':~' )
-          _chm_.print "extended-regexp \`"
+          _chm_.print "extended-regexp '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should match STDERR"
+          _chm_.echo "' should match STDERR"
           ;;
         '!:~' )
-          _chm_.print "extended-regexp \`"
+          _chm_.print "extended-regexp '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\` should NOT match STDERR"
+          _chm_.echo "' should NOT match STDERR"
           ;;
       esac
       ;;
     * ) # judge variables
       case $4 in
         '=' )
-          _chm_.print "value \`"
+          _chm_.print "value '"
           _chm_.tprint "$_chm_opt_tput" -- "$3"
-          _chm_.print "\` should be \`"
+          _chm_.print "' should be '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\`"
+          _chm_.echo "'"
           ;;
         '!=' )
-          _chm_.print "value \`"
+          _chm_.print "value '"
           _chm_.tprint "$_chm_opt_tput" -- "$3"
-          _chm_.print "\` should NOT be \`"
+          _chm_.print "' should NOT be '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\`"
+          _chm_.echo "'"
           ;;
         '=~' )
-          _chm_.print "value \`"
+          _chm_.print "value '"
           _chm_.tprint "$_chm_opt_tput" -- "$3"
-          _chm_.print "\` should match extended-regexp \`"
+          _chm_.print "' should match extended-regexp '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\`"
+          _chm_.echo "'"
           ;;
         '!=~' )
-          _chm_.print "value \`"
+          _chm_.print "value '"
           _chm_.tprint "$_chm_opt_tput" -- "$3"
-          _chm_.print "\` should NOT match extended-regexp \`"
+          _chm_.print "' should NOT match extended-regexp '"
           _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "\`"
+          _chm_.echo "'"
           ;;
       esac
       ;;
@@ -234,55 +237,32 @@ function _chm_.judgeout() {
 
 
 function _chm_.stdout() {
-  _chm_.tprint bold -- '>>> STDOUT BEGIN'
-  _chm_.echo
-  _chm_.cat $_CHM_CMD_OUT
+  #_chm_.tprint bold -- '>>> STDOUT BEGIN'
+  #_chm_.echo
+  cat $_CHM_CMD_OUT | sed 's/^/STDOUT: /' >&3
   _chm_.tput sgr0 # for reset previous output attributes
-  _chm_.tprint bold -- '<<< STDOUT END'
-  _chm_.echo
+  #_chm_.tprint bold -- '<<< STDOUT END'
+  #_chm_.echo
 }
 
 
 function _chm_.stderr() {
-  _chm_.tprint bold -- '>>> STDERR BEGIN'
-  _chm_.echo
-  _chm_.cat $_CHM_CMD_ERR
+  #_chm_.tprint bold -- '>>> STDERR BEGIN'
+  #_chm_.echo
+  #_chm_.cat $_CHM_CMD_ERR
+  cat $_CHM_CMD_ERR | sed 's/^/STDERR: /' >&3
   _chm_.tput sgr0 # for reset previous output attributes
-  _chm_.tprint bold -- '<<< STDERR END'
-  _chm_.echo
+  #_chm_.tprint bold -- '<<< STDERR END'
+  #_chm_.echo
 }
 
 
 function _chm_outputs.stdouterr() {
-  # $1 failure flag
+  _chm_.stdout
+  _chm_.stderr
   $_CHM_BC_COMMAND_EXIST &&
     _chm_.print "${_CHM_TIME_RESULT} seconds. "
-  if $1; then
-    _chm_.echo "failed."
-    if [ -s "$_CHM_CMD_OUT" ] && [ -s "$_CHM_CMD_ERR" ]; then
-      _chm_.echo
-      _chm_.stdout
-      _chm_.echo
-      _chm_.stderr
-      _chm_.echo
-    elif [ -s "$_CHM_CMD_OUT" ]; then
-      _chm_.echo "'STDERR' is nothing."
-      _chm_.echo
-      _chm_.stdout
-      _chm_.echo
-    elif [ -s "$_CHM_CMD_ERR" ]; then
-      _chm_.echo "'STDOUT' is nothing."
-      _chm_.echo
-      _chm_.stderr
-      _chm_.echo
-    else
-      _chm_.tprint bold -- "output is nothing."
-      _chm_.echo
-    fi
-  else
-    _chm_.echo "succeeded."
-    ((_CHM_CMD_SUCCESS++))
-  fi
+  _chm_.echo
 }
 
 
@@ -300,6 +280,6 @@ function _chm_outputs.overall_results() {
 
 
 function _chm_outputs.command() {
-  _chm_.tprint bold 3 -- "${1}"
-  echo "${2}" | sed s/^/$($_CHM_TPUT setaf 3)/ | sed s/$/$($_CHM_TPUT sgr0)/ >&3
+  _chm_.tprint 3 -- "${1}"
+  echo "${2}" | sed s/^/$($_CHM_TPUT sgr0)/ | sed s/$/$($_CHM_TPUT sgr0)/ >&3
 }

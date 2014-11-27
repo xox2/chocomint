@@ -4,17 +4,17 @@
 declare -A _CHM_TEST_POSITION # "NL" or "EOL"
 declare -A _CHM_DB
 
-TEST_MARKER=":"
+TEST_MARKER=${TEST_MARKER:-':'}
 
 _tput() { $_CHM_TPUT "$@"; }
 
 error() {
-  echo -n "`_tput bold``_tput setaf 1`Parse error:`_tput sgr0` "
+  echo -n "$(_tput bold)$(_tput setaf 1)Parse error:$(_tput sgr0) "
   echo "${1} (L${LINE_NUMBER})"
 
   local begin_col=$((LINE_NUMBER - 3))
   local end_col=$((LINE_NUMBER + 3))
-  local file_max_lines=`cat "${TARGET_FULLPATH}" | wc -l`
+  local file_max_lines=$(cat "${TARGET_FULLPATH}" | wc -l)
   local offset=""
 
   [ ${begin_col} -lt 1 ] && begin_col=1
@@ -26,10 +26,10 @@ error() {
   while read -r line; do
     if [ ${cols_count} -eq ${LINE_NUMBER} ]; then
       echo -n '->'
-      echo " `printf "%${padding}d" ${cols_count}` |  `_tput setaf 1`${line}`_tput sgr0`"
+      echo " $(printf "%${padding}d" ${cols_count}) |  $(_tput setaf 1)${line}$(_tput sgr0)"
     else
       echo -n '  '
-      echo " `printf "%${padding}d" ${cols_count}` |  ${line}"
+      echo " $(printf "%${padding}d" ${cols_count}) |  ${line}"
     fi
     ((cols_count++))
   done < <(sed -n "${begin_col},${end_col}p" "${TARGET_FULLPATH}")
@@ -165,7 +165,7 @@ parse_test_right() {
     "" )
       _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
       _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
-      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},max]="${TEST_INDEX}"
+      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
       TEST_EXIST=true
       valid
       PARSE_METHOD="parse_nl"
@@ -250,7 +250,7 @@ parse_test_main() {
       ;;
     "" )
       _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
-      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},max]="${TEST_INDEX}"
+      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
       PARSE_METHOD="parse_nl"
       TEST_COMMENT=""
       ;;
@@ -436,7 +436,7 @@ main() {
     parse "${i}"
 
     ${TEST_EXIST} || {
-      echo "`_tput bold``_tput setaf 1`Parse error:`_tput sgr0` test not found"
+      echo "$(_tput bold)$(_tput setaf 1)Parse error:$(_tput sgr0) test not found"
       echo
       TEST_NOT_FOUND=true
     }
@@ -446,6 +446,8 @@ main() {
 
   declare -p _CHM_TEST_POSITION > ${_CHM_TEST_POSITION_FILE}
   declare -p _CHM_DB            > ${_CHM_DB_FILE}
+  declare -p _CHM_TEST_POSITION | sed 's/ \[/\n[/g' | sort
+  declare -p _CHM_DB | sed 's/ \[/\n[/g' | sort
 }
 
 main "$@"

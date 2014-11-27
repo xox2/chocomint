@@ -11,7 +11,7 @@ _chm_aggregate_results() {
   local _chm_mid
   local _chm_right
 
-  for _chm_i in $(seq 0 ${_CHM_DB[${_CHM_FULLPATH},${_CHM_TESTLINE},max]})
+  for _chm_i in $(seq 0 ${_CHM_DB[${_CHM_FULLPATH},${_CHM_TESTLINE},max_test_index]})
   do
     ((_CHM_TEST_COUNT++))
     _chm_left="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_CHM_TESTLINE},${_chm_i},left]}")"
@@ -30,11 +30,14 @@ _chm_aggregate_results() {
     fi
   done
 
-  _chm_outputs.stdouterr "${_chm_cmd_failure}"
+  $_chm_cmd_failure || ((_CHM_CMD_SUCCESS++))
+
+  _chm_outputs.stdouterr
 }
 
 
 _chm_prepare_execution() {
+  # $1 line number
   if [ "${_CHM_TEST_POSITION[${_CHM_FULLPATH},${1}]-}" = "EOL" ]; then
     _CHM_TEST_EXIST=true
     _CHM_TESTLINE="${1}"
@@ -48,7 +51,7 @@ _chm_prepare_execution() {
   ${_CHM_TEST_EXIST} && {
     : > ${_CHM_CMD_OUT}
     : > ${_CHM_CMD_ERR}
-    _chm_outputs.command "L${1}: " "${2}"
+    _chm_outputs.command "==> L${1}: " "${2}"
   }
 }
 

@@ -34,12 +34,15 @@ true #: status:0
 echo "Hello"
 #: stdout:'hello' status!:1
 
-dummy_func
-#: stderr:'error' stdout:~'.*std.*' status:3 status!:0
+dummy_func  #: stderr:'error' stdout:~'.*std.*'
+            #: status:3       status!:0
 
 for i in 1 2 3
 do
-  echo $i #: stdout:"$i"
+  echo $i
+  #: stdout:"$i"
+  #: stdout:"1"
+  #: status!:1
 done
 ```
 
@@ -71,45 +74,51 @@ $ chocomint test1 test2 test3
 
 ```
 $ chocomint test.sh
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- chocomint.sh 0.3.5
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ chocomint.sh 0.3.6
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ==> Parsing: "/home/vagrant/github/chocomint.sh/tests/test.sh"
 
--------------------------------------------------------------------------------------
+------------------------------------------------------------------
  [1/1] /home/vagrant/github/chocomint.sh/tests/test.sh
--------------------------------------------------------------------------------------
-13L: true
-   ✔ status 0 should be 0
-0.00 seconds. succeeded.
-15L: echo "Hello"
-   ✘ fixed-strings `hello` should match STDOUT
-   ✔ status 0 should NOT be 1
-0.00 seconds. failed.
-'STDERR' is nothing.
+------------------------------------------------------------------
+==> L13: true
+[success] status 0 should be 0
+0 seconds.
+==> L15: echo "Hello"
+[failure] fixed-strings 'hello' should match STDOUT
+[success] status 0 should NOT be 1
+STDOUT: Hello
+0 seconds.
+==> L18: dummy_func
+[success] fixed-strings 'error' should match STDERR
+[success] extended-regexp '.*std.*' should match STDOUT
+[success] status 3 should be 3
+[success] status 3 should NOT be 0
+STDOUT: out stdout
+STDERR: out error
+0 seconds.
+==> L23: echo $i
+[success] fixed-strings '1' should match STDOUT
+[success] fixed-strings '1' should match STDOUT
+[success] status 0 should NOT be 1
+STDOUT: 1
+0 seconds.
+==> L23: echo $i
+[success] fixed-strings '2' should match STDOUT
+[failure] fixed-strings '1' should match STDOUT
+[success] status 0 should NOT be 1
+STDOUT: 2
+0 seconds.
+==> L23: echo $i
+[success] fixed-strings '3' should match STDOUT
+[failure] fixed-strings '1' should match STDOUT
+[success] status 0 should NOT be 1
+STDOUT: 3
+0 seconds.
 
->>> STDOUT BEGIN
-Hello
->>> STDOUT END
-
-18L: dummy_func
-   ✔ fixed-strings `error` should match STDERR
-   ✔ extended-regexp `.*std.*` should match STDOUT
-   ✔ status 3 should be 3
-   ✔ status 3 should NOT be 0
-0.00 seconds. succeeded.
-23L: echo $i
-   ✔ fixed-strings `1` should match STDOUT
-0.00 seconds. succeeded.
-23L: echo $i
-   ✔ fixed-strings `2` should match STDOUT
-0.00 seconds. succeeded.
-23L: echo $i
-   ✔ fixed-strings `3` should match STDOUT
-0.00 seconds. succeeded.
-
-1 tests failed.
-9/10 tests, 5/6 commands succeeded.
+3 tests failed.
+13/16 tests, 3/6 commands succeeded.
 ```
 
 ## Installation

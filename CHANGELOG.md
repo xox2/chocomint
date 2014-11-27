@@ -1,9 +1,10 @@
 # ChangeLog
 
-## 0.3.6 ()
+## 0.3.6 (2014-11-27)
 
 - Change to be displayed all of the output
 - Change the display format
+- Change to allow describe test-comment over multiple lines
 
 ## 0.3.5 (2014-11-01)
 

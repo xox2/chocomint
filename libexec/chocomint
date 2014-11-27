@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 _CHM_NAME='chocomint.sh'
-_CHM_VERSION='0.3.5-dev'
+_CHM_VERSION='0.3.6'
 
 export _CHM_CMD_OUT="/tmp/_chm_command_stdout.$$.log"
 export _CHM_CMD_ERR="/tmp/_chm_command_stderr.$$.log"

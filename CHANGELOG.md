@@ -1,5 +1,7 @@
 # ChangeLog
 
+## 0.3.7 ()
+
 ## 0.3.6 (2014-11-27)
 
 - Change to be displayed all of the output

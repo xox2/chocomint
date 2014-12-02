@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # vim: ft=sh
 
-source ${_CHM_LIBEXEC}/chocomint-lib/outputs
+source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
 _chm_aggregate_results() {
   # $1 exitstatus
@@ -13,14 +13,14 @@ _chm_aggregate_results() {
 
   for _chm_line in "${_CHM_TESTLINE_LIST[@]}"
   do
-    for _chm_i in $(seq 0 ${_CHM_DB[${_CHM_FULLPATH},${_chm_line},max_test_index]})
+    for _chm_i in $(seq 0 "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},max_test_index]}")
     do
       ((_CHM_TEST_COUNT++))
       _chm_left="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},${_chm_i},left]}")"
       _chm_mid="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},${_chm_i},mid]}")"
       _chm_right="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},${_chm_i},right]}")"
 
-      if source ${_CHM_LIBEXEC}/chocomint-judge "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
+      if source "${_CHM_LIBEXEC}/chocomint-judge" "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
       then
         ((_CHM_TEST_SUCCESS++))
         _chm_outputs.ok "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
@@ -35,16 +35,17 @@ _chm_aggregate_results() {
 
   $_chm_cmd_failure || ((_CHM_CMD_SUCCESS++))
 
-  _chm_outputs.stdouterr
+  _chm_outputs.stdouterr "${_CHM_TIME_RESULT}"
 }
 
 
 _chm_prepare_execution-search_continuous_testline() {
   # $1 line number
+  local _chm_ln="${1}"
   local _chm_i=1
-  while [ "${_CHM_TEST_POSITION[${_CHM_FULLPATH},$((${1}+${_chm_i}))]-}" = 'NL' ]
+  while [ "${_CHM_TEST_POSITION[${_CHM_FULLPATH},$(( _chm_ln + _chm_i ))]-}" = 'NL' ]
   do
-    _CHM_TESTLINE_LIST=("${_CHM_TESTLINE_LIST[@]}" "$((${1}+${_chm_i}))")
+    _CHM_TESTLINE_LIST=("${_CHM_TESTLINE_LIST[@]}" "$(( _chm_ln + _chm_i ))")
     ((_chm_i++))
   done
 }
@@ -65,8 +66,8 @@ _chm_prepare_execution() {
   fi
 
   ${_CHM_TEST_EXIST} && {
-    : > ${_CHM_CMD_OUT}
-    : > ${_CHM_CMD_ERR}
+    : > "${_CHM_CMD_OUT}"
+    : > "${_CHM_CMD_ERR}"
     _chm_outputs.command "==> L${1}: " "${2}"
   }
 }
@@ -78,10 +79,10 @@ _chm_trap() {
   local _chm_prev_stat="$?"
 
   [ "${_CHM_TIME_START}" ] && {
-    _CHM_TIME_RESULT=$(( $(date +%s) - ${_CHM_TIME_START} ))
+    _CHM_TIME_RESULT=$(( $(date +%s) - _CHM_TIME_START ))
   }
 
-  if [ ${3} -eq ${_CHM_TARGETFILE_STACK_LEVEL} ]; then
+  if [ "${3}" -eq "${_CHM_TARGETFILE_STACK_LEVEL}" ]; then
     ${_CHM_TEST_EXIST} && _chm_aggregate_results "${_chm_prev_stat}"
     _chm_prepare_execution "${1}" "${BASH_COMMAND}"
   fi
@@ -91,9 +92,9 @@ _chm_trap() {
 
 
 _chm_run_test() {
-  exec 3>&1 4>&2 1> ${_CHM_CMD_OUT} 2> ${_CHM_CMD_ERR}
+  exec 3>&1 4>&2 1> "${_CHM_CMD_OUT}" 2> "${_CHM_CMD_ERR}"
   set -T; trap '_chm_trap "${LINENO}" "${BASH_SOURCE}" "${#FUNCNAME[*]}"' DEBUG
-  _CHM_TARGETFILE_STACK_LEVEL=$((${#FUNCNAME[*]} + 1))
+  _CHM_TARGETFILE_STACK_LEVEL=$(( ${#FUNCNAME[*]} + 1 ))
   source "${1}"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T
@@ -104,8 +105,8 @@ _chm_run_test() {
 
 
 _chm_main() {
-  source ${_CHM_TEST_POSITION_FILE}
-  source ${_CHM_DB_FILE}
+  source "${_CHM_TEST_POSITION_FILE}"
+  source "${_CHM_DB_FILE}"
 
   local _chm_count=1
   for _chm_i in "$@"
@@ -119,12 +120,14 @@ _chm_main() {
     ((_chm_count++))
   done
 
-  declare -p _CHM_TEST_FAILURE >  ${_CHM_TEST_RESULTS_FILE}
-  declare -p _CHM_TEST_SUCCESS >> ${_CHM_TEST_RESULTS_FILE}
-  declare -p _CHM_TEST_COUNT   >> ${_CHM_TEST_RESULTS_FILE}
-  declare -p _CHM_CMD_SUCCESS  >> ${_CHM_TEST_RESULTS_FILE}
-  declare -p _CHM_CMD_COUNT    >> ${_CHM_TEST_RESULTS_FILE}
-  declare -p _CHM_FAILURE      >> ${_CHM_TEST_RESULTS_FILE}
+  {
+    declare -p _CHM_TEST_FAILURE
+    declare -p _CHM_TEST_SUCCESS
+    declare -p _CHM_TEST_COUNT
+    declare -p _CHM_CMD_SUCCESS
+    declare -p _CHM_CMD_COUNT
+    declare -p _CHM_FAILURE
+  } > "${_CHM_TEST_RESULTS_FILE}"
 }
 
 _chm_main "$@"

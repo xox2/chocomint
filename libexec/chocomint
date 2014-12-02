@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 _CHM_NAME='chocomint.sh'
-_CHM_VERSION='0.3.6'
+_CHM_VERSION='0.3.6-dev'
 
 export _CHM_CMD_OUT="/tmp/_chm_command_stdout.$$.log"
 export _CHM_CMD_ERR="/tmp/_chm_command_stderr.$$.log"
@@ -10,7 +10,7 @@ export _CHM_TEST_POSITION_FILE="/tmp/_chm_test_pos.$$"
 export _CHM_DB_FILE="/tmp/_chm_test_db.$$"
 
 export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
-source ${_CHM_LIBEXEC}/chocomint-lib/outputs
+source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
 export _CHM_TEST_RESULTS_FILE="/tmp/_chm_test_results.$$"
 # variables in _CHM_TEST_RESULTS_FILE
@@ -65,8 +65,8 @@ _chm_main() {
     local _chm_fullpath_list=("${_chm_fullpath_list[@]}" "${fullpath}")
   done
 
-  ${_CHM_LIBEXEC}/chocomint-parse "${_chm_fullpath_list[@]}" || exit $?
-  ${_CHM_LIBEXEC}/chocomint-main  "${_chm_fullpath_list[@]}" || exit $?
+  "${_CHM_LIBEXEC}/chocomint-parse" "${_chm_fullpath_list[@]}" || exit $?
+  "${_CHM_LIBEXEC}/chocomint-main"  "${_chm_fullpath_list[@]}" || exit $?
 
   source ${_CHM_TEST_RESULTS_FILE}
   rm ${_CHM_TEST_RESULTS_FILE}

@@ -18,6 +18,8 @@ echo "Hello"
 dummy_func  #: stderr:'error' stdout:~'.*std.*'
             #: status:3       status!:0
 
+sleep 2 #: status:0
+
 for i in 1 2 3
 do
   echo $i

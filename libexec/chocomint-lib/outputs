@@ -10,7 +10,7 @@ function _chm_.draw_line() {
     _chm_cols=40
   }
   local _chm_line
-  for (( _chm_i=0; _chm_i<$_chm_cols; _chm_i++ ))
+  for (( _chm_i=0; _chm_i<_chm_cols; _chm_i++ ))
   do
     _chm_line="${_chm_line}${1}"
   done
@@ -54,7 +54,7 @@ function _chm_.tprint() {
     esac
     shift
   done
-  _chm_.print "${@:2}$($_CHM_TPUT sgr0)"
+  _chm_.print "${*:2}$($_CHM_TPUT sgr0)"
 }
 
 
@@ -239,7 +239,7 @@ function _chm_.judgeout() {
 function _chm_.stdout() {
   #_chm_.tprint bold -- '>>> STDOUT BEGIN'
   #_chm_.echo
-  cat $_CHM_CMD_OUT | sed 's/^/STDOUT: /' >&3
+  sed 's/^/STDOUT: /' "$_CHM_CMD_OUT" >&3
   _chm_.tput sgr0 # for reset previous output attributes
   #_chm_.tprint bold -- '<<< STDOUT END'
   #_chm_.echo
@@ -250,7 +250,7 @@ function _chm_.stderr() {
   #_chm_.tprint bold -- '>>> STDERR BEGIN'
   #_chm_.echo
   #_chm_.cat $_CHM_CMD_ERR
-  cat $_CHM_CMD_ERR | sed 's/^/STDERR: /' >&3
+  sed 's/^/STDERR: /' "$_CHM_CMD_ERR" >&3
   _chm_.tput sgr0 # for reset previous output attributes
   #_chm_.tprint bold -- '<<< STDERR END'
   #_chm_.echo
@@ -261,7 +261,7 @@ function _chm_outputs.stdouterr() {
   _chm_.stdout
   _chm_.stderr
   $_CHM_BC_COMMAND_EXIST &&
-    _chm_.print "${_CHM_TIME_RESULT} seconds. "
+    _chm_.print "${1} seconds. "
   _chm_.echo
 }
 
@@ -269,7 +269,7 @@ function _chm_outputs.stdouterr() {
 function _chm_outputs.overall_results() {
   echo
   $_CHM_TPUT bold
-  if [ $1 -eq 0 ]; then
+  if [ "$1" -eq 0 ]; then
     echo "$($_CHM_TPUT setaf 2)$3 tests, $5 commands all succeeded.$($_CHM_TPUT sgr0)"
   else
     echo "$($_CHM_TPUT setaf 1)$1 tests failed.$($_CHM_TPUT sgr0)"

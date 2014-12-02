@@ -14,17 +14,16 @@ error() {
 
   local begin_col=$((LINE_NUMBER - 3))
   local end_col=$((LINE_NUMBER + 3))
-  local file_max_lines=$(cat "${TARGET_FULLPATH}" | wc -l)
-  local offset=""
+  local file_max_lines=$(wc -l < "${TARGET_FULLPATH}")
 
   [ ${begin_col} -lt 1 ] && begin_col=1
-  [ ${end_col} -gt ${file_max_lines} ] && end_col=${file_max_lines}
+  [ ${end_col} -gt "${file_max_lines}" ] && end_col=${file_max_lines}
 
   local cols_count=${begin_col}
   local padding=${#end_col}
 
   while read -r line; do
-    if [ ${cols_count} -eq ${LINE_NUMBER} ]; then
+    if [ ${cols_count} -eq "${LINE_NUMBER}" ]; then
       echo -n '->'
       echo " $(printf "%${padding}d" ${cols_count}) |  $(_tput setaf 1)${line}$(_tput sgr0)"
     else
@@ -55,7 +54,7 @@ valid() {
               error "\"${mid}\": invalid matcher"
               ;;
           esac
-          [ ${right} -ge 0 ] > /dev/null 2>&1 || error "\"${right}\": invalid status code"
+          [ "${right}" -ge 0 ] > /dev/null 2>&1 || error "\"${right}\": invalid status code"
           ;;
         'output'|'stdout'|'stderr' )
           case ${mid} in
@@ -95,7 +94,7 @@ parse_test_dq() {
   case ${1} in
     '"' )
       TEST_COMMENT="${TEST_COMMENT}""\""
-      PARSE_METHOD=${PARENT_PARSE_METHOD}
+      PARSE_METHOD="${PARENT_PARSE_METHOD}"
       ;;
     "\\" )
       TEST_COMMENT="${TEST_COMMENT}""\\"
@@ -117,7 +116,7 @@ parse_test_sq() {
   case ${1} in
     "'" )
       TEST_COMMENT="${TEST_COMMENT}""'"
-      PARSE_METHOD=${PARENT_PARSE_METHOD}
+      PARSE_METHOD="${PARENT_PARSE_METHOD}"
       ;;
     "" )
       error "\"${TEST_COMMENT}\": quote is not closed"
@@ -135,7 +134,7 @@ parse_test_bs() {
   case ${1} in
     * )
       TEST_COMMENT="${TEST_COMMENT}""${1}"
-      PARSE_METHOD=${PARENT_PARSE_METHOD}
+      PARSE_METHOD="${PARENT_PARSE_METHOD}"
       ;;
   esac
 }
@@ -417,7 +416,7 @@ parse() {
     OFFSET_NUMBER=1
     TEST_INDEX=-1 # reset index. '-1' means that there is no test.
     ((LINE_NUMBER++))
-  done < ${TARGET_FULLPATH}
+  done < "${TARGET_FULLPATH}"
 }
 
 main() {
@@ -446,8 +445,6 @@ main() {
 
   declare -p _CHM_TEST_POSITION > ${_CHM_TEST_POSITION_FILE}
   declare -p _CHM_DB            > ${_CHM_DB_FILE}
-  #declare -p _CHM_TEST_POSITION | sed 's/ \[/\n[/g' | sort
-  #declare -p _CHM_DB | sed 's/ \[/\n[/g' | sort
 }
 
 main "$@"

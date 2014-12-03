@@ -2,7 +2,7 @@
 
 ## 0.3.7 ()
 
-- Change to do not put a color on the terminal output when redirecting
+- Change to do not coloring the terminal output when redirecting
 
 ## 0.3.6 (2014-11-27)
 

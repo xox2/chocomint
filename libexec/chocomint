@@ -9,9 +9,6 @@ export _CHM_CMD_ERR="/tmp/_chm_command_stderr.$$.log"
 export _CHM_TEST_POSITION_FILE="/tmp/_chm_test_pos.$$"
 export _CHM_DB_FILE="/tmp/_chm_test_db.$$"
 
-export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
-source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
-
 export _CHM_TEST_RESULTS_FILE="/tmp/_chm_test_results.$$"
 # variables in _CHM_TEST_RESULTS_FILE
 export _CHM_TEST_FAILURE=0
@@ -21,8 +18,9 @@ export _CHM_CMD_SUCCESS=0
 export _CHM_CMD_COUNT=0
 export _CHM_FAILURE=false
 
+export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 
-_tput() { $_CHM_TPUT "$@"; }
+source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
 _chm_system_check() {
   #

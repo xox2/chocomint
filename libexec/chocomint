@@ -42,11 +42,17 @@ _chm_system_check() {
 
 _chm_file_check() {
   # $1 target fullpath
+  [ -d "$1" ] && {
+    echo "WARN: \"$1\" is a directory" 1>&2
+    return 1
+  }
   [ -f "$1" ] || {
-    echo "No such a file: $1" 1>&2
+    echo "No such a file: \"$1\"" 1>&2
     exit 3
   }
+  return 0
 }
+
 
 _chm_main() {
   [ "$1" ] || {
@@ -62,8 +68,11 @@ _chm_main() {
   do
     local fullpath="$(readlink -f -- "${i}")"
     _chm_file_check "${fullpath}"
-    local _chm_fullpath_list=("${_chm_fullpath_list[@]}" "${fullpath}")
+    [ $? -eq 0 ] && {
+      local _chm_fullpath_list=("${_chm_fullpath_list[@]}" "${fullpath}")
+    }
   done
+  [ "${_chm_fullpath_list[*]}" ] || exit 3
 
   "${_CHM_LIBEXEC}/chocomint-parse" "${_chm_fullpath_list[@]}" || exit $?
   "${_CHM_LIBEXEC}/chocomint-main"  "${_chm_fullpath_list[@]}" || exit $?

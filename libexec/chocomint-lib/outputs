@@ -58,6 +58,39 @@ function _chm_.tprint() {
 }
 
 
+function _chm_.judgeout.output_rsc() {
+  case $1 in
+    '::' )
+      case $2 in
+        'None' )
+          _chm_.echo "$3 should be nothing"
+          ;;
+      esac
+      ;;
+    ':' )
+      _chm_.print "fixed-strings '"
+      _chm_.tprint "$_chm_opt_tput" -- "$2"
+      _chm_.echo "' should match $3"
+      ;;
+    '!:' )
+      _chm_.print "fixed-strings '"
+      _chm_.tprint "$_chm_opt_tput" -- "$2"
+      _chm_.echo "' should NOT match $3"
+      ;;
+    ':~' )
+      _chm_.print "extended-regexp '"
+      _chm_.tprint "$_chm_opt_tput" -- "$2"
+      _chm_.echo "' should match $3"
+      ;;
+    '!:~' )
+      _chm_.print "extended-regexp '"
+      _chm_.tprint "$_chm_opt_tput" -- "$2"
+      _chm_.echo "' should NOT match $3"
+      ;;
+  esac
+}
+
+
 function _chm_.judgeout() {
   # $1 label tput color
   # $2 label string
@@ -87,118 +120,13 @@ function _chm_.judgeout() {
       esac
       ;;
     'output' )
-      case $4 in
-        '::' )
-          case $5 in
-            'None' )
-              _chm_.echo "outputs should be nothing"
-              ;;
-          esac
-          ;;
-        '!::' )
-          case $5 in
-            'None' )
-              _chm_.echo "outputs should NOT be nothing"
-              ;;
-          esac
-          ;;
-        ':' )
-          _chm_.print "fixed-strings '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should match outputs"
-          ;;
-        '!:' )
-          _chm_.print "fixed-strings '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should NOT match outputs"
-          ;;
-        ':~' )
-          _chm_.print "extended-regexp '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should match outputs"
-          ;;
-        '!:~' )
-          _chm_.print "extended-regexp '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should NOT match outputs"
-          ;;
-      esac
+      _chm_.judgeout.output_rsc "$4" "$5" "outputs"
       ;;
     'stdout' )
-      case $4 in
-        '::' )
-          case $5 in
-            'None' )
-              _chm_.echo "STDOUT should be nothing"
-              ;;
-          esac
-          ;;
-        '!::' )
-          case $5 in
-            'None' )
-              _chm_.echo "STDOUT should NOT be nothing"
-              ;;
-          esac
-          ;;
-        ':' )
-          _chm_.print "fixed-strings '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should match STDOUT"
-          ;;
-        '!:' )
-          _chm_.print "fixed-strings '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should NOT match STDOUT"
-          ;;
-        ':~' )
-          _chm_.print "extended-regexp '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should match STDOUT"
-          ;;
-        '!:~' )
-          _chm_.print "extended-regexp '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should NOT match STDOUT"
-          ;;
-      esac
+      _chm_.judgeout.output_rsc "$4" "$5" "STDOUT"
       ;;
     'stderr' )
-      case $4 in
-        '::' )
-          case $5 in
-            'None' )
-              _chm_.echo "STDERR should be nothing"
-              ;;
-          esac
-          ;;
-        '!::' )
-          case $5 in
-            'None' )
-              _chm_.echo "STDERR should NOT be nothing"
-              ;;
-          esac
-          ;;
-        ':' )
-          _chm_.print "fixed-strings '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should match STDERR"
-          ;;
-        '!:' )
-          _chm_.print "fixed-strings '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should NOT match STDERR"
-          ;;
-        ':~' )
-          _chm_.print "extended-regexp '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should match STDERR"
-          ;;
-        '!:~' )
-          _chm_.print "extended-regexp '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "' should NOT match STDERR"
-          ;;
-      esac
+      _chm_.judgeout.output_rsc "$4" "$5" "STDERR"
       ;;
     * ) # judge variables
       case $4 in

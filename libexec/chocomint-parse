@@ -46,11 +46,11 @@ valid() {
     '='|'!='|'=~'|'!=~' )
       :
       ;;
-    ':'|'!:'|':~'|'!:~'|'::'|'!::' )
+    ':'|'!:'|':~'|'!:~'|'::' )
       case ${left} in
         'status' )
           case ${mid} in
-            ':~'|'!:~'|'::'|'!::' )
+            ':~'|'!:~'|'::' )
               error "\"${mid}\": invalid matcher"
               ;;
           esac
@@ -58,7 +58,7 @@ valid() {
           ;;
         'output'|'stdout'|'stderr' )
           case ${mid} in
-            '::'|'!::' )
+            '::' )
               case ${right} in
                 'None' )
                   :

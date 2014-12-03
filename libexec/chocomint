@@ -28,6 +28,8 @@ _chm_system_check() {
   #
   # "tput" exist check
   #
+  [ ! -t 1 ] && export _CHM_TPUT="true" && return
+
   if type tput > /dev/null 2>&1
   then
     export _CHM_TPUT="tput"

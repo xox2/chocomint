@@ -29,13 +29,16 @@ function dummy_func() {
   return 3
 }
 
-true #: status:0
+true #: status:0 output::None
 
 echo "Hello"
 #: stdout:'hello' status!:1
 
 dummy_func  #: stderr:'error' stdout:~'.*std.*'
             #: status:3       status!:0
+            #: output::None
+
+sleep 2 #: status:0
 
 for i in 1 2 3
 do
@@ -74,16 +77,17 @@ $ chocomint test1 test2 test3
 
 ```
 $ chocomint test.sh
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- chocomint.sh 0.3.6
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ chocomint.sh 0.3.7
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ==> Parsing: "/home/vagrant/github/chocomint.sh/tests/test.sh"
 
-------------------------------------------------------------------
+------------------------------------------------------------
  [1/1] /home/vagrant/github/chocomint.sh/tests/test.sh
-------------------------------------------------------------------
+------------------------------------------------------------
 ==> L13: true
 [success] status 0 should be 0
+[success] outputs should be nothing
 0 seconds.
 ==> L15: echo "Hello"
 [failure] fixed-strings 'hello' should match STDOUT
@@ -95,30 +99,34 @@ STDOUT: Hello
 [success] extended-regexp '.*std.*' should match STDOUT
 [success] status 3 should be 3
 [success] status 3 should NOT be 0
+[failure] outputs should be nothing
 STDOUT: out stdout
 STDERR: out error
 0 seconds.
-==> L23: echo $i
+==> L22: sleep 2
+[success] status 0 should be 0
+2 seconds.
+==> L26: echo $i
 [success] fixed-strings '1' should match STDOUT
 [success] fixed-strings '1' should match STDOUT
 [success] status 0 should NOT be 1
 STDOUT: 1
 0 seconds.
-==> L23: echo $i
+==> L26: echo $i
 [success] fixed-strings '2' should match STDOUT
 [failure] fixed-strings '1' should match STDOUT
 [success] status 0 should NOT be 1
 STDOUT: 2
 0 seconds.
-==> L23: echo $i
+==> L26: echo $i
 [success] fixed-strings '3' should match STDOUT
 [failure] fixed-strings '1' should match STDOUT
 [success] status 0 should NOT be 1
 STDOUT: 3
 0 seconds.
 
-3 tests failed.
-13/16 tests, 3/6 commands succeeded.
+4 tests failed.
+15/19 tests, 3/7 commands succeeded.
 ```
 
 ## Installation

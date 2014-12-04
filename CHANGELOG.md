@@ -1,8 +1,9 @@
 # ChangeLog
 
-## 0.3.7 ()
+## 0.3.7 (2014-12-05)
 
 - Change to do not coloring the terminal output when redirecting
+- Fix 'output::None' Bugs
 
 ## 0.3.6 (2014-11-27)
 

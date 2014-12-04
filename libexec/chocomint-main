@@ -66,8 +66,8 @@ _chm_prepare_execution() {
   fi
 
   ${_CHM_TEST_EXIST} && {
-    : > "${_CHM_CMD_OUT}"
-    : > "${_CHM_CMD_ERR}"
+    : > "${_CHM_CMD_OUT_FILE}"
+    : > "${_CHM_CMD_ERR_FILE}"
     _chm_outputs.command "==> L${1}: " "${2}"
   }
 }
@@ -92,7 +92,7 @@ _chm_trap() {
 
 
 _chm_run_test() {
-  exec 3>&1 4>&2 1> "${_CHM_CMD_OUT}" 2> "${_CHM_CMD_ERR}"
+  exec 3>&1 4>&2 1> "${_CHM_CMD_OUT_FILE}" 2> "${_CHM_CMD_ERR_FILE}"
   set -T; trap '_chm_trap "${LINENO}" "${BASH_SOURCE}" "${#FUNCNAME[*]}"' DEBUG
   _CHM_TARGETFILE_STACK_LEVEL=$(( ${#FUNCNAME[*]} + 1 ))
   source "${1}"; local exitstat=$?
@@ -100,7 +100,7 @@ _chm_run_test() {
   trap DEBUG; set +T
   ${_CHM_TEST_EXIST} && _chm_aggregate_results "${exitstat}"
   exec 1>&3- 2>&4-
-  rm "${_CHM_CMD_OUT}" "${_CHM_CMD_ERR}"
+  rm "${_CHM_CMD_OUT_FILE}" "${_CHM_CMD_ERR_FILE}"
 }
 
 

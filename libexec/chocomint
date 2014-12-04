@@ -3,8 +3,8 @@
 _CHM_NAME='chocomint.sh'
 _CHM_VERSION='0.3.6-dev'
 
-export _CHM_CMD_OUT=$(mktemp "/tmp/_chm_command_stdout.tmp.$$.XXXXXX")
-export _CHM_CMD_ERR=$(mktemp "/tmp/_chm_command_stderr.tmp.$$.XXXXXX")
+export _CHM_CMD_OUT_FILE=$(mktemp "/tmp/_chm_command_stdout.tmp.$$.XXXXXX")
+export _CHM_CMD_ERR_FILE=$(mktemp "/tmp/_chm_command_stderr.tmp.$$.XXXXXX")
 
 export _CHM_TEST_POSITION_FILE=$(mktemp "/tmp/_chm_test_position.tmp.$$.XXXXXX")
 export _CHM_DATABASE_FILE=$(mktemp "/tmp/_chm_database.tmp.$$.XXXXXX")

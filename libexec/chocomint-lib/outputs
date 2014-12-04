@@ -167,7 +167,7 @@ function _chm_.judgeout() {
 function _chm_.stdout() {
   #_chm_.tprint bold -- '>>> STDOUT BEGIN'
   #_chm_.echo
-  sed 's/^/STDOUT: /' "$_CHM_CMD_OUT" >&3
+  sed 's/^/STDOUT: /' "$_CHM_CMD_OUT_FILE" >&3
   _chm_.tput sgr0 # for reset previous output attributes
   #_chm_.tprint bold -- '<<< STDOUT END'
   #_chm_.echo
@@ -177,8 +177,8 @@ function _chm_.stdout() {
 function _chm_.stderr() {
   #_chm_.tprint bold -- '>>> STDERR BEGIN'
   #_chm_.echo
-  #_chm_.cat $_CHM_CMD_ERR
-  sed 's/^/STDERR: /' "$_CHM_CMD_ERR" >&3
+  #_chm_.cat $_CHM_CMD_ERR_FILE
+  sed 's/^/STDERR: /' "$_CHM_CMD_ERR_FILE" >&3
   _chm_.tput sgr0 # for reset previous output attributes
   #_chm_.tprint bold -- '<<< STDERR END'
   #_chm_.echo

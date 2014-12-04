@@ -30,7 +30,7 @@ _chm_judge() {
         '::' )
           case $3 in
             'None' )
-              ([ ! -s "$CHOCOMINT_CMD_OUT" ] && [ ! -s "$CHOCOMINT_CMD_ERR" ]) && return 0 || return 1
+              ([ ! -s "$_CHM_CMD_OUT_FILE" ] && [ ! -s "$_CHM_CMD_ERR_FILE" ]) && return 0 || return 1
               ;;
           esac
           ;;
@@ -41,7 +41,7 @@ _chm_judge() {
         '::' )
           case $3 in
             'None' )
-              [ ! -s "$CHOCOMINT_CMD_OUT" ] && return 0 || return 1
+              [ ! -s "$_CHM_CMD_OUT_FILE" ] && return 0 || return 1
               ;;
           esac
           ;;
@@ -52,7 +52,7 @@ _chm_judge() {
         '::' )
           case $3 in
             'None' )
-              [ ! -s "$CHOCOMINT_CMD_ERR" ] && return 0 || return 1
+              [ ! -s "$_CHM_CMD_ERR_FILE" ] && return 0 || return 1
               ;;
           esac
           ;;
@@ -84,7 +84,7 @@ _chm_judge() {
           ;;
         'output' )
           [ "$2" = ':~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT" "$_CHM_CMD_ERR"
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT_FILE" "$_CHM_CMD_ERR_FILE"
           then
             return 0
           else
@@ -93,7 +93,7 @@ _chm_judge() {
           ;;
         'stdout' )
           [ "$2" = ':~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT"; then
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT_FILE"; then
             return 0
           else
             return 1
@@ -101,7 +101,7 @@ _chm_judge() {
           ;;
         'stderr' )
           [ "$2" = ':~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_ERR"; then
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_ERR_FILE"; then
             return 0
           else
             return 1
@@ -120,7 +120,7 @@ _chm_judge() {
           ;;
         'output' )
           [ "$2" = '!:~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT" "$_CHM_CMD_ERR"; then
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT_FILE" "$_CHM_CMD_ERR_FILE"; then
             return 1
           else
             return 0
@@ -128,7 +128,7 @@ _chm_judge() {
           ;;
         'stdout' )
           [ "$2" = '!:~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT"; then
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT_FILE"; then
             return 1
           else
             return 0
@@ -136,7 +136,7 @@ _chm_judge() {
           ;;
         'stderr' )
           [ "$2" = '!:~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_ERR"; then
+          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_ERR_FILE"; then
             return 1
           else
             return 0

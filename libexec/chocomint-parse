@@ -2,7 +2,7 @@
 # vim: ft=sh
 
 declare -A _CHM_TEST_POSITION # "NL" or "EOL"
-declare -A _CHM_DB
+declare -A _CHM_DATABASE
 
 TEST_MARKER=${TEST_MARKER:-':'}
 
@@ -38,9 +38,9 @@ error() {
 }
 
 valid() {
-  local left=${_CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},left]}
-  local mid=${_CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},mid]}
-  local right=${_CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]}
+  local left=${_CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},left]}
+  local mid=${_CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},mid]}
+  local right=${_CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]}
 
   case ${mid} in
     '='|'!='|'=~'|'!=~' )
@@ -155,7 +155,7 @@ parse_test_right() {
       PARSE_METHOD="parse_test_bs"
       ;;
     " "|"\t" )
-      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
+      _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
       valid
       PARSE_METHOD="parse_test_main"
       TEST_COMMENT=""
@@ -163,8 +163,8 @@ parse_test_right() {
       ;;
     "" )
       _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
-      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
-      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
+      _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
+      _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
       TEST_EXIST=true
       valid
       PARSE_METHOD="parse_nl"
@@ -195,7 +195,7 @@ parse_test_mid() {
       PARENT_PARSE_METHOD=""
       ;;
     * )
-      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},mid]="${TEST_COMMENT}"
+      _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},mid]="${TEST_COMMENT}"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_right"
       parse_test_right "${1}"
@@ -219,7 +219,7 @@ parse_test_left() {
       PARSE_METHOD="parse_test_bs"
       ;;
     "!"|"="|":" )
-      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},left]="${TEST_COMMENT}"
+      _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},left]="${TEST_COMMENT}"
       TEST_COMMENT=""
       PARSE_METHOD="parse_test_mid"
       parse_test_mid "${1}"
@@ -249,7 +249,7 @@ parse_test_main() {
       ;;
     "" )
       _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
-      _CHM_DB[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
+      _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
       PARSE_METHOD="parse_nl"
       TEST_COMMENT=""
       ;;
@@ -444,7 +444,7 @@ main() {
   (${PARSE_ERROR} || ${TEST_NOT_FOUND}) && exit 1
 
   declare -p _CHM_TEST_POSITION > ${_CHM_TEST_POSITION_FILE}
-  declare -p _CHM_DB            > ${_CHM_DB_FILE}
+  declare -p _CHM_DATABASE      > ${_CHM_DATABASE_FILE}
 }
 
 main "$@"

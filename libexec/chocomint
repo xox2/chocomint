@@ -3,13 +3,13 @@
 _CHM_NAME='chocomint.sh'
 _CHM_VERSION='0.3.6-dev'
 
-export _CHM_CMD_OUT="/tmp/_chm_command_stdout.$$.log"
-export _CHM_CMD_ERR="/tmp/_chm_command_stderr.$$.log"
+export _CHM_CMD_OUT=$(mktemp "/tmp/_chm_command_stdout.tmp.$$.XXXXXX")
+export _CHM_CMD_ERR=$(mktemp "/tmp/_chm_command_stderr.tmp.$$.XXXXXX")
 
-export _CHM_TEST_POSITION_FILE="/tmp/_chm_test_pos.$$"
-export _CHM_DB_FILE="/tmp/_chm_test_db.$$"
+export _CHM_TEST_POSITION_FILE=$(mktemp "/tmp/_chm_test_position.tmp.$$.XXXXXX")
+export _CHM_DATABASE_FILE=$(mktemp "/tmp/_chm_database.tmp.$$.XXXXXX")
 
-export _CHM_TEST_RESULTS_FILE="/tmp/_chm_test_results.$$"
+export _CHM_TEST_RESULTS_FILE=$(mktemp "/tmp/_chm_test_results.tmp.$$.XXXXXX")
 # variables in _CHM_TEST_RESULTS_FILE
 export _CHM_TEST_FAILURE=0
 export _CHM_TEST_SUCCESS=0
@@ -80,7 +80,7 @@ _chm_main() {
   source ${_CHM_TEST_RESULTS_FILE}
   rm ${_CHM_TEST_RESULTS_FILE}
   rm ${_CHM_TEST_POSITION_FILE}
-  rm ${_CHM_DB_FILE}
+  rm ${_CHM_DATABASE_FILE}
 
   _chm_outputs.overall_results \
     "${_CHM_TEST_FAILURE}"     \

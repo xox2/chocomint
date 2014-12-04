@@ -13,12 +13,12 @@ _chm_aggregate_results() {
 
   for _chm_line in "${_CHM_TESTLINE_LIST[@]}"
   do
-    for _chm_i in $(seq 0 "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},max_test_index]}")
+    for _chm_i in $(seq 0 "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},max_test_index]}")
     do
       ((_CHM_TEST_COUNT++))
-      _chm_left="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},${_chm_i},left]}")"
-      _chm_mid="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},${_chm_i},mid]}")"
-      _chm_right="$(eval echo "${_CHM_DB[${_CHM_FULLPATH},${_chm_line},${_chm_i},right]}")"
+      _chm_left="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},left]}")"
+      _chm_mid="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},mid]}")"
+      _chm_right="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},right]}")"
 
       if source "${_CHM_LIBEXEC}/chocomint-judge" "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
       then
@@ -106,7 +106,7 @@ _chm_run_test() {
 
 _chm_main() {
   source "${_CHM_TEST_POSITION_FILE}"
-  source "${_CHM_DB_FILE}"
+  source "${_CHM_DATABASE_FILE}"
 
   local _chm_count=1
   for _chm_i in "$@"

@@ -8,11 +8,19 @@ _chm_match_file() {
   local _chm_string="$2"
   shift 2
 
+  linenum="$(echo "$_chm_string" | wc -l)"
+
   for _chm_file in "$@"
   do
-    if grep "$_chm_opt" -q "$_chm_string" "$_chm_file"
-    then
-      _chm_matching=true
+    if [ "$linenum" -eq 0 ]; then
+      grep "$_chm_opt" -q "$_chm_string" "$_chm_file" && _chm_matching=true
+    else
+      _chm_fail=false
+      while read _chm_line
+      do
+        grep "$_chm_opt" --binary-files=text "$_chm_line" "$_chm_file" >&3 || _chm_fail=true
+      done <<< "$_chm_string"
+      $_chm_fail || _chm_matching=true
     fi
   done
 

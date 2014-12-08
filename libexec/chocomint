@@ -88,7 +88,14 @@ _chm_main() {
   }
   "${_CHM_LIBEXEC}/chocomint-main"  "${_chm_fullpath_list[@]}" || {
     exitcode=$?
-    echo "chocomint-main: Unknown Error (code $exitcode)"
+    case $exitcode in
+      '21' )
+        :
+        ;;
+      * )
+        echo "chocomint-main: Unknown Error (code $exitcode)"
+        ;;
+    esac
     exit $exitcode
   }
 

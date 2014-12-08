@@ -15,7 +15,10 @@ match_file() {
     if [ "${linenum}" -eq 0 ]; then
       grep "$opt" -q "$string" "$file" && matching=true
     else
-      [ "$opt" = "-E" ] && exit 21
+      [ "$opt" = "-E" ] && {
+        echo Runtime error: Regexp matcher is not available in multi-line matching >&3
+        exit 21
+      }
       # To match the multiple lines, using 'grep --perl-regexp'
       # So, escape '$string' except '\n'
       perl_regex_escape="$(

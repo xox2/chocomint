@@ -26,8 +26,8 @@ function _chm_outputs.section() {
 
 ###
 
-function _chm_.echo() { echo "$@" >&3; }
-function _chm_.print() { echo -n "$@" >&3; }
+function _chm_outputs.echo() { echo "$@" >&3; }
+function _chm_outputs.print() { echo -n "$@" >&3; }
 function _chm_.cat() { cat "$@" >&3; }
 function _chm_.tput() { $_CHM_TPUT "$@" >&3; }
 
@@ -41,7 +41,7 @@ function _chm_outputs.title() {
 }
 
 
-function _chm_.tprint() {
+function _chm_outputs.tprint() {
   while [ "$1" != "--" ]
   do
     case $1 in
@@ -54,7 +54,7 @@ function _chm_.tprint() {
     esac
     shift
   done
-  _chm_.print "${*:2}$($_CHM_TPUT sgr0)"
+  _chm_outputs.print "${*:2}$($_CHM_TPUT sgr0)"
 }
 
 
@@ -63,29 +63,29 @@ function _chm_.judgeout.output_rsc() {
     '::' )
       case $2 in
         'None' )
-          _chm_.echo "$3 should be nothing"
+          _chm_outputs.echo "$3 should be nothing"
           ;;
       esac
       ;;
     ':' )
-      _chm_.print "fixed-strings '"
-      _chm_.tprint "$_chm_opt_tput" -- "$2"
-      _chm_.echo "' should match $3"
+      _chm_outputs.print "fixed-strings '"
+      _chm_outputs.tprint "$_chm_opt_tput" -- "$2"
+      _chm_outputs.echo "' should match $3"
       ;;
     '!:' )
-      _chm_.print "fixed-strings '"
-      _chm_.tprint "$_chm_opt_tput" -- "$2"
-      _chm_.echo "' should NOT match $3"
+      _chm_outputs.print "fixed-strings '"
+      _chm_outputs.tprint "$_chm_opt_tput" -- "$2"
+      _chm_outputs.echo "' should NOT match $3"
       ;;
     ':~' )
-      _chm_.print "extended-regexp '"
-      _chm_.tprint "$_chm_opt_tput" -- "$2"
-      _chm_.echo "' should match $3"
+      _chm_outputs.print "extended-regexp '"
+      _chm_outputs.tprint "$_chm_opt_tput" -- "$2"
+      _chm_outputs.echo "' should match $3"
       ;;
     '!:~' )
-      _chm_.print "extended-regexp '"
-      _chm_.tprint "$_chm_opt_tput" -- "$2"
-      _chm_.echo "' should NOT match $3"
+      _chm_outputs.print "extended-regexp '"
+      _chm_outputs.tprint "$_chm_opt_tput" -- "$2"
+      _chm_outputs.echo "' should NOT match $3"
       ;;
   esac
 }
@@ -99,23 +99,23 @@ function _chm_.judgeout() {
   # $5 right
   # $6 exitstat
   local _chm_opt_tput="5"
-  _chm_.tprint "$1" -- "$2" # 'ok' or 'ng'
+  _chm_outputs.tprint "$1" -- "$2" # 'ok' or 'ng'
   case $3 in
     'status' )
       case $4 in
         ':' )
-          _chm_.print "status "
-          _chm_.tprint "$_chm_opt_tput" -- "$6"
-          _chm_.print " should be "
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo
+          _chm_outputs.print "status "
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$6"
+          _chm_outputs.print " should be "
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$5"
+          _chm_outputs.echo
           ;;
         '!:' )
-          _chm_.print "status "
-          _chm_.tprint "$_chm_opt_tput" -- "$6"
-          _chm_.print " should NOT be "
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo
+          _chm_outputs.print "status "
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$6"
+          _chm_outputs.print " should NOT be "
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$5"
+          _chm_outputs.echo
           ;;
       esac
       ;;
@@ -131,32 +131,32 @@ function _chm_.judgeout() {
     * ) # judge variables
       case $4 in
         '=' )
-          _chm_.print "value '"
-          _chm_.tprint "$_chm_opt_tput" -- "$3"
-          _chm_.print "' should be '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "'"
+          _chm_outputs.print "value '"
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$3"
+          _chm_outputs.print "' should be '"
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$5"
+          _chm_outputs.echo "'"
           ;;
         '!=' )
-          _chm_.print "value '"
-          _chm_.tprint "$_chm_opt_tput" -- "$3"
-          _chm_.print "' should NOT be '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "'"
+          _chm_outputs.print "value '"
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$3"
+          _chm_outputs.print "' should NOT be '"
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$5"
+          _chm_outputs.echo "'"
           ;;
         '=~' )
-          _chm_.print "value '"
-          _chm_.tprint "$_chm_opt_tput" -- "$3"
-          _chm_.print "' should match extended-regexp '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "'"
+          _chm_outputs.print "value '"
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$3"
+          _chm_outputs.print "' should match extended-regexp '"
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$5"
+          _chm_outputs.echo "'"
           ;;
         '!=~' )
-          _chm_.print "value '"
-          _chm_.tprint "$_chm_opt_tput" -- "$3"
-          _chm_.print "' should NOT match extended-regexp '"
-          _chm_.tprint "$_chm_opt_tput" -- "$5"
-          _chm_.echo "'"
+          _chm_outputs.print "value '"
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$3"
+          _chm_outputs.print "' should NOT match extended-regexp '"
+          _chm_outputs.tprint "$_chm_opt_tput" -- "$5"
+          _chm_outputs.echo "'"
           ;;
       esac
       ;;
@@ -164,33 +164,15 @@ function _chm_.judgeout() {
 }
 
 
-function _chm_.stdout() {
-  #_chm_.tprint bold -- '>>> STDOUT BEGIN'
-  #_chm_.echo
+function _chm_outputs.stdout() {
   sed 's/^/STDOUT: /' "$_CHM_CMD_OUT_FILE" >&3
   _chm_.tput sgr0 # for reset previous output attributes
-  #_chm_.tprint bold -- '<<< STDOUT END'
-  #_chm_.echo
 }
 
 
-function _chm_.stderr() {
-  #_chm_.tprint bold -- '>>> STDERR BEGIN'
-  #_chm_.echo
-  #_chm_.cat $_CHM_CMD_ERR_FILE
+function _chm_outputs.stderr() {
   sed 's/^/STDERR: /' "$_CHM_CMD_ERR_FILE" >&3
   _chm_.tput sgr0 # for reset previous output attributes
-  #_chm_.tprint bold -- '<<< STDERR END'
-  #_chm_.echo
-}
-
-
-function _chm_outputs.stdouterr() {
-  _chm_.stdout
-  _chm_.stderr
-  $_CHM_BC_COMMAND_EXIST &&
-    _chm_.print "${1} seconds. "
-  _chm_.echo
 }
 
 
@@ -208,6 +190,6 @@ function _chm_outputs.overall_results() {
 
 
 function _chm_outputs.command() {
-  _chm_.tprint 3 -- "${1}"
+  _chm_outputs.tprint 3 -- "${1}"
   echo "${2}" | sed s/^/$($_CHM_TPUT sgr0)/ | sed s/$/$($_CHM_TPUT sgr0)/ >&3
 }

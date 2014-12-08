@@ -42,7 +42,10 @@ _chm_aggregate_results() {
 
   $_chm_cmd_failure || ((_CHM_CMD_SUCCESS++))
 
-  _chm_outputs.stdouterr "${_CHM_TIME_RESULT}"
+  _chm_outputs.stdout
+  _chm_outputs.stderr
+  _chm_outputs.print "${_CHM_TIME_RESULT} seconds. "
+  _chm_outputs.echo
 }
 
 

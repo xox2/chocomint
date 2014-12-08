@@ -20,15 +20,22 @@ _chm_aggregate_results() {
       _chm_mid="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},mid]}")"
       _chm_right="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},right]}")"
 
-      if source "${_CHM_LIBEXEC}/chocomint-judge" "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
+      if "${_CHM_LIBEXEC}/chocomint-judge" \
+        "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}" \
+        "${_CHM_CMD_OUT_FILE}" "${_CHM_CMD_ERR_FILE}"
       then
         ((_CHM_TEST_SUCCESS++))
         _chm_outputs.ok "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
       else
-        ((_CHM_TEST_FAILURE++))
-        _chm_outputs.ng "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
-        _chm_cmd_failure=true
-        _CHM_FAILURE=true
+        exitcode=$?
+        if [ $exitcode -eq 1 ]; then
+          ((_CHM_TEST_FAILURE++))
+          _chm_outputs.ng "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
+          _chm_cmd_failure=true
+          _CHM_FAILURE=true
+        else
+          exit $exitcode
+        fi
       fi
     done
   done

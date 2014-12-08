@@ -20,7 +20,7 @@ _chm_aggregate_results() {
       _chm_mid="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},mid]}")"
       _chm_right="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},right]}")"
 
-      if "${_CHM_LIBEXEC}/chocomint-judge" \
+      if "${_CHM_LIBEXEC}/chocomint-main-judge" \
         "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}" \
         "${_CHM_CMD_OUT_FILE}" "${_CHM_CMD_ERR_FILE}"
       then

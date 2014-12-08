@@ -8,19 +8,44 @@ _chm_match_file() {
   local _chm_string="$2"
   shift 2
 
-  linenum="$(echo "$_chm_string" | wc -l)"
+  linenum="$(echo -n "$_chm_string" | wc -l)"
 
   for _chm_file in "$@"
   do
-    if [ "$linenum" -eq 0 ]; then
+    if [ "${linenum}" -eq 0 ]; then
       grep "$_chm_opt" -q "$_chm_string" "$_chm_file" && _chm_matching=true
     else
-      _chm_fail=false
-      while read _chm_line
-      do
-        grep "$_chm_opt" --binary-files=text "$_chm_line" "$_chm_file" >&3 || _chm_fail=true
-      done <<< "$_chm_string"
-      $_chm_fail || _chm_matching=true
+      [ "$_chm_opt" = "-E" ] && exit 21
+      # To match the multiple lines, using 'grep --perl-regexp'
+      # So, escape '$_chm_string' except '\n'
+      _chm_perl_regex_escape="$(
+        echo -n "$_chm_string" |
+        sed 's/\\/\\\\/g'      |
+        sed 's/\*/\\*/g'       |
+        sed 's/\+/\\+/g'       |
+        sed 's/\./\\./g'       |
+        sed 's/\?/\\?/g'       |
+        sed 's/{/\\{/g'        |
+        sed 's/}/\\}/g'        |
+        sed 's/(/\\(/g'        |
+        sed 's/)/\\)/g'        |
+        sed 's/\[/\\[/g'       |
+        sed 's/\]/\\]/g'       |
+        sed 's/\^/\\^/g'       |
+        sed 's/\$/\\$/g'       |
+        sed 's/\-/\\-/g'       |
+        sed 's/|/\\|/g'        |
+        sed 's/\//\\\//g'      |
+        sed ':a;N;$!ba;s/\n/\\n/g'
+      )"    # `- http://stackoverflow.com/questions/1251999/sed-how-can-i-replace-a-newline-n
+
+      # ${_chm_file} is output only. copy it temporary file.
+      local _chm_file_copy="$(mktemp "${_chm_file}.copy.$$.XXXXXX")"
+      cp "${_chm_file}" "${_chm_file_copy}"
+
+      grep -Pzo -q "$_chm_perl_regex_escape" "${_chm_file_copy}" && _chm_matching=true
+
+      rm "${_chm_file_copy}"
     fi
   done
 

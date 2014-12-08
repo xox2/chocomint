@@ -74,8 +74,23 @@ _chm_main() {
   done
   [ "${_chm_fullpath_list[*]}" ] || exit 3
 
-  "${_CHM_LIBEXEC}/chocomint-parse" "${_chm_fullpath_list[@]}" || exit $?
-  "${_CHM_LIBEXEC}/chocomint-main"  "${_chm_fullpath_list[@]}" || exit $?
+  "${_CHM_LIBEXEC}/chocomint-parse" "${_chm_fullpath_list[@]}" || {
+    exitcode=$?
+    case $exitcode in
+      '1' )
+        :
+        ;;
+      * )
+        echo "chocomint-parse: Unknown Error (code $exitcode)"
+        ;;
+    esac
+    exit $exitcode
+  }
+  "${_CHM_LIBEXEC}/chocomint-main"  "${_chm_fullpath_list[@]}" || {
+    exitcode=$?
+    echo "chocomint-main: Unknown Error (code $exitcode)"
+    exit $exitcode
+  }
 
   source ${_CHM_TEST_RESULTS_FILE}
   rm ${_CHM_TEST_RESULTS_FILE}

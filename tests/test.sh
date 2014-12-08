@@ -5,8 +5,8 @@
 ### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE ALL TESTS.
 ###
 function dummy_func() {
-  echo 'out error' 1>&2
-  echo 'out stdout'
+  echo 'out error////' 1>&2
+  echo 'out stdout////'
   return 3
 }
 
@@ -15,8 +15,8 @@ true #: status:0 output::None
 echo "Hello"
 #: stdout:'hello' status!:1
 
-dummy_func  #: stderr:'error' stdout:~'.*std.*'
-            #: status:3       status!:0
+dummy_func  #: stderr:'error////' stdout:~'.*std.*////'
+            #: status:3           status!:0
             #: output::None
 
 sleep 2 #: status:0

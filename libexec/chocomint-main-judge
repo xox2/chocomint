@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 # vim: ft=sh
 
-_chm_match_file() {
+match_file() {
   # $1 right string
-  local _chm_matching=false
-  local _chm_opt="$1"
-  local _chm_string="$2"
+  local matching=false
+  local opt="$1"
+  local string="$2"
   shift 2
 
-  linenum="$(echo -n "$_chm_string" | wc -l)"
+  linenum="$(echo -n "$string" | wc -l)"
 
-  for _chm_file in "$@"
+  for file in "$@"
   do
     if [ "${linenum}" -eq 0 ]; then
-      grep "$_chm_opt" -q "$_chm_string" "$_chm_file" && _chm_matching=true
+      grep "$opt" -q "$string" "$file" && matching=true
     else
-      [ "$_chm_opt" = "-E" ] && exit 21
+      [ "$opt" = "-E" ] && exit 21
       # To match the multiple lines, using 'grep --perl-regexp'
-      # So, escape '$_chm_string' except '\n'
-      _chm_perl_regex_escape="$(
-        echo -n "$_chm_string" |
+      # So, escape '$string' except '\n'
+      perl_regex_escape="$(
+        echo -n "$string" |
         sed 's/\\/\\\\/g'      |
         sed 's/\*/\\*/g'       |
         sed 's/\+/\\+/g'       |
@@ -39,20 +39,20 @@ _chm_match_file() {
         sed ':a;N;$!ba;s/\n/\\n/g'
       )"    # `- http://stackoverflow.com/questions/1251999/sed-how-can-i-replace-a-newline-n
 
-      # ${_chm_file} is output only. copy it temporary file.
-      local _chm_file_copy="$(mktemp "${_chm_file}.copy.$$.XXXXXX")"
-      cp "${_chm_file}" "${_chm_file_copy}"
+      # ${file} is output only. copy it temporary file.
+      local file_copy="$(mktemp "${file}.copy.$$.XXXXXX")"
+      cp "${file}" "${file_copy}"
 
-      grep -Pzo -q "$_chm_perl_regex_escape" "${_chm_file_copy}" && _chm_matching=true
+      grep -Pzo -q "$perl_regex_escape" "${file_copy}" && matching=true
 
-      rm "${_chm_file_copy}"
+      rm "${file_copy}"
     fi
   done
 
-  $_chm_matching && return 0 || return 1
+  $matching && return 0 || return 1
 }
 
-_chm_judge() {
+judge() {
   # $1 left string
   # $2 middle string
   # $3 right string
@@ -116,8 +116,8 @@ _chm_judge() {
           fi
           ;;
         'output' )
-          [ "$2" = ':~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT_FILE" "$_CHM_CMD_ERR_FILE"
+          [ "$2" = ':~' ] && local opt='-E' || local opt='-F'
+          if match_file $opt "$3" "$_CHM_CMD_OUT_FILE" "$_CHM_CMD_ERR_FILE"
           then
             return 0
           else
@@ -125,16 +125,16 @@ _chm_judge() {
           fi
           ;;
         'stdout' )
-          [ "$2" = ':~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT_FILE"; then
+          [ "$2" = ':~' ] && local opt='-E' || local opt='-F'
+          if match_file $opt "$3" "$_CHM_CMD_OUT_FILE"; then
             return 0
           else
             return 1
           fi
           ;;
         'stderr' )
-          [ "$2" = ':~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_ERR_FILE"; then
+          [ "$2" = ':~' ] && local opt='-E' || local opt='-F'
+          if match_file $opt "$3" "$_CHM_CMD_ERR_FILE"; then
             return 0
           else
             return 1
@@ -152,24 +152,24 @@ _chm_judge() {
           fi
           ;;
         'output' )
-          [ "$2" = '!:~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT_FILE" "$_CHM_CMD_ERR_FILE"; then
+          [ "$2" = '!:~' ] && local opt='-E' || local opt='-F'
+          if match_file $opt "$3" "$_CHM_CMD_OUT_FILE" "$_CHM_CMD_ERR_FILE"; then
             return 1
           else
             return 0
           fi
           ;;
         'stdout' )
-          [ "$2" = '!:~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_OUT_FILE"; then
+          [ "$2" = '!:~' ] && local opt='-E' || local opt='-F'
+          if match_file $opt "$3" "$_CHM_CMD_OUT_FILE"; then
             return 1
           else
             return 0
           fi
           ;;
         'stderr' )
-          [ "$2" = '!:~' ] && local _chm_opt='-E' || local _chm_opt='-F'
-          if _chm_match_file $_chm_opt "$3" "$_CHM_CMD_ERR_FILE"; then
+          [ "$2" = '!:~' ] && local opt='-E' || local opt='-F'
+          if match_file $opt "$3" "$_CHM_CMD_ERR_FILE"; then
             return 1
           else
             return 0
@@ -180,4 +180,4 @@ _chm_judge() {
   esac
 }
 
-_chm_judge "$@"
+judge "$@"

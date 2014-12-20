@@ -110,7 +110,6 @@ _chm_run_test() {
   trap DEBUG; set +T
   ${_CHM_TEST_EXIST} && _chm_aggregate_results "${exitstat}"
   exec 1>&3- 2>&4-
-  rm "${_CHM_CMD_OUT_FILE}" "${_CHM_CMD_ERR_FILE}"
 }
 
 
@@ -118,16 +117,20 @@ _chm_main() {
   source "${_CHM_TEST_POSITION_FILE}"
   source "${_CHM_DATABASE_FILE}"
 
-  local _chm_count=1
+  local _chm_file_num_count=1
   for _chm_i in "$@"
   do
     _CHM_TEST_EXIST=false
     _CHM_TIME_START=''
     _CHM_FULLPATH="${_chm_i}"
 
-    _chm_outputs.section "[${_chm_count}/${#@}] ${_CHM_FULLPATH}"
-    _chm_run_test "${_CHM_FULLPATH}"
-    ((_chm_count++))
+    _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_FULLPATH}"
+    if [ "${_CHM_DATABASE[$_CHM_FULLPATH,parse_error]}" ]; then
+      echo "==> Pass this test by Parse Error"
+    else
+      _chm_run_test "${_CHM_FULLPATH}"
+    fi
+    ((_chm_file_num_count++))
   done
 
   {

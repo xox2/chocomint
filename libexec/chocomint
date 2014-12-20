@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-_CHM_NAME='chocomint.sh'
-_CHM_VERSION='0.3.7-dev'
+NAME='chocomint.sh'
+VERSION='0.3.7-dev'
 
 export _CHM_CMD_OUT_FILE=$(mktemp "/tmp/_chm_command_stdout.tmp.$$.XXXXXX")
 export _CHM_CMD_ERR_FILE=$(mktemp "/tmp/_chm_command_stderr.tmp.$$.XXXXXX")
@@ -22,7 +22,17 @@ export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
 
 source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
-_chm_system_check() {
+for opt in "$@"
+do
+  case "$opt" in
+    '--ignore-parse-error' )
+      IGNORE_PARSE_ERROR=true
+      shift 1
+      ;;
+  esac
+done
+
+system_check() {
   #
   # "tput" exist check
   #
@@ -40,7 +50,7 @@ _chm_system_check() {
 }
 
 
-_chm_file_check() {
+file_check() {
   # $1 target fullpath
   [ -d "$1" ] && {
     echo "WARN: \"$1\" is a directory" 1>&2
@@ -54,27 +64,8 @@ _chm_file_check() {
 }
 
 
-_chm_main() {
-  [ "$1" ] || {
-    echo "${_CHM_NAME}: no input file" 1>&2
-    exit 2
-  }
-
-  _chm_system_check
-
-  _chm_outputs.title "${_CHM_NAME} ${_CHM_VERSION}"
-
-  for i in "$@"
-  do
-    local fullpath="$(readlink -f -- "${i}")"
-    _chm_file_check "${fullpath}"
-    [ $? -eq 0 ] && {
-      local _chm_fullpath_list=("${_chm_fullpath_list[@]}" "${fullpath}")
-    }
-  done
-  [ "${_chm_fullpath_list[*]}" ] || exit 3
-
-  "${_CHM_LIBEXEC}/chocomint-parse" "${_chm_fullpath_list[@]}" || {
+parse() {
+  "${_CHM_LIBEXEC}/chocomint-parse" "$@" || {
     exitcode=$?
     case $exitcode in
       '1' )
@@ -84,9 +75,13 @@ _chm_main() {
         echo "chocomint-parse: Unknown Error (code $exitcode)"
         ;;
     esac
-    exit $exitcode
+    [ "$IGNORE_PARSE_ERROR" ] || exit $exitcode
   }
-  "${_CHM_LIBEXEC}/chocomint-main"  "${_chm_fullpath_list[@]}" || {
+}
+
+
+run() {
+  "${_CHM_LIBEXEC}/chocomint-main" "$@" || {
     exitcode=$?
     case $exitcode in
       '21' )
@@ -98,11 +93,33 @@ _chm_main() {
     esac
     exit $exitcode
   }
+}
+
+
+main() {
+  [ "$1" ] || {
+    echo "${NAME}: no input file" 1>&2
+    exit 2
+  }
+
+  system_check
+
+  _chm_outputs.title "${NAME} ${VERSION}"
+
+  for i in "$@"
+  do
+    local fullpath="$(readlink -f -- "${i}")"
+    file_check "${fullpath}"
+    [ $? -eq 0 ] && {
+      local fullpath_list=("${fullpath_list[@]}" "${fullpath}")
+    }
+  done
+  [ "${fullpath_list[*]}" ] || exit 3
+
+  parse "${fullpath_list[@]}"
+  run "${fullpath_list[@]}"
 
   source ${_CHM_TEST_RESULTS_FILE}
-  rm ${_CHM_TEST_RESULTS_FILE}
-  rm ${_CHM_TEST_POSITION_FILE}
-  rm ${_CHM_DATABASE_FILE}
 
   _chm_outputs.overall_results \
     "${_CHM_TEST_FAILURE}"     \
@@ -114,4 +131,10 @@ _chm_main() {
   ${_CHM_FAILURE} && return 1 || return 0
 }
 
-_chm_main "$@"
+trap "rm \"${_CHM_CMD_OUT_FILE}\" \
+         \"${_CHM_CMD_ERR_FILE}\" \
+         \"${_CHM_TEST_RESULTS_FILE}\" \
+         \"${_CHM_TEST_POSITION_FILE}\" \
+         \"${_CHM_DATABASE_FILE}\"" EXIT
+
+main "$@"

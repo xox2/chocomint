@@ -9,7 +9,7 @@ TEST_MARKER=${TEST_MARKER:-':'}
 _tput() { $_CHM_TPUT "$@"; }
 
 error() {
-  echo -n "$(_tput bold)$(_tput setaf 1)Parse error:$(_tput sgr0) "
+  echo -n "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) "
   echo "${1} (L${LINE_NUMBER})"
 
   local begin_col=$((LINE_NUMBER - 3))
@@ -35,6 +35,7 @@ error() {
   echo
 
   PARSE_ERROR=true
+  _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
 }
 
 valid() {
@@ -435,16 +436,17 @@ main() {
     parse "${i}"
 
     ${TEST_EXIST} || {
-      echo "$(_tput bold)$(_tput setaf 1)Parse error:$(_tput sgr0) test not found"
+      echo "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) test not found"
       echo
       TEST_NOT_FOUND=true
+      _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
     }
   done
 
-  (${PARSE_ERROR} || ${TEST_NOT_FOUND}) && exit 1
-
   declare -p _CHM_TEST_POSITION > ${_CHM_TEST_POSITION_FILE}
   declare -p _CHM_DATABASE      > ${_CHM_DATABASE_FILE}
+
+  (${PARSE_ERROR} || ${TEST_NOT_FOUND}) && return 1
 }
 
 main "$@"

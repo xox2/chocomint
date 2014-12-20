@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.3.8 ()
+
+- Specifiable multiple lines to output resources
+
 ## 0.3.7 (2014-12-05)
 
 - Change to do not coloring the terminal output when redirecting

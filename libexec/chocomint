@@ -135,6 +135,6 @@ trap "rm \"${_CHM_CMD_OUT_FILE}\" \
          \"${_CHM_CMD_ERR_FILE}\" \
          \"${_CHM_TEST_RESULTS_FILE}\" \
          \"${_CHM_TEST_POSITION_FILE}\" \
-         \"${_CHM_DATABASE_FILE}\"" EXIT
+         \"${_CHM_DATABASE_FILE}\" > /dev/null 2>&1" EXIT
 
 main "$@"

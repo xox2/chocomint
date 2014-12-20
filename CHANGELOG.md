@@ -3,6 +3,7 @@
 ## 0.3.8 ()
 
 - Specifiable multiple lines to output resources
+- Add ignore-parse-error option
 
 ## 0.3.7 (2014-12-05)
 

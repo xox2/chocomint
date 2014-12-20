@@ -16,29 +16,29 @@ match_file() {
       grep "$opt" -q "$string" "$file" && matching=true
     else
       [ "$opt" = "-E" ] && {
-        echo Runtime error: Regexp matcher is not available in multi-line matching >&3
+        echo '===> Runtime error: Regexp matcher is not available in multi-line matching' >&3
         exit 21
       }
       # To match the multiple lines, using 'grep --perl-regexp'
       # So, escape '$string' except '\n'
       perl_regex_escape="$(
         echo -n "$string" |
-        sed 's/\\/\\\\/g'      |
-        sed 's/\*/\\*/g'       |
-        sed 's/\+/\\+/g'       |
-        sed 's/\./\\./g'       |
-        sed 's/\?/\\?/g'       |
-        sed 's/{/\\{/g'        |
-        sed 's/}/\\}/g'        |
-        sed 's/(/\\(/g'        |
-        sed 's/)/\\)/g'        |
-        sed 's/\[/\\[/g'       |
-        sed 's/\]/\\]/g'       |
-        sed 's/\^/\\^/g'       |
-        sed 's/\$/\\$/g'       |
-        sed 's/\-/\\-/g'       |
-        sed 's/|/\\|/g'        |
-        sed 's/\//\\\//g'      |
+        sed 's/\\/\\\\/g' |
+        sed 's/\*/\\*/g'  |
+        sed 's/\+/\\+/g'  |
+        sed 's/\./\\./g'  |
+        sed 's/\?/\\?/g'  |
+        sed 's/{/\\{/g'   |
+        sed 's/}/\\}/g'   |
+        sed 's/(/\\(/g'   |
+        sed 's/)/\\)/g'   |
+        sed 's/\[/\\[/g'  |
+        sed 's/\]/\\]/g'  |
+        sed 's/\^/\\^/g'  |
+        sed 's/\$/\\$/g'  |
+        sed 's/\-/\\-/g'  |
+        sed 's/|/\\|/g'   |
+        sed 's/\//\\\//g' |
         sed ':a;N;$!ba;s/\n/\\n/g'
       )"    # `- http://stackoverflow.com/questions/1251999/sed-how-can-i-replace-a-newline-n
 

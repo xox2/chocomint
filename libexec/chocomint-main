@@ -124,7 +124,14 @@ _chm_main() {
     _CHM_TIME_START=''
     _CHM_FULLPATH="${_chm_i}"
 
-    _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_FULLPATH}"
+    if [ "${_CHM_DATABASE[${_CHM_FULLPATH},meta,name]}" ]; then
+      _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_DATABASE[${_CHM_FULLPATH},meta,name]} (${_CHM_FULLPATH##*/})"
+    elif [ "${_CHM_DATABASE[${_CHM_FULLPATH},meta,title]}" ]; then
+      _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_DATABASE[${_CHM_FULLPATH},meta,title]} (${_CHM_FULLPATH##*/})"
+    else
+      _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_FULLPATH}"
+    fi
+
     if [ "${_CHM_DATABASE[$_CHM_FULLPATH,parse_error]}" ]; then
       echo "==> Pass this test by Parse Error"
     else

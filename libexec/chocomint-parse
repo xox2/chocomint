@@ -5,6 +5,7 @@ declare -A _CHM_TEST_POSITION # "NL" or "EOL"
 declare -A _CHM_DATABASE
 
 TEST_MARKER=${TEST_MARKER:-':'}
+META_MARKER=${META_MARKER:-'@'}
 
 _tput() { $_CHM_TPUT "$@"; }
 
@@ -262,10 +263,58 @@ parse_test_main() {
   esac
 }
 
-parse_hash() {
+parse_meta_value() {
+  case ${1} in
+    '' )
+      _CHM_DATABASE[${TARGET_FULLPATH},meta,${META_KEY}]="`echo "${META_VAL}" | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//'`"
+      PARSE_METHOD='parse_nl'
+      META_KEY=''
+      META_VAL=''
+      ;;
+    * )
+      META_VAL="${META_VAL}${1}"
+      ;;
+  esac
+}
+
+parse_meta_key() {
+  case ${1} in
+    ':' )
+      PARSE_METHOD="parse_meta_value"
+      ;;
+    '' )
+      error "\"${META_KEY}\": invalid token"
+      PARSE_METHOD='parse_nl'
+      META_KEY=''
+      ;;
+    * )
+      META_KEY="${META_KEY}${1}"
+      ;;
+  esac
+}
+
+parse_meta_main() {
+  case ${1} in
+    " "|"\t" )
+      :
+      ;;
+    "" )
+      PARSE_METHOD='parse_nl'
+      ;;
+    * )
+      PARSE_METHOD='parse_meta_key'
+      parse_meta_key "${1}"
+      ;;
+  esac
+}
+
+parse_marker() {
   case ${1} in
     "${TEST_MARKER}" )
       PARSE_METHOD="parse_test_main"
+      ;;
+    "${META_MARKER}" )
+      PARSE_METHOD="parse_meta_main"
       ;;
     "" )
       PARSE_METHOD="parse_nl"
@@ -330,7 +379,7 @@ parse_bs() {
 parse_main() {
   case ${1} in
     "#" )
-      PARSE_METHOD="parse_hash"
+      PARSE_METHOD="parse_marker"
       COMMENT_IN="EOL"
       ;;
     "\\" )
@@ -353,7 +402,7 @@ parse_main() {
 parse_nl_space() {
   case ${1} in
     "#" )
-      PARSE_METHOD="parse_hash"
+      PARSE_METHOD="parse_marker"
       COMMENT_IN="NL"
       ;;
     " "|"\t" )
@@ -380,7 +429,7 @@ parse_nl_space() {
 parse_nl() {
   case ${1} in
     "#" )
-      PARSE_METHOD="parse_hash"
+      PARSE_METHOD="parse_marker"
       COMMENT_IN="NL"
       ;;
     " "|"\t" )

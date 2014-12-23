@@ -4,6 +4,7 @@
 
 - Specifiable multiple lines to output resources
 - Add ignore-parse-error option
+- Add 'name' meta-data for each test files
 
 ## 0.3.7 (2014-12-05)
 

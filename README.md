@@ -220,6 +220,7 @@ Identifier of beginning the meta-data is `#@`
 | name | define the test name   |
 
 ``` bash
+# Example:
 #@ name: TEST TITLE IS HERE
 ```
 

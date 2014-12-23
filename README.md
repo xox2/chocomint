@@ -20,6 +20,8 @@ Add test comments `#:` on Bash script.
 #!/usr/bin/env chocomint
 # test.sh
 
+#@ name: THIS TEST TITLE IS HERE
+
 ###
 ### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE ALL TESTS.
 ###
@@ -77,24 +79,24 @@ $ chocomint test1 test2 test3
 
 ```
 $ chocomint test.sh
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- chocomint.sh 0.3.7
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-==> Parsing: "/home/vagrant/github/chocomint.sh/tests/test.sh"
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ chocomint.sh 0.3.7-dev
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+==> Parsing: "/home/vagrant/github/chocomint.sh/tests/tests.sh"
 
-------------------------------------------------------------
- [1/1] /home/vagrant/github/chocomint.sh/tests/test.sh
-------------------------------------------------------------
-==> L13: true
+-----------------------------------------------------------------
+ [1/1] THIS TEST TITLE IS HERE (tests.sh)
+-----------------------------------------------------------------
+==> L15: true
 [success] status 0 should be 0
 [success] outputs should be nothing
 0 seconds.
-==> L15: echo "Hello"
+==> L17: echo "Hello"
 [failure] fixed-strings 'hello' should match STDOUT
 [success] status 0 should NOT be 1
 STDOUT: Hello
 0 seconds.
-==> L18: dummy_func
+==> L20: dummy_func
 [success] fixed-strings 'error' should match STDERR
 [success] extended-regexp '.*std.*' should match STDOUT
 [success] status 3 should be 3
@@ -103,22 +105,22 @@ STDOUT: Hello
 STDOUT: out stdout
 STDERR: out error
 0 seconds.
-==> L22: sleep 2
+==> L24: sleep 2
 [success] status 0 should be 0
 2 seconds.
-==> L26: echo $i
+==> L28: echo $i
 [success] fixed-strings '1' should match STDOUT
 [success] fixed-strings '1' should match STDOUT
 [success] status 0 should NOT be 1
 STDOUT: 1
 0 seconds.
-==> L26: echo $i
+==> L28: echo $i
 [success] fixed-strings '2' should match STDOUT
 [failure] fixed-strings '1' should match STDOUT
 [success] status 0 should NOT be 1
 STDOUT: 2
 0 seconds.
-==> L26: echo $i
+==> L28: echo $i
 [success] fixed-strings '3' should match STDOUT
 [failure] fixed-strings '1' should match STDOUT
 [success] status 0 should NOT be 1
@@ -139,7 +141,7 @@ $ cp -r chocomint.sh/libexec/ /usr/local/
 
 ## Reference
 
-### Test comment marker
+### Test comment marker: `#:`
 
 Identifier of beginning the test comment is `#:`
 
@@ -208,6 +210,18 @@ name=${USER} #: "${name}"='bob'
 | `=~`    | match extended regexp               | `"a $bee c"=~'a.*c'`
 | `!=`    | NOT match fixed strings             | `"a $bee foo"!='b a foo'`
 | `!=~`   | NOT match extended regexp           | `"a $bee bar"!=~'b.*bar'`
+
+### Meta-data marker: `#@`
+
+Identifier of beginning the meta-data is `#@`
+
+| Key  | Description            |
+|------|------------------------|
+| name | define the test name   |
+
+``` bash
+#@ name: TEST TITLE IS HERE
+```
 
 ## Requirement
 

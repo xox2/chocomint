@@ -18,7 +18,7 @@ Add test comments `#:` on Bash script.
 
 ``` bash
 #!/usr/bin/env chocomint
-# test.sh
+# tests.sh
 
 #@ name: THIS TEST TITLE IS HERE
 
@@ -63,7 +63,7 @@ if exist `chocomint` on PATH environment variable.
 or run `chocomint` directly.
 
 ```
-$ chocomint test.sh
+$ chocomint tests.sh
 ```
 
 You can input multiple files.
@@ -78,9 +78,9 @@ $ chocomint test1 test2 test3
 - If one or more tests __failed__, chocomint will return __1__.
 
 ```
-$ chocomint test.sh
+$ chocomint tests.sh
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- chocomint.sh 0.3.7-dev
+ chocomint.sh 0.4.0
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ==> Parsing: "/home/vagrant/github/chocomint.sh/tests/tests.sh"
 

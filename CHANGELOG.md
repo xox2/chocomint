@@ -1,6 +1,6 @@
 # ChangeLog
 
-## 0.4.0 ()
+## 0.4.0 (2014-12-25)
 
 - Specifiable multiple lines to output resources
 - Add `--ignore-parse-error` option

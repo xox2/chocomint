@@ -227,7 +227,8 @@ Identifier of beginning the meta-data is `#@`
 ## Requirement
 
 - Bash __4.x__
-- Please _avoid_ function/variable names that begin with `_chm_` or `_CHM_`.
+- Please __avoid function/variable names__ that begin with __`_chm_` or `_CHM_`__.
+- If you use __functions__, you must define __before all tests__.
 
 ## License
 

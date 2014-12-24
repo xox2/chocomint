@@ -1,15 +1,15 @@
 # ChangeLog
 
-## 0.3.8 ()
+## 0.4.0 ()
 
 - Specifiable multiple lines to output resources
-- Add ignore-parse-error option
-- Add 'name' meta-data for each test files
+- Add `--ignore-parse-error` option
+- Add `name` meta-data for each test files
 
 ## 0.3.7 (2014-12-05)
 
 - Change to do not coloring the terminal output when redirecting
-- Fix 'output::None' Bugs
+- Fix `output::None` Bugs
 
 ## 0.3.6 (2014-11-27)
 

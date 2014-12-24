@@ -14,7 +14,7 @@ variables in the test comments, you can create a test to powerful and flexible.
 
 ### Write test files
 
-Add test comments `#:` on Bash script.
+Add __test comments `#:`__ on Bash script.
 
 ``` bash
 #!/usr/bin/env chocomint

@@ -495,7 +495,11 @@ main() {
   declare -p _CHM_TEST_POSITION > ${_CHM_TEST_POSITION_FILE}
   declare -p _CHM_DATABASE      > ${_CHM_DATABASE_FILE}
 
-  (${PARSE_ERROR} || ${TEST_NOT_FOUND}) && return 1
+  if ${PARSE_ERROR} || ${TEST_NOT_FOUND}; then
+    return 1
+  else
+    return 0
+  fi
 }
 
 main "$@"

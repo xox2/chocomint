@@ -84,15 +84,17 @@ _chm_prepare_execution() {
 
 
 _chm_trap() {
+  local _chm_prev_stat="$?" # must be first
+
   # $1 line number
   # $2 source path
+
   $_CHM_DEBUG && {
     echo "LINENO: $1" >&3
     echo "BASH_SOURCE: $2" >&3
     echo "#FUNCNAME[*]: $3" >&3
     echo "FUNCNAME: $4" >&3
   }
-  local _chm_prev_stat="$?"
 
   [ "${_CHM_TIME_START}" ] && {
     _CHM_TIME_RESULT=$(( $(date +%s) - _CHM_TIME_START ))

@@ -1,8 +1,8 @@
 #!/bin/bash
 # vim: ft=sh
 
-_CHM_OK_STRING=${_CHM_OK_STRING:-'[success] '}
-_CHM_NG_STRING=${_CHM_NG_STRING:-'[failure] '}
+_CHM_OK_STRING=${_CHM_OK_STRING:-'[pass] '}
+_CHM_NG_STRING=${_CHM_NG_STRING:-'[fail] '}
 
 function _chm_.draw_line() {
   local _chm_cols=$($_CHM_TPUT cols)

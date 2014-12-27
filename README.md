@@ -133,6 +133,15 @@ STDOUT: 3
 
 ## Installation
 
+#### Simple, Local
+
+```
+$ git clone https://github.com/toromoti/chocomint.sh ~/chocomint
+$ export PATH=~/chocomint/bin:$PATH
+```
+
+#### Systemwide
+
 ```
 $ git clone https://github.com/toromoti/chocomint.sh
 $ cp -r chocomint.sh/bin/ /usr/local/

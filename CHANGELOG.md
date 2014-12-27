@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.5.0 ()
+
+- Another of the process for each test file
+
 ## 0.4.0 (2014-12-25)
 
 - Specifiable multiple lines to output resources

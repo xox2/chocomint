@@ -496,7 +496,7 @@ main() {
   declare -p _CHM_DATABASE      > ${_CHM_DATABASE_FILE}
 
   if ${PARSE_ERROR} || ${TEST_NOT_FOUND}; then
-    return 1
+    return 10
   else
     return 0
   fi

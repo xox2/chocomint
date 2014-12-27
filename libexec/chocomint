@@ -68,10 +68,10 @@ file_check() {
 
 parse() {
   "${_CHM_LIBEXEC}/chocomint-parse" "$@" || {
-    exitcode=$?
+    local exitcode=$?
     case $exitcode in
       '10' )
-        :
+        : # ${PARSE_ERROR} || ${TEST_NOT_FOUND}
         ;;
       * )
         echo "chocomint-parse: Unknown Error (exitcode: $exitcode)"
@@ -83,40 +83,37 @@ parse() {
 
 
 run() {
-  source "${_CHM_TEST_POSITION_FILE}"
-  source "${_CHM_DATABASE_FILE}"
-
-  local _chm_file_num_count=1
-  for _CHM_FULLPATH in "$@"
+  local file_num_count=1
+  for path in "$@"
   do
-    if [ "${_CHM_DATABASE[${_CHM_FULLPATH},meta,name]}" ]; then
-      _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_DATABASE[${_CHM_FULLPATH},meta,name]} (${_CHM_FULLPATH##*/})"
-    elif [ "${_CHM_DATABASE[${_CHM_FULLPATH},meta,title]}" ]; then
-      _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_DATABASE[${_CHM_FULLPATH},meta,title]} (${_CHM_FULLPATH##*/})"
+    if [ "${_CHM_DATABASE[${path},meta,name]}" ]; then
+      _chm_outputs.section "[${file_num_count}/${#@}] ${_CHM_DATABASE[${path},meta,name]} (${path##*/})"
+    elif [ "${_CHM_DATABASE[${path},meta,title]}" ]; then
+      _chm_outputs.section "[${file_num_count}/${#@}] ${_CHM_DATABASE[${path},meta,title]} (${path##*/})"
     else
-      _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_FULLPATH}"
+      _chm_outputs.section "[${file_num_count}/${#@}] ${path}"
     fi
 
-    if [ "${_CHM_DATABASE[$_CHM_FULLPATH,parse_error]}" ]; then
-      echo "==> Pass this test by Parse Error"
+    if [ "${_CHM_DATABASE[$path,parse_error]}" ]; then
+      echo '==> Pass this test by Parse Error'
     else
-      "${_CHM_LIBEXEC}/chocomint-main" "$_CHM_FULLPATH" || {
-        exitcode=$?
+      "${_CHM_LIBEXEC}/chocomint-main" "$path" || {
+        local exitcode=$?
         case $exitcode in
           '21' )
-            :
+            : # in chocomint-main-judge
             ;;
           * )
             echo "chocomint-main: Unknown Error (exitcode: $exitcode)"
-            cat ${_CHM_CMD_OUT_FILE}
-            cat ${_CHM_CMD_ERR_FILE}
+            cat "${_CHM_CMD_OUT_FILE}"
+            cat "${_CHM_CMD_ERR_FILE}"
             ;;
         esac
         exit $exitcode
       }
       source "${_CHM_TEST_RESULTS_FILE}"
     fi
-    ((_chm_file_num_count++))
+    ((file_num_count++))
   done
 }
 
@@ -133,17 +130,18 @@ main() {
 
   for i in "$@"
   do
-    local fullpath="$(readlink -f -- "${i}")"
-    file_check "${fullpath}"
-    [ $? -eq 0 ] && {
-      local fullpath_list=("${fullpath_list[@]}" "${fullpath}")
+    local path="$(readlink -f -- "${i}")"
+    file_check "${path}" && {
+      local path_list=("${path_list[@]}" "${path}")
     }
   done
-  [ "${fullpath_list[*]}" ] || exit 3
+  [ "${path_list[*]}" ] || exit 3
 
-  parse "${fullpath_list[@]}"
-  run "${fullpath_list[@]}"
+  parse "${path_list[@]}"
+  source "${_CHM_TEST_POSITION_FILE}"
+  source "${_CHM_DATABASE_FILE}"
 
+  run "${path_list[@]}"
   source ${_CHM_TEST_RESULTS_FILE}
 
   _chm_outputs.overall_results \

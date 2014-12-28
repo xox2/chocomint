@@ -3,6 +3,7 @@
 
 declare -A _CHM_TEST_POSITION # "NL" or "EOL"
 declare -A _CHM_DATABASE
+declare -A _CHM_PARSED
 
 TEST_MARKER=${TEST_MARKER:-':'}
 META_MARKER=${META_MARKER:-'@'}
@@ -470,8 +471,10 @@ parse() {
 }
 
 main() {
-  PARSE_ERROR=false
-  TEST_NOT_FOUND=false
+  PARSE_ERROR=false    # Any even one of the multiple files
+  TEST_NOT_FOUND=false # Any even one of the multiple files
+
+  [ -f "${_CHM_PARSER_FILE}" ] && source "${_CHM_PARSER_FILE}"
 
   for i in "$@"
   do
@@ -483,6 +486,7 @@ main() {
 
     echo "==> Parsing: \"${i}\""
     parse "${i}"
+    _CHM_PARSED[${i}]='parsed!!'
 
     ${TEST_EXIST} || {
       echo "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) test not found"
@@ -492,8 +496,17 @@ main() {
     }
   done
 
-  declare -p _CHM_TEST_POSITION > ${_CHM_TEST_POSITION_FILE}
-  declare -p _CHM_DATABASE      > ${_CHM_DATABASE_FILE}
+  {
+    declare -p _CHM_TEST_POSITION
+    declare -p _CHM_DATABASE
+    declare -p _CHM_PARSED
+  } > ${_CHM_PARSER_FILE}
+
+  $_CHM_DEBUG && {
+    declare -p _CHM_TEST_POSITION
+    declare -p _CHM_DATABASE
+    declare -p _CHM_PARSED
+  }
 
   if ${PARSE_ERROR} || ${TEST_NOT_FOUND}; then
     return 10

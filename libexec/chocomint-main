@@ -44,7 +44,7 @@ _chm_aggregate_results() {
 
   _chm_outputs.stdout
   _chm_outputs.stderr
-  _chm_outputs.print "${_CHM_TIME_RESULT} seconds. "
+  _chm_outputs.print "    ${_CHM_TIME_RESULT} seconds."
   _chm_outputs.echo
 }
 
@@ -78,7 +78,7 @@ _chm_prepare_execution() {
   ${_CHM_TEST_EXIST} && {
     : > "${_CHM_CMD_OUT_FILE}"
     : > "${_CHM_CMD_ERR_FILE}"
-    _chm_outputs.command "==> L${1}: " "${2}"
+    _chm_outputs.command "==> Running: \"${_CHM_FULLPATH}\" (L${1})" "${2}"
   }
 }
 
@@ -88,22 +88,32 @@ _chm_trap() {
   # $2 previous exitcode
   # $3 FUNCNAME item num
 
+  eval `echo "$6" | sed 's/BASH_SOURCE=/_CHM_BASH_SOURCE=/'`
+  _CHM_BASH_SOURCE=`readlink -f -- $_CHM_BASH_SOURCE`
+
+  $_CHM_DEBUG && {
+    echo >&3
+    echo " * \$BASH_COMMAND: ${BASH_COMMAND}" >&3
+    echo " * \$LINENO: $1" >&3
+    echo " * prev command exitcode(\$?): $2" >&3
+    echo " * \$FUNCNAME item num: $3" >&3
+    echo " * \$FUNCNAME list: `echo "$4" | sed 's/FUNCNAME=/F=/'`" >&3
+    echo " * \$BASH_SOURCE item num: $5" >&3
+    echo " * \$BASH_SOURCE list: $6" >&3
+    echo " * \$_CHM_BASH_SOURCE: $_CHM_BASH_SOURCE" >&3
+  }
+
   [ "${_CHM_TIME_START}" ] && {
     _CHM_TIME_RESULT=$(( $(date +%s) - _CHM_TIME_START ))
   }
 
   if [ "${3}" = "${_CHM_TARGETFILE_STACK_LEVEL}" ]; then
-    $_CHM_DEBUG && {
-      echo " * \$BASH_COMMAND: ${BASH_COMMAND}" >&3
-      echo " * prev command exitcode(\$?): $2" >&3
-      echo " * \$LINENO: $1" >&3
-      echo " * \$FUNCNAME item num: $3" >&3
-      echo " * \$FUNCNAME list: $4" >&3
-      echo >&3
-    }
-
     ${_CHM_TEST_EXIST} && _chm_aggregate_results "${2}"
     _chm_prepare_execution "${1}" "${BASH_COMMAND}"
+  fi
+
+  if [ ${3} -gt ${_CHM_TARGETFILE_STACK_LEVEL} ] && [ -f $_CHM_BASH_SOURCE ]; then
+    echo gyaa!!!!!! >&3
   fi
 
   _CHM_TIME_START=$(date +%s)
@@ -112,7 +122,13 @@ _chm_trap() {
 
 _chm_run_test() {
   exec 3>&1 4>&2 1> "${_CHM_CMD_OUT_FILE}" 2> "${_CHM_CMD_ERR_FILE}"
-  set -T; trap '_chm_trap "${LINENO}" "$?" "${#FUNCNAME[*]}" "`declare -p FUNCNAME`"' DEBUG
+  set -T; trap "_chm_trap \"\${LINENO}\"                 \
+                          \"\$?\"                        \
+                          \"\${#FUNCNAME[*]}\"           \
+                          \"\`declare -p FUNCNAME\`\"    \
+                          \"\${#BASH_SOURCE[*]}\"        \
+                          \"\`declare -p BASH_SOURCE\`\" \
+                          " DEBUG
   _CHM_TARGETFILE_STACK_LEVEL=$(( ${#FUNCNAME[*]} + 1 ))
   source "${1}"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
@@ -123,8 +139,7 @@ _chm_run_test() {
 
 
 _chm_main() {
-  source "${_CHM_TEST_POSITION_FILE}"
-  source "${_CHM_DATABASE_FILE}"
+  source "${_CHM_PARSER_FILE}"
 
   _CHM_TEST_EXIST=false
   _CHM_TIME_START=''

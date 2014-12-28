@@ -8,8 +8,7 @@ export _CHM_DEBUG=${DEBUG:-false}
 export _CHM_CMD_OUT_FILE=$(mktemp "/tmp/_chm_command_stdout.tmp.$$.XXXXXX")
 export _CHM_CMD_ERR_FILE=$(mktemp "/tmp/_chm_command_stderr.tmp.$$.XXXXXX")
 
-export _CHM_TEST_POSITION_FILE=$(mktemp "/tmp/_chm_test_position.tmp.$$.XXXXXX")
-export _CHM_DATABASE_FILE=$(mktemp "/tmp/_chm_database.tmp.$$.XXXXXX")
+export _CHM_PARSER_FILE=$(mktemp "/tmp/_chm_parser.tmp.$$.XXXXXX")
 
 export _CHM_TEST_RESULTS_FILE=$(mktemp "/tmp/_chm_test_results.tmp.$$.XXXXXX")
 # variables in _CHM_TEST_RESULTS_FILE
@@ -138,8 +137,7 @@ main() {
   [ "${path_list[*]}" ] || exit 3
 
   parse "${path_list[@]}"
-  source "${_CHM_TEST_POSITION_FILE}"
-  source "${_CHM_DATABASE_FILE}"
+  source "${_CHM_PARSER_FILE}"
 
   run "${path_list[@]}"
   source ${_CHM_TEST_RESULTS_FILE}
@@ -164,8 +162,7 @@ exit_trap() {
     rm "${_CHM_CMD_OUT_FILE}"
     rm "${_CHM_CMD_ERR_FILE}"
     rm "${_CHM_TEST_RESULTS_FILE}"
-    rm "${_CHM_TEST_POSITION_FILE}"
-    rm "${_CHM_DATABASE_FILE}"
+    rm "${_CHM_PARSER_FILE}"
   } > /dev/null 2>&1
 }
 

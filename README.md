@@ -133,17 +133,19 @@ STDOUT: 3
 
 ## Installation
 
+`master` branch is for development. Use `current` branch.
+
 #### Simple, Local
 
 ```
-$ git clone https://github.com/toromoti/chocomint.sh ~/chocomint
+$ git clone -b current https://github.com/toromoti/chocomint.sh ~/chocomint
 $ export PATH=~/chocomint/bin:$PATH
 ```
 
 #### Systemwide
 
 ```
-$ git clone https://github.com/toromoti/chocomint.sh
+$ git clone -b current https://github.com/toromoti/chocomint.sh
 $ cp -r chocomint.sh/bin/ /usr/local/
 $ cp -r chocomint.sh/libexec/ /usr/local/
 ```
@@ -182,7 +184,8 @@ echo 'hello' #: stdout:'hello'
 
 #### Plain Strings
 
-Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`. Of course, you can include variables to these strings. `"it is ${any_variable}"`
+Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.
+Of course, you can include variables to these strings. `"it is ${any_variable}"`
 
 ``` bash
 # Example:
@@ -191,14 +194,14 @@ name=${USER} #: "${name}"='bob'
 
 ### Matcher
 
-#### Status
+#### Status Matcher
 
 | Matcher | Description                         | Example                   |
 |---------|-------------------------------------|---------------------------|
 | `:`     | Exit code is equal to the value     | `status:0`                |
 | `!:`    | Exit code is NOT equal to the value | `status!:127`             |
 
-#### Output
+#### Output Matcher
 
 | Matcher  | Description                         | Example                   |
 |----------|-------------------------------------|---------------------------|
@@ -211,7 +214,7 @@ name=${USER} #: "${name}"='bob'
 |----------|---------|-----------------|-----------------|
 | `::`     | `None`  | outputs NOTHING | `output::None`
 
-#### Plain Strings
+#### Plain Strings Matcher
 
 | Matcher | Description                         | Example                   |
 |---------|-------------------------------------|---------------------------|

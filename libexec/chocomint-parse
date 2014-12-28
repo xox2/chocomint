@@ -478,22 +478,26 @@ main() {
 
   for i in "$@"
   do
-    LINE_NUMBER=1
-    OFFSET_NUMBER=1
-    TEST_INDEX=-1
-    PARSE_METHOD="parse_nl" # initial parse-method
-    TEST_EXIST=false
+    if ! [ "${_CHM_PARSED[${i}]}" ]; then
+      LINE_NUMBER=1
+      OFFSET_NUMBER=1
+      TEST_INDEX=-1
+      PARSE_METHOD="parse_nl" # initial parse-method
+      TEST_EXIST=false
 
-    echo "==> Parsing: \"${i}\""
-    parse "${i}"
-    _CHM_PARSED[${i}]='parsed!!'
+      echo "==> Parsing: \"${i}\""
+      parse "${i}"
+      _CHM_PARSED[${i}]='parsed'
 
-    ${TEST_EXIST} || {
-      echo "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) test not found"
-      echo
-      TEST_NOT_FOUND=true
-      _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
-    }
+      ${TEST_EXIST} || {
+        echo "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) test not found"
+        echo
+        TEST_NOT_FOUND=true
+        _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
+      }
+    else
+      echo "==> Skip Parsing: \"${i}\" has already been parsed."
+    fi
   done
 
   {
@@ -503,9 +507,9 @@ main() {
   } > ${_CHM_PARSER_FILE}
 
   $_CHM_DEBUG && {
-    declare -p _CHM_TEST_POSITION
-    declare -p _CHM_DATABASE
-    declare -p _CHM_PARSED
+    echo " * `declare -p _CHM_TEST_POSITION`"
+    echo " * `declare -p _CHM_DATABASE`"
+    echo " * `declare -p _CHM_PARSED`"
   }
 
   if ${PARSE_ERROR} || ${TEST_NOT_FOUND}; then

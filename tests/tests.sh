@@ -6,9 +6,16 @@
 ###
 ### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE ALL TESTS.
 ###
+function dummy_func2() {
+  echo 'out error 2' 1>&2
+  echo 'out stdout 2'
+  return 5
+}
+
 function dummy_func() {
   echo 'out error' 1>&2
   echo 'out stdout'
+  dummy_func2
   return 3
 }
 

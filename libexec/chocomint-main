@@ -134,6 +134,22 @@ _chm_write_output() {
 }
 
 
+_chm_show_result() {
+  # $1 current stack level
+  # $2 prev stack level
+  # $3 previous exitcode
+  local _chm_lvl=$2
+  while [ $_chm_lvl -ge ${1} ]
+  do
+    echo "LEVEL${_chm_lvl}リザルトほい(${1})" >&3
+    _CHM_PREV_STATUS[$_chm_lvl]="${3}"
+    [ "${_CHM_PREV_TEST_EXIST[$_chm_lvl]}" ] &&
+      _chm_aggregate_execution_results "${_CHM_PREV_STATUS[$_chm_lvl]}" "${_chm_lvl}"
+    ((_chm_lvl--))
+  done
+}
+
+
 _chm_trap() {
   # $1 line number
   # $2 previous exitcode
@@ -150,15 +166,7 @@ _chm_trap() {
       _chm_write_output "${_CHM_PREV_STACKLEVEL}"
 
       if [ ! $5 -gt $_CHM_PREV_STACKLEVEL ]; then
-        local _chm_lvl=$_CHM_PREV_STACKLEVEL
-        while [ $_chm_lvl -ge $5 ]
-        do
-          echo "LEVEL${_chm_lvl}リザルトほい(${5})" >&3
-          _CHM_PREV_STATUS[$_chm_lvl]="$2"
-          [ "${_CHM_PREV_TEST_EXIST[$_chm_lvl]}" ] &&
-            _chm_aggregate_execution_results "${_CHM_PREV_STATUS[$_chm_lvl]}" "${_chm_lvl}"
-          ((_chm_lvl--))
-        done
+        _chm_show_result ${5} ${_CHM_PREV_STACKLEVEL} ${2}
       fi
     else
       echo "LEVEL${5}　一番最初" >&3
@@ -185,13 +193,12 @@ _chm_run_test() {
                           \"\${#BASH_SOURCE[*]}\"        \
                           \"\$(declare -p BASH_SOURCE)\" \
                           " DEBUG
-  source "${1}"; local exitstat=$?
+  source "${1}"; local exitcode=$?
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T
   echo "_chm_run_testに復帰" >&3
   _chm_write_output "${_CHM_PREV_STACKLEVEL}"
-  [ "${_CHM_PREV_TEST_EXIST[${_CHM_PREV_STACKLEVEL}]}" ] &&
-    _chm_aggregate_execution_results "${exitstat}" "${_CHM_PREV_STACKLEVEL}"
+  _chm_show_result ${_CHM_BASE_STACKLEVEL} ${_CHM_PREV_STACKLEVEL} ${exitcode}
   exec 1>&3- 2>&4-
 }
 

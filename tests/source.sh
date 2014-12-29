@@ -15,5 +15,3 @@ echo 1 #: status:0
 #source tests/source-sub.sh
 
 func #: status:10
-
-echo

@@ -165,7 +165,7 @@ _chm_trap() {
     if [ "$_CHM_INITIAL_EXEC" ]; then
       _chm_write_output "${_CHM_PREV_STACKLEVEL}"
 
-      if [ ! $5 -gt $_CHM_PREV_STACKLEVEL ]; then
+      if [ $5 -le $_CHM_PREV_STACKLEVEL ]; then
         _chm_show_result ${5} ${_CHM_PREV_STACKLEVEL} ${2}
       fi
     else
@@ -219,5 +219,20 @@ _chm_main() {
     declare -p _CHM_FAILURE
   } > "${_CHM_TEST_RESULTS_FILE}"
 }
+
+exit_trap() {
+  {
+    for file in "${_CHM_LVL_OUT_FILES[@]}"
+    do
+      rm "$file"
+    done
+    for file in "${_CHM_LVL_ERR_FILES[@]}"
+    do
+      rm "$file"
+    done
+  } > /dev/null 2>&1
+}
+
+trap 'exit_trap' EXIT
 
 _chm_main "$1"

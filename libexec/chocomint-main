@@ -21,16 +21,6 @@ _chm_show_debug() {
 }
 
 
-_chm_make_lvl_out_file() {
-  # $1 stack level
-  if [ ! "${_CHM_LVL_OUT_FILES[$1]}" ] || [ ! "${_CHM_LVL_ERR_FILES[$1]}" ]; then
-    echo "LEVEL${1}のアウトファイルがないので作成" >&3
-    _CHM_LVL_OUT_FILES[$1]=$(mktemp "/tmp/_chm_command_stdout.lvl${1}.$$.XXXXXX")
-    _CHM_LVL_ERR_FILES[$1]=$(mktemp "/tmp/_chm_command_stderr.lvl${1}.$$.XXXXXX")
-  fi
-}
-
-
 _chm_aggregate_execution_results() {
   # $1 exitstatus
   ((_CHM_CMD_COUNT++))
@@ -41,14 +31,14 @@ _chm_aggregate_execution_results() {
 
   _chm_outputs.command "==> Running: \"${_CHM_PREV_PATH[$2]}\" (L${_CHM_PREV_LINENO[$2]})" "${_CHM_PREV_COMMAND[$2]}"
 
-  for _chm_line in ${_CHM_CONTINUOUS_TESTLINES}
+  for _chm_line in ${_CHM_CONTINUOUS_TESTLINES[$2]}
   do
-    for _chm_i in $(seq 0 "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},max_test_index]}")
+    for _chm_testidx in $(seq 0 "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},max_test_index]}")
     do
       ((_CHM_TEST_COUNT++))
-      _chm_left="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_i},left]}")"
-      _chm_mid="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_i},mid]}")"
-      _chm_right="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_i},right]}")"
+      _chm_left="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_testidx},left]}")"
+      _chm_mid="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_testidx},mid]}")"
+      _chm_right="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_testidx},right]}")"
 
       if "${_CHM_LIBEXEC}/chocomint-main-judge" \
         "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}" \
@@ -80,16 +70,13 @@ _chm_aggregate_execution_results() {
 }
 
 
-_chm_prepare_execution-search_continuous_testline() {
-  # $1 line number
-  # $2 fullpath
-  local _chm_ln="${1}"
-  local _chm_i=1
-  while [ "${_CHM_TEST_POSITION[${2},$(( _chm_ln + _chm_i ))]-}" = 'NL' ]
-  do
-    _CHM_CONTINUOUS_TESTLINES="${_CHM_CONTINUOUS_TESTLINES} $(( _chm_ln + _chm_i ))"
-    ((_chm_i++))
-  done
+_chm_make_lvl_out_file() {
+  # $1 stack level
+  if [ ! "${_CHM_LVL_OUT_FILES[$1]}" ] || [ ! "${_CHM_LVL_ERR_FILES[$1]}" ]; then
+    echo "LEVEL${1}のアウトファイルがないので作成" >&3
+    _CHM_LVL_OUT_FILES[$1]=$(mktemp "/tmp/_chm_command_stdout.lvl${1}.$$.XXXXXX")
+    _CHM_LVL_ERR_FILES[$1]=$(mktemp "/tmp/_chm_command_stderr.lvl${1}.$$.XXXXXX")
+  fi
 }
 
 
@@ -100,21 +87,30 @@ _chm_prepare_execution() {
   # $4 stack level
   if [ "${_CHM_TEST_POSITION[${3},${1}]-}" = "EOL" ]; then
     _CHM_PREV_TEST_EXIST[$4]='y'
-    _CHM_CONTINUOUS_TESTLINES="${1}"
+    _CHM_CONTINUOUS_TESTLINES[$4]="${1}"
   elif [ "${_CHM_TEST_POSITION[${3},$((${1}+1))]-}" = "NL" ]; then
     _CHM_PREV_TEST_EXIST[$4]='y'
-    _CHM_CONTINUOUS_TESTLINES=""
+    _CHM_CONTINUOUS_TESTLINES[$4]=""
   else
     _CHM_PREV_TEST_EXIST[$4]=''
   fi
 
   [ "${_CHM_PREV_TEST_EXIST[$4]}" ] && {
     echo "「$2」のテスト見っけ！" >&3
-    _chm_prepare_execution-search_continuous_testline "${1}" "${3}"
+    local _chm_i=1
+    while [ "${_CHM_TEST_POSITION[${3},$(( ${1} + _chm_i ))]-}" = 'NL' ]
+    do
+      _CHM_CONTINUOUS_TESTLINES[$4]="${_CHM_CONTINUOUS_TESTLINES[$4]} $(( ${1} + _chm_i ))"
+      ((_chm_i++))
+    done
     _CHM_PREV_PATH[$4]="${3}"
     _CHM_PREV_LINENO[$4]="${1}"
     _CHM_PREV_COMMAND[$4]="${2}"
   }
+
+  _chm_make_lvl_out_file "${4}"
+  echo "_CHM_PREV_STACKLEVELにLEVEL${4}を設定" >&3
+  _CHM_PREV_STACKLEVEL="${4}"
 }
 
 
@@ -151,36 +147,29 @@ _chm_trap() {
     _CHM_FULLPATH=$(readlink -f -- "$_CHM_BASH_SOURCE")
 
     if [ "$_CHM_INITIAL_EXEC" ]; then
-      if [ $5 -lt $_CHM_PREV_STACKLEVEL ]; then
-        _CHM_PREV_STATUS[$5]="$2"
-      elif [ $5 -eq $_CHM_PREV_STACKLEVEL ]; then
-        _CHM_PREV_STATUS[$5]="$2"
-      fi
       _chm_write_output "${_CHM_PREV_STACKLEVEL}"
 
-      if [ "${5}" = "${_CHM_BASE_STACKLEVEL}" ]; then
-        [ "${_CHM_PREV_TEST_EXIST[$5]}" ] &&
-          _chm_aggregate_execution_results "${_CHM_PREV_STATUS[$5]}" "${5}"
-        _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${_CHM_FULLPATH}" "${5}"
+      if [ ! $5 -gt $_CHM_PREV_STACKLEVEL ]; then
+        local _chm_lvl=$_CHM_PREV_STACKLEVEL
+        while [ $_chm_lvl -ge $5 ]
+        do
+          echo "LEVEL${_chm_lvl}リザルトほい(${5})" >&3
+          _CHM_PREV_STATUS[$_chm_lvl]="$2"
+          [ "${_CHM_PREV_TEST_EXIST[$_chm_lvl]}" ] &&
+            _chm_aggregate_execution_results "${_CHM_PREV_STATUS[$_chm_lvl]}" "${_chm_lvl}"
+          ((_chm_lvl--))
+        done
       fi
-      #if   [ $5 -gt $_CHM_PREV_STACKLEVEL ]; then
-      #  _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${_CHM_FULLPATH}" "${5}"
-      #elif [ $5 -eq $_CHM_PREV_STACKLEVEL ]; then
-      #  ${_CHM_PREV_TEST_EXIST} &&
-      #    _chm_aggregate_execution_results "${2}" "${5}"
-      #  _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${_CHM_FULLPATH}" "${5}"
-      #elif [ $5 -lt $_CHM_PREV_STACKLEVEL ]; then
-      #fi
     else
       echo "LEVEL${5}　一番最初" >&3
       _CHM_INITIAL_EXEC='start'
     fi
 
-    _chm_make_lvl_out_file "${5}"
-    _CHM_PREV_STACKLEVEL="${5}"
+    _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${_CHM_FULLPATH}" "${5}"
+    echo "LEVEL$5のコマンド「${BASH_COMMAND}」を実行" >&3
+
     # start stopwatch
     _CHM_TIME_START=$(date +%s)
-    echo "LEVEL$5のコマンド「${BASH_COMMAND}」を実行" >&3
   fi
 }
 
@@ -199,10 +188,10 @@ _chm_run_test() {
   source "${1}"; local exitstat=$?
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T
-  echo "LEVEL${_CHM_PREV_STACKLEVEL}のアウトファイルを共通一時のアウトで上書き" >&3
-  _chm_write_output "${_CHM_BASE_STACKLEVEL}"
-  [ "${_CHM_PREV_TEST_EXIST[${_CHM_BASE_STACKLEVEL}]}" ] &&
-    _chm_aggregate_execution_results "${exitstat}" "${_CHM_BASE_STACKLEVEL}"
+  echo "_chm_run_testに復帰" >&3
+  _chm_write_output "${_CHM_PREV_STACKLEVEL}"
+  [ "${_CHM_PREV_TEST_EXIST[${_CHM_PREV_STACKLEVEL}]}" ] &&
+    _chm_aggregate_execution_results "${exitstat}" "${_CHM_PREV_STACKLEVEL}"
   exec 1>&3- 2>&4-
 }
 

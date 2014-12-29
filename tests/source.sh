@@ -1,5 +1,11 @@
+funcfunc() {
+  echo func func shite
+  return 10 #: status:10
+}
+
 func() {
-  echo func shite # status:3
+  echo func shite
+  funcfunc #: status:10
 }
 
 echo 1 #: status:0
@@ -8,5 +14,6 @@ echo 1 #: status:0
 
 #source tests/source-sub.sh
 
-func
+func #: status:10
 
+echo

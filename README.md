@@ -108,7 +108,7 @@ $ chocomint path/to/test1 path/to/test2 path/to/test3
 
 ```
 $ chocomint tests/tests.sh
-::: chocomint.sh 0.4.0-dev
+::: chocomint.sh 0.6.0-rc
 ==> Parsing: "/home/vagrant/github/chocomint.sh/tests/tests.sh"
 >>> [1/1] THIS TEST TITLE IS HERE (tests.sh)
 ==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L6)

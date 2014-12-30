@@ -1,6 +1,6 @@
 # ChangeLog
 
-## 0.6.0 ()
+## 0.6.0 (release candidate)
 
 - __Big change__ of architecture
 - Another of the process for each test file

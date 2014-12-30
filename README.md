@@ -1,6 +1,6 @@
 # chocomint.sh
 
-Minimal, simple, easy, comment-based Testing Framework for your command-line tools or shell scripts on Bash 4.x
+Minimal, simple, easy, __comment-based Testing Framework__ for your command-line tools or shell scripts on Bash 4.x
 
 ## Description
 

@@ -18,12 +18,10 @@ variables in the test comments, you can create a test to powerful and flexible.
 - [Installation](#installation)
 - [Reference](#reference)
   - [Test comment marker](#test-comment-marker-)
-  - [Resource::Status](#resourcestatus)
-  - [Resource::Output](#resourceoutput)
-  - [Resource::PlainStrings](#resourceplainstrings)
-  - [Matcher::Status](#matcherstatus)
-  - [Matcher::Output](#matcheroutput)
-  - [Matcher::PlainStrings](#matcherplainstrings)
+  - [Resource and Matcher](#resource-and-matcher)
+    - [Status](#status)
+    - [Output](#output)
+    - [Plain-Strings](#plain-strings)
   - [Meta-data marker](#meta-data-marker-)
 - [Requirement](#requirement)
 - [License](#license)
@@ -200,49 +198,31 @@ $ cp -r chocomint.sh/libexec/ /usr/local/
 
 Identifier of beginning the test comment is `#:`
 
-### Resource::Status
-
+### Resource and Matcher
+#### Status
+##### Status Resource
 | Identifier | Description
 |------------|-------------
 | `status`   | Exit status code
+##### Status Matcher
+| Matcher | Description                         | Example                   |
+|---------|-------------------------------------|---------------------------|
+| `:`     | Exit code is equal to the value     | `status:0`                |
+| `!:`    | Exit code is NOT equal to the value | `status!:127`             |
 
 ``` bash
 # Example:
 false #: status:1
 ```
 
-### Resource::Output
-
+#### Output
+##### Output Resource
 | Identifier | Description
 |------------|-------------
 | `output`   | Standard output and Standard Error output
 | `stdout`   | Standard output Only
 | `stderr`   | Standard Error output Only
-
-``` bash
-# Example:
-echo 'hello' #: stdout:'hello'
-```
-
-### Resource::PlainStrings
-
-Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.
-Of course, you can include variables to these strings. `"it is ${any_variable}"`
-
-``` bash
-# Example:
-name=${USER} #: "${name}"='bob'
-```
-
-### Matcher::Status
-
-| Matcher | Description                         | Example                   |
-|---------|-------------------------------------|---------------------------|
-| `:`     | Exit code is equal to the value     | `status:0`                |
-| `!:`    | Exit code is NOT equal to the value | `status!:127`             |
-
-### Matcher::Output
-
+##### Output Matcher
 | Matcher  | Description                         | Example                   |
 |----------|-------------------------------------|---------------------------|
 | `:`      | match fixed strings                 | `output:'foo bar'`
@@ -254,14 +234,27 @@ name=${USER} #: "${name}"='bob'
 |----------|---------|-----------------|-----------------|
 | `::`     | `None`  | outputs NOTHING | `output::None`
 
-### Matcher::PlainStrings
+``` bash
+# Example:
+echo 'hello' #: stdout:'hello'
+```
 
+#### Plain-Strings
+##### Plain-Strings Resource
+Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.
+Of course, you can include variables to these strings. `"it is ${any_variable}"`
+##### Plain-Strings Matcher
 | Matcher | Description                         | Example                   |
 |---------|-------------------------------------|---------------------------|
 | `=`     | match fixed strings                 | `"a $bee c"='a b c'`
 | `=~`    | match extended regexp               | `"a $bee c"=~'a.*c'`
 | `!=`    | NOT match fixed strings             | `"a $bee foo"!='b a foo'`
 | `!=~`   | NOT match extended regexp           | `"a $bee bar"!=~'b.*bar'`
+
+``` bash
+# Example:
+name=${USER} #: "${name}"='bob'
+```
 
 ### Meta-data marker: `#@`
 

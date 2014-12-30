@@ -63,7 +63,8 @@ done
 ```
 
 ``` bash
-# tests/test2.sh
+# tests/tests2.sh
+#@ name: second test
 
 function func2() {
   echo 'out error 2' 1>&2
@@ -111,30 +112,30 @@ $ chocomint tests/tests.sh
 ::: chocomint.sh 0.6.0-rc
 ==> Parsing: "/home/vagrant/github/chocomint.sh/tests/tests.sh"
 >>> [1/1] THIS TEST TITLE IS HERE (tests.sh)
-==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L6)
+==> THIS TEST TITLE IS HERE [L6]
 --> $ true
     [pass] status 0 should be 0
     [pass] outputs should be nothing
     0 seconds.
-==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L8)
+==> THIS TEST TITLE IS HERE [L8]
 --> $ echo "Hello"
     [fail] fixed-strings 'hello' should match STDOUT
     [pass] status 0 should NOT be 1
     STDOUT: Hello
     0 seconds.
-==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests2.sh" (L12)
+==> second test [L13]
 --> $ func2
     [pass] status 5 should be 5
     [fail] outputs should be nothing
     STDOUT: out stdout 2
     STDERR: out error 2
     0 seconds.
-==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests2.sh" (L14)
+==> second test [L15]
 --> $ return 3
     [pass] status 3 should be 3
     [pass] outputs should be nothing
     0 seconds.
-==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L13)
+==> THIS TEST TITLE IS HERE [L13]
 --> $ func
     [pass] fixed-strings 'error' should match STDERR
     [pass] extended-regexp '.*std.*' should match STDOUT
@@ -145,25 +146,25 @@ $ chocomint tests/tests.sh
     STDERR: out error
     STDERR: out error 2
     0 seconds.
-==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L17)
+==> THIS TEST TITLE IS HERE [L17]
 --> $ sleep 2
     [pass] status 0 should be 0
     2 seconds.
-==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L21)
+==> THIS TEST TITLE IS HERE [L21]
 --> $ echo $i
     [pass] fixed-strings '1' should match STDOUT
     [pass] fixed-strings '1' should match STDOUT
     [pass] status 0 should NOT be 1
     STDOUT: 1
     0 seconds.
-==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L21)
+==> THIS TEST TITLE IS HERE [L21]
 --> $ echo $i
     [pass] fixed-strings '2' should match STDOUT
     [fail] fixed-strings '1' should match STDOUT
     [pass] status 0 should NOT be 1
     STDOUT: 2
     0 seconds.
-==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L21)
+==> THIS TEST TITLE IS HERE [L21]
 --> $ echo $i
     [pass] fixed-strings '3' should match STDOUT
     [fail] fixed-strings '1' should match STDOUT

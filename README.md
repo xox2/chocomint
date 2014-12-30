@@ -201,6 +201,11 @@ $ cp -r chocomint.sh/libexec/ /usr/local/
 
 Identifier of beginning the test comment is `#:`
 
+``` bash
+# Example:
+echo 'chocomint is awesome' #: stdout:'awesome'
+```
+
 ### Meta-data marker: `#@`
 
 Identifier of beginning the meta-data is `#@`

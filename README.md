@@ -10,11 +10,25 @@ Hence if you have even Bash, other language environments such as Perl or
 Ruby or Python is not required. In addition, since it is possible to use shell
 variables in the test comments, you can create a test to powerful and flexible.
 
+## Table of contents
+
+- [Usage](#usage)
+  - [Write tests](#write-tests)
+  - [Run](#run)
+- [Installation](#installation)
+- [Reference](#reference)
+  - [Test comment marker](#test-comment-marker-)
+  - [Resource](#resource)
+  - [Matcher](#matcher)
+  - [Meta-data marker](#meta-data-marker-)
+- [Requirement](#requirement)
+- [License](#license)
+
 ## Usage
 
-### Write test files
+### Write tests
 
-Add __test comments `#:`__ on Bash script.
+Write test files. Add __test comments `#:`__ on Bash script.
 
 ``` bash
 #!/usr/bin/env chocomint
@@ -71,8 +85,6 @@ You can input multiple files.
 ```
 $ chocomint test1 test2 test3
 ```
-
-#### Results
 
 - If all tests are __successful__, chocomint will return __0__.
 - If one or more tests __failed__, chocomint will return __1__.
@@ -240,7 +252,6 @@ Identifier of beginning the meta-data is `#@`
 
 - Bash __4.x__
 - Please __avoid function/variable names__ that begin with __`_chm_` or `_CHM_`__.
-- If you use __functions__, you must define __before all tests__.
 
 ## License
 

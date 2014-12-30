@@ -8,6 +8,16 @@ declare -A _CHM_PARSED
 TEST_MARKER=${TEST_MARKER:-':'}
 META_MARKER=${META_MARKER:-'@'}
 
+for opt in "$@"
+do
+  case "$opt" in
+    '-q' )
+      QUIET=true
+      shift 1
+      ;;
+  esac
+done
+
 _tput() { $_CHM_TPUT "$@"; }
 
 error() {
@@ -473,11 +483,13 @@ parse() {
 main() {
   PARSE_ERROR=false    # Any even one of the multiple files
   TEST_NOT_FOUND=false # Any even one of the multiple files
+  PARSE_DUP=false      # Any even one of the multiple files
 
   [ -f "${_CHM_PARSER_FILE}" ] && source "${_CHM_PARSER_FILE}"
 
   for i in "$@"
   do
+    [ "$QUIET" ] || echo "==> Parsing: \"${i}\""
     if ! [ "${_CHM_PARSED[${i}]}" ]; then
       LINE_NUMBER=1
       OFFSET_NUMBER=1
@@ -485,18 +497,19 @@ main() {
       PARSE_METHOD="parse_nl" # initial parse-method
       TEST_EXIST=false
 
-      echo "==> Parsing: \"${i}\""
       parse "${i}"
       _CHM_PARSED[${i}]='parsed'
 
       ${TEST_EXIST} || {
-        echo "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) test not found"
-        echo
+        [ "$QUIET" ] || echo "===> test not found" 1>&2
+        [ "$QUIET" ] || echo 1>&2
         TEST_NOT_FOUND=true
         _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
       }
     else
-      echo "==> Skip Parsing: \"${i}\" has already been parsed."
+      [ "$QUIET" ] || echo "===> already parsed" 1>&2
+      [ "$QUIET" ] || echo 1>&2
+      PARSE_DUP=true
     fi
   done
 
@@ -512,8 +525,12 @@ main() {
     echo " * `declare -p _CHM_PARSED`"
   }
 
-  if ${PARSE_ERROR} || ${TEST_NOT_FOUND}; then
+  if ${PARSE_ERROR}; then
     return 10
+  elif ${TEST_NOT_FOUND}; then
+    return 11
+  elif ${PARSE_DUP}; then
+    return 12
   else
     return 0
   fi

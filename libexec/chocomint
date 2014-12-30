@@ -69,9 +69,7 @@ parse() {
   "${_CHM_LIBEXEC}/chocomint-parse" "$@" || {
     local exitcode=$?
     case $exitcode in
-      '10' )
-        : # ${PARSE_ERROR} || ${TEST_NOT_FOUND}
-        ;;
+      '10'|'11'|'12' ) : ;;
       * )
         echo "chocomint-parse: Unknown Error (exitcode: $exitcode)"
         ;;

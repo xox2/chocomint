@@ -25,6 +25,8 @@ variables in the test comments, you can create a test to powerful and flexible.
     - [Plain-Strings](#plain-strings)
 - [Requirement](#requirement)
 - [License](#license)
+- [Contribution](#contribution)
+- [Author](#author)
 
 ## Usage
 
@@ -214,7 +216,7 @@ Identifier of beginning the meta-data is `#@`
 ### Resource and Matcher
 #### Status
 ###### Status Resource
-| Identifier | Description
+| Resource   | Description
 |------------|-------------
 | `status`   | Exit status code
 ###### Status Matcher
@@ -230,7 +232,7 @@ false #: status:1
 
 #### Output
 ###### Output Resource
-| Identifier | Description
+| Resource   | Description
 |------------|-------------
 | `output`   | Standard output and Standard Error output
 | `stdout`   | Standard output Only

@@ -1,6 +1,6 @@
 # chocomint.sh
 
-Minimal, simple, easy, __comment-based Testing Framework__ for your command-line tools or shell scripts on Bash 4.x
+Simple, powerful, flexible, __comment-based Testing Framework__ for your command-line tools or shell scripts on Bash 4.x
 
 ## Description
 
@@ -212,7 +212,7 @@ Identifier of beginning the meta-data is `#@`
 
 | Key  | Description            |
 |------|------------------------|
-| name | define the test name   |
+| `name` | define the test name   |
 
 ``` bash
 # Example:

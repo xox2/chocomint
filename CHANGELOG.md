@@ -1,8 +1,11 @@
 # ChangeLog
 
-## 0.5.0 ()
+## 0.6.0 (release candidate)
 
+- __Big change__ of architecture
 - Another of the process for each test file
+- Able to run nested tests
+- Support of nested files Auto-Parse
 
 ## 0.4.0 (2014-12-25)
 

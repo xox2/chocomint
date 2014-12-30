@@ -10,35 +10,46 @@ Hence if you have even Bash, other language environments such as Perl or
 Ruby or Python is not required. In addition, since it is possible to use shell
 variables in the test comments, you can create a test to powerful and flexible.
 
+## Table of contents
+
+- [Usage](#usage)
+  - [Write tests](#write-tests)
+  - [Run](#run)
+- [Installation](#installation)
+- [Reference](#reference)
+  - [Test comment marker](#test-comment-marker-)
+  - [Meta-data marker](#meta-data-marker-)
+  - [Resource and Matcher](#resource-and-matcher)
+    - [Status](#status)
+    - [Output](#output)
+    - [Plain-Strings](#plain-strings)
+- [Requirement](#requirement)
+- [License](#license)
+- [Contribution](#contribution)
+- [Author](#author)
+
 ## Usage
 
-### Write test files
+### Write tests
 
-Add __test comments `#:`__ on Bash script.
+Write test files. Add __test comments `#:`__ on Bash script.
 
 ``` bash
 #!/usr/bin/env chocomint
-# tests.sh
+# tests/tests.sh
 
 #@ name: THIS TEST TITLE IS HERE
-
-###
-### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE ALL TESTS.
-###
-function dummy_func() {
-  echo 'out error' 1>&2
-  echo 'out stdout'
-  return 3
-}
 
 true #: status:0 output::None
 
 echo "Hello"
 #: stdout:'hello' status!:1
 
-dummy_func  #: stderr:'error' stdout:~'.*std.*'
-            #: status:3       status!:0
-            #: output::None
+source tests/tests2.sh
+
+func #: stderr:'error' stdout:~'.*std.*'
+     #: status:3
+     #: output::None
 
 sleep 2 #: status:0
 
@@ -51,6 +62,26 @@ do
 done
 ```
 
+``` bash
+# tests/test2.sh
+
+function func2() {
+  echo 'out error 2' 1>&2
+  echo 'out stdout 2'
+  return 5
+}
+
+function func() {
+  echo 'out error' 1>&2
+  echo 'out stdout'
+  func2 #: status:5
+        #: output::None
+  return 3
+  #: status:3
+  #: output::None
+}
+```
+
 ### Run
 
 Use shebang `#!/usr/bin/env chocomint` in the script,
@@ -60,75 +91,88 @@ if exist `chocomint` on PATH environment variable.
 #!/usr/bin/env chocomint
 ```
 
-or run `chocomint` directly.
+Or run `chocomint` directly.
 
 ```
-$ chocomint tests.sh
+$ chocomint path/to/tests.sh
 ```
 
 You can input multiple files.
 
 ```
-$ chocomint test1 test2 test3
+$ chocomint path/to/test1 path/to/test2 path/to/test3
 ```
-
-#### Results
 
 - If all tests are __successful__, chocomint will return __0__.
 - If one or more tests __failed__, chocomint will return __1__.
 
 ```
-$ chocomint tests.sh
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- chocomint.sh 0.4.0
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+$ chocomint tests/tests.sh
+::: chocomint.sh 0.6.0-rc
 ==> Parsing: "/home/vagrant/github/chocomint.sh/tests/tests.sh"
+>>> [1/1] THIS TEST TITLE IS HERE (tests.sh)
+==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L6)
+--> $ true
+    [pass] status 0 should be 0
+    [pass] outputs should be nothing
+    0 seconds.
+==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L8)
+--> $ echo "Hello"
+    [fail] fixed-strings 'hello' should match STDOUT
+    [pass] status 0 should NOT be 1
+    STDOUT: Hello
+    0 seconds.
+==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests2.sh" (L12)
+--> $ func2
+    [pass] status 5 should be 5
+    [fail] outputs should be nothing
+    STDOUT: out stdout 2
+    STDERR: out error 2
+    0 seconds.
+==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests2.sh" (L14)
+--> $ return 3
+    [pass] status 3 should be 3
+    [pass] outputs should be nothing
+    0 seconds.
+==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L13)
+--> $ func
+    [pass] fixed-strings 'error' should match STDERR
+    [pass] extended-regexp '.*std.*' should match STDOUT
+    [pass] status 3 should be 3
+    [fail] outputs should be nothing
+    STDOUT: out stdout
+    STDOUT: out stdout 2
+    STDERR: out error
+    STDERR: out error 2
+    0 seconds.
+==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L17)
+--> $ sleep 2
+    [pass] status 0 should be 0
+    2 seconds.
+==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L21)
+--> $ echo $i
+    [pass] fixed-strings '1' should match STDOUT
+    [pass] fixed-strings '1' should match STDOUT
+    [pass] status 0 should NOT be 1
+    STDOUT: 1
+    0 seconds.
+==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L21)
+--> $ echo $i
+    [pass] fixed-strings '2' should match STDOUT
+    [fail] fixed-strings '1' should match STDOUT
+    [pass] status 0 should NOT be 1
+    STDOUT: 2
+    0 seconds.
+==> Ran: "/home/vagrant/github/chocomint.sh/tests/tests.sh" (L21)
+--> $ echo $i
+    [pass] fixed-strings '3' should match STDOUT
+    [fail] fixed-strings '1' should match STDOUT
+    [pass] status 0 should NOT be 1
+    STDOUT: 3
+    0 seconds.
 
------------------------------------------------------------------
- [1/1] THIS TEST TITLE IS HERE (tests.sh)
------------------------------------------------------------------
-==> L15: true
-[success] status 0 should be 0
-[success] outputs should be nothing
-0 seconds.
-==> L17: echo "Hello"
-[failure] fixed-strings 'hello' should match STDOUT
-[success] status 0 should NOT be 1
-STDOUT: Hello
-0 seconds.
-==> L20: dummy_func
-[success] fixed-strings 'error' should match STDERR
-[success] extended-regexp '.*std.*' should match STDOUT
-[success] status 3 should be 3
-[success] status 3 should NOT be 0
-[failure] outputs should be nothing
-STDOUT: out stdout
-STDERR: out error
-0 seconds.
-==> L24: sleep 2
-[success] status 0 should be 0
-2 seconds.
-==> L28: echo $i
-[success] fixed-strings '1' should match STDOUT
-[success] fixed-strings '1' should match STDOUT
-[success] status 0 should NOT be 1
-STDOUT: 1
-0 seconds.
-==> L28: echo $i
-[success] fixed-strings '2' should match STDOUT
-[failure] fixed-strings '1' should match STDOUT
-[success] status 0 should NOT be 1
-STDOUT: 2
-0 seconds.
-==> L28: echo $i
-[success] fixed-strings '3' should match STDOUT
-[failure] fixed-strings '1' should match STDOUT
-[success] status 0 should NOT be 1
-STDOUT: 3
-0 seconds.
-
-4 tests failed.
-15/19 tests, 3/7 commands succeeded.
+5 tests failed.
+17/22 tests, 4/9 commands succeeded.
 ```
 
 ## Installation
@@ -156,73 +200,6 @@ $ cp -r chocomint.sh/libexec/ /usr/local/
 
 Identifier of beginning the test comment is `#:`
 
-### Resource
-
-#### Status
-
-| Identifier | Description
-|------------|-------------
-| `status`   | Exit status code
-
-``` bash
-# Example:
-false #: status:1
-```
-
-#### Output
-
-| Identifier | Description
-|------------|-------------
-| `output`   | Standard output and Standard Error output
-| `stdout`   | Standard output Only
-| `stderr`   | Standard Error output Only
-
-``` bash
-# Example:
-echo 'hello' #: stdout:'hello'
-```
-
-#### Plain Strings
-
-Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.
-Of course, you can include variables to these strings. `"it is ${any_variable}"`
-
-``` bash
-# Example:
-name=${USER} #: "${name}"='bob'
-```
-
-### Matcher
-
-#### Status Matcher
-
-| Matcher | Description                         | Example                   |
-|---------|-------------------------------------|---------------------------|
-| `:`     | Exit code is equal to the value     | `status:0`                |
-| `!:`    | Exit code is NOT equal to the value | `status!:127`             |
-
-#### Output Matcher
-
-| Matcher  | Description                         | Example                   |
-|----------|-------------------------------------|---------------------------|
-| `:`      | match fixed strings                 | `output:'foo bar'`
-| `:~`     | match extended regexp               | `stdout:~'std.*'`
-| `!:`     | NOT match fixed strings             | `stderr!:'hoge hoge'`
-| `!:~`    | NOT match extended regexp           | `output!:~'reg.xp'`
-
-| Matcher  | Keyword | Description     | Example         |
-|----------|---------|-----------------|-----------------|
-| `::`     | `None`  | outputs NOTHING | `output::None`
-
-#### Plain Strings Matcher
-
-| Matcher | Description                         | Example                   |
-|---------|-------------------------------------|---------------------------|
-| `=`     | match fixed strings                 | `"a $bee c"='a b c'`
-| `=~`    | match extended regexp               | `"a $bee c"=~'a.*c'`
-| `!=`    | NOT match fixed strings             | `"a $bee foo"!='b a foo'`
-| `!=~`   | NOT match extended regexp           | `"a $bee bar"!=~'b.*bar'`
-
 ### Meta-data marker: `#@`
 
 Identifier of beginning the meta-data is `#@`
@@ -236,11 +213,68 @@ Identifier of beginning the meta-data is `#@`
 #@ name: TEST TITLE IS HERE
 ```
 
+### Resource and Matcher
+#### Status
+###### Status Resource
+| Resource   | Description
+|------------|-------------
+| `status`   | Exit status code
+###### Status Matcher
+| Matcher | Description                         | Example                   |
+|---------|-------------------------------------|---------------------------|
+| `:`     | Exit code is equal to the value     | `status:0`                |
+| `!:`    | Exit code is NOT equal to the value | `status!:127`             |
+
+``` bash
+# Example:
+false #: status:1
+```
+
+#### Output
+###### Output Resource
+| Resource   | Description
+|------------|-------------
+| `output`   | Standard output and Standard Error output
+| `stdout`   | Standard output Only
+| `stderr`   | Standard Error output Only
+###### Output Matcher
+| Matcher  | Description                         | Example                   |
+|----------|-------------------------------------|---------------------------|
+| `:`      | match fixed strings                 | `output:'foo bar'`
+| `:~`     | match extended regexp               | `stdout:~'std.*'`
+| `!:`     | NOT match fixed strings             | `stderr!:'hoge hoge'`
+| `!:~`    | NOT match extended regexp           | `output!:~'reg.xp'`
+
+| Matcher  | Keyword | Description     | Example         |
+|----------|---------|-----------------|-----------------|
+| `::`     | `None`  | outputs NOTHING | `output::None`
+
+``` bash
+# Example:
+echo 'hello' #: stdout:'hello'
+```
+
+#### Plain-Strings
+###### Plain-Strings Resource
+Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.
+Of course, you can include variables to these strings. `"it is ${any_variable}"`
+###### Plain-Strings Matcher
+| Matcher | Description                         | Example                   |
+|---------|-------------------------------------|---------------------------|
+| `=`     | match fixed strings                 | `"a $bee c"='a b c'`
+| `=~`    | match extended regexp               | `"a $bee c"=~'a.*c'`
+| `!=`    | NOT match fixed strings             | `"a $bee foo"!='b a foo'`
+| `!=~`   | NOT match extended regexp           | `"a $bee bar"!=~'b.*bar'`
+
+``` bash
+# Example:
+name=${USER} #: "${name}"='bob'
+```
+
 ## Requirement
 
 - Bash __4.x__
 - Please __avoid function/variable names__ that begin with __`_chm_` or `_CHM_`__.
-- If you use __functions__, you must define __before all tests__.
 
 ## License
 

@@ -3,6 +3,24 @@
 
 source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
+
+_chm_parse() {
+  "${_CHM_LIBEXEC}/chocomint-parse" -q "$@" 1>&3 2>&4 || {
+    local exitcode=$?
+    case $exitcode in
+      '10' )
+        exit $exitcode
+        ;;
+      '11'|'12' ) : ;;
+      * )
+        echo "chocomint-parse: Unknown Error (exitcode: $exitcode)" >&4
+        exit $exitcode
+        ;;
+    esac
+  }
+}
+
+
 _chm_aggregate_execution_results() {
   # $1 exitstatus
   ((_CHM_CMD_COUNT++))
@@ -11,18 +29,26 @@ _chm_aggregate_execution_results() {
   local _chm_mid
   local _chm_right
 
-  for _chm_line in "${_CHM_CONTINUOUS_TESTLINES[@]}"
+  _chm_outputs.command "==> Ran: \"${_CHM_PREV_PATH[$2]}\" (L${_CHM_PREV_LINENO[$2]})" "${_CHM_PREV_COMMAND[$2]}"
+
+  source "${_CHM_PARSER_FILE}"
+
+  #echo "${_CHM_CONTINUOUS_TESTLINES[$2]}行目にテストある" >&3
+  for _chm_line in ${_CHM_CONTINUOUS_TESTLINES[$2]}
   do
-    for _chm_i in $(seq 0 "${_CHM_DATABASE[${2},${_chm_line},max_test_index]}")
+    #echo "この行には${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},max_test_index]}番のテストまでがある" >&3
+    for _chm_testidx in $(seq 0 "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},max_test_index]}")
     do
       ((_CHM_TEST_COUNT++))
-      _chm_left="$(eval echo "${_CHM_DATABASE[${2},${_chm_line},${_chm_i},left]}")"
-      _chm_mid="$(eval echo "${_CHM_DATABASE[${2},${_chm_line},${_chm_i},mid]}")"
-      _chm_right="$(eval echo "${_CHM_DATABASE[${2},${_chm_line},${_chm_i},right]}")"
+      _chm_left="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_testidx},left]}")"
+      _chm_mid="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_testidx},mid]}")"
+      _chm_right="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_testidx},right]}")"
+      #echo " * $_chm_left$_chm_mid$_chm_right" >&3
 
       if "${_CHM_LIBEXEC}/chocomint-main-judge" \
         "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}" \
-        "${_CHM_CMD_OUT_FILE}" "${_CHM_CMD_ERR_FILE}"
+        "${_CHM_LVL_OUT_FILES[$2]}" \
+        "${_CHM_LVL_ERR_FILES[$2]}"
       then
         ((_CHM_TEST_SUCCESS++))
         _chm_outputs.ok "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
@@ -42,23 +68,20 @@ _chm_aggregate_execution_results() {
 
   $_chm_cmd_failure || ((_CHM_CMD_SUCCESS++))
 
-  _chm_outputs.stdout
-  _chm_outputs.stderr
+  _chm_outputs.stdout "${_CHM_LVL_OUT_FILES[$2]}"
+  _chm_outputs.stderr "${_CHM_LVL_ERR_FILES[$2]}"
   _chm_outputs.print "    ${_CHM_TIME_RESULT} seconds."
   _chm_outputs.echo
 }
 
 
-_chm_prepare_execution-search_continuous_testline() {
-  # $1 line number
-  # $2 fullpath
-  local _chm_ln="${1}"
-  local _chm_i=1
-  while [ "${_CHM_TEST_POSITION[${2},$(( _chm_ln + _chm_i ))]-}" = 'NL' ]
-  do
-    _CHM_CONTINUOUS_TESTLINES=("${_CHM_CONTINUOUS_TESTLINES[@]}" "$(( _chm_ln + _chm_i ))")
-    ((_chm_i++))
-  done
+_chm_make_lvl_out_file() {
+  # $1 stack level
+  if [ ! "${_CHM_LVL_OUT_FILES[$1]}" ] || [ ! "${_CHM_LVL_ERR_FILES[$1]}" ]; then
+    #echo "LEVEL${1}のアウトファイルがないので作成" >&3
+    _CHM_LVL_OUT_FILES[$1]=$(mktemp "/tmp/_chm_command_stdout.lvl${1}.$$.XXXXXX")
+    _CHM_LVL_ERR_FILES[$1]=$(mktemp "/tmp/_chm_command_stderr.lvl${1}.$$.XXXXXX")
+  fi
 }
 
 
@@ -66,22 +89,72 @@ _chm_prepare_execution() {
   # $1 line number
   # $2 command
   # $3 fullpath
+  # $4 stack level
   if [ "${_CHM_TEST_POSITION[${3},${1}]-}" = "EOL" ]; then
-    _CHM_TEST_EXIST=true
-    _CHM_CONTINUOUS_TESTLINES=("${1}")
+    _CHM_PREV_TEST_EXIST[$4]='y'
+    _CHM_CONTINUOUS_TESTLINES[$4]="${1}"
   elif [ "${_CHM_TEST_POSITION[${3},$((${1}+1))]-}" = "NL" ]; then
-    _CHM_TEST_EXIST=true
-    _CHM_CONTINUOUS_TESTLINES=()
+    _CHM_PREV_TEST_EXIST[$4]='y'
+    _CHM_CONTINUOUS_TESTLINES[$4]=""
   else
-    _CHM_TEST_EXIST=false
+    _CHM_PREV_TEST_EXIST[$4]=''
   fi
 
-  ${_CHM_TEST_EXIST} && {
-    _chm_prepare_execution-search_continuous_testline "${1}" "${3}"
-    : > "${_CHM_CMD_OUT_FILE}"
-    : > "${_CHM_CMD_ERR_FILE}"
-    _chm_outputs.command "==> Running: \"${3}\" (L${1})" "${2}"
+  [ "${_CHM_PREV_TEST_EXIST[$4]}" ] && {
+    #echo "「$2」のテスト見っけ！" >&3
+    local _chm_i=1
+    while [ "${_CHM_TEST_POSITION[${3},$(( ${1} + _chm_i ))]-}" = 'NL' ]
+    do
+      _CHM_CONTINUOUS_TESTLINES[$4]="${_CHM_CONTINUOUS_TESTLINES[$4]} $(( ${1} + _chm_i ))"
+      ((_chm_i++))
+    done
+    _CHM_PREV_PATH[$4]="${3}"
+    _CHM_PREV_LINENO[$4]="${1}"
+    _CHM_PREV_COMMAND[$4]="${2}"
   }
+
+  _chm_make_lvl_out_file "${4}"
+
+  if [ ! "${_CHM_PREV_STACKLEVEL}" ] || [ "${4}" -ne "${_CHM_PREV_STACKLEVEL}" ]; then
+    #echo "_CHM_PREV_STACKLEVELにLEVEL${4}を設定" >&3
+    _CHM_PREV_STACKLEVEL="${4}"
+  fi
+}
+
+
+_chm_write_output() {
+  # $1 stack level
+  #echo "LEVEL${1}のアウトファイルを共通一時アウトファイルのコピーとする" >&3
+  cp "${_CHM_CMD_OUT_FILE}" "${_CHM_LVL_OUT_FILES[$1]}"
+  cp "${_CHM_CMD_ERR_FILE}" "${_CHM_LVL_ERR_FILES[$1]}"
+
+  local parent_lvl=$((${1} - 1))
+  for (( _chm_i=parent_lvl; _chm_i >= _CHM_BASE_STACKLEVEL; _chm_i-- ))
+  do
+    #echo "LEVEL${_chm_i}のアウトファイルに共通一時の内容を追記" >&3
+    cat "${_CHM_CMD_OUT_FILE}" >> "${_CHM_LVL_OUT_FILES[$_chm_i]}"
+    cat "${_CHM_CMD_ERR_FILE}" >> "${_CHM_LVL_ERR_FILES[$_chm_i]}"
+  done
+
+  #echo "共通一時のアウトファイルをリセット" >&3
+  : > "${_CHM_CMD_OUT_FILE}"
+  : > "${_CHM_CMD_ERR_FILE}"
+}
+
+
+_chm_show_result() {
+  # $1 current stack level
+  # $2 prev stack level
+  # $3 previous exitcode
+  local _chm_lvl=$2
+  while [ $_chm_lvl -ge ${1} ]
+  do
+    #echo "LEVEL${_chm_lvl}リザルトほい(${1})" >&3
+    _CHM_PREV_STATUS[$_chm_lvl]="${3}"
+    [ "${_CHM_PREV_TEST_EXIST[$_chm_lvl]}" ] &&
+      _chm_aggregate_execution_results "${_CHM_PREV_STATUS[$_chm_lvl]}" "${_chm_lvl}"
+    ((_chm_lvl--))
+  done
 }
 
 
@@ -89,63 +162,85 @@ _chm_trap() {
   # $1 line number
   # $2 previous exitcode
   # $3 FUNCNAME item num
+  if [ "$5" -ge "$_CHM_BASE_STACKLEVEL" ]; then
+    _chm_stop_stopwatch
 
-  eval `echo "$6" | sed 's/BASH_SOURCE=/_CHM_BASH_SOURCE=/'`
-  _CHM_BASH_SOURCE=`readlink -f -- $_CHM_BASH_SOURCE`
+    source "${_CHM_PARSER_FILE}"
 
-  $_CHM_DEBUG && {
-    echo >&3
-    echo " * \$BASH_COMMAND: ${BASH_COMMAND}" >&3
-    echo " * \$LINENO: $1" >&3
-    echo " * prev command exitcode(\$?): $2" >&3
-    echo " * \$_CHM_PREVIOUS_PATH: $_CHM_PREVIOUS_PATH" >&3
-    echo " * \$FUNCNAME item num: $3" >&3
-    echo " * \$FUNCNAME list: `echo "$4" | sed 's/FUNCNAME=/F=/'`" >&3
-    echo " * \$BASH_SOURCE item num: $5" >&3
-    echo " * \$BASH_SOURCE list: $6" >&3
-    echo " * \$_CHM_BASH_SOURCE: $_CHM_BASH_SOURCE" >&3
-  }
+    eval $(echo "$6" | sed 's/BASH_SOURCE=/_CHM_BASH_SOURCE=/')
+    _CHM_FULLPATH=$(readlink -f -- "$_CHM_BASH_SOURCE")
 
-  [ "${_CHM_TIME_START}" ] && {
-    _CHM_TIME_RESULT=$(( $(date +%s) - _CHM_TIME_START ))
-  }
+    $_CHM_DEBUG && _chm_trap_debug "$@"
 
-  if [ "${3}" = "${_CHM_TARGETFILE_STACK_LEVEL}" ]; then
-    ${_CHM_TEST_EXIST} && _chm_aggregate_execution_results "${2}" "${_CHM_PREVIOUS_PATH}"
-    _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${7}"
+    if [ "$_CHM_INITIAL_EXEC" ]; then
+      _chm_write_output "${_CHM_PREV_STACKLEVEL}"
+
+      if [ "${5}" -le "$_CHM_PREV_STACKLEVEL" ]; then
+        _chm_show_result "${5}" "${_CHM_PREV_STACKLEVEL}" "${2}"
+      else
+        _chm_parse "${_CHM_FULLPATH}"
+        source "${_CHM_PARSER_FILE}"
+      fi
+    else
+      _CHM_INITIAL_EXEC='start'
+    fi
+
+    _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${_CHM_FULLPATH}" "${5}"
+    #echo "LEVEL$5のコマンド「${BASH_COMMAND}」を実行" >&3
+
+    _chm_start_stopwatch
   fi
+}
 
-  _CHM_PREVIOUS_PATH="$_CHM_BASH_SOURCE"
+
+_chm_trap_debug() {
+  echo >&3
+  echo " * \$BASH_COMMAND: ${BASH_COMMAND}" >&3
+  echo " * \$LINENO: $1" >&3
+  echo " * \$? (prev exitcode): $2" >&3
+  echo " * \$_CHM_PREV_PATH: $_CHM_PREV_PATH" >&3
+  echo " * \$FUNCNAME item num: $3" >&3
+  echo " * \$FUNCNAME list: $4" >&3
+  echo " * \$BASH_SOURCE item num: $5" >&3
+  echo " * \$BASH_SOURCE list: $6" >&3
+  echo " * \$_CHM_LVL_OUT_FILES list: $(declare -p _CHM_LVL_OUT_FILES)" >&3
+  echo >&3
+}
+
+
+_chm_stop_stopwatch() {
+  [ "${_CHM_TIME_START}" ] && _CHM_TIME_RESULT=$(( $(date +%s) - _CHM_TIME_START ))
+}
+
+
+_chm_start_stopwatch() {
   _CHM_TIME_START=$(date +%s)
 }
 
 
 _chm_run_test() {
   # $1 fullpath
+  source "${_CHM_PARSER_FILE}"
+  _CHM_BASE_STACKLEVEL=$(( ${#FUNCNAME[*]} + 1 ))
   exec 3>&1 4>&2 1> "${_CHM_CMD_OUT_FILE}" 2> "${_CHM_CMD_ERR_FILE}"
   set -T; trap "_chm_trap \"\${LINENO}\"                 \
                           \"\$?\"                        \
                           \"\${#FUNCNAME[*]}\"           \
-                          \"\`declare -p FUNCNAME\`\"    \
+                          \"\$(declare -p FUNCNAME)\"    \
                           \"\${#BASH_SOURCE[*]}\"        \
-                          \"\`declare -p BASH_SOURCE\`\" \
-                          $1                             \
+                          \"\$(declare -p BASH_SOURCE)\" \
                           " DEBUG
-  _CHM_TARGETFILE_STACK_LEVEL=$(( ${#FUNCNAME[*]} + 1 ))
-  source "${1}"; local exitstat=$?
+  source "${1}"; local exitcode=$?
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T
-  ${_CHM_TEST_EXIST} && _chm_aggregate_execution_results "${exitstat}" "${1}"
+  #echo "_chm_run_testに復帰" >&3
+  _chm_write_output "${_CHM_PREV_STACKLEVEL}"
+  _chm_show_result ${_CHM_BASE_STACKLEVEL} ${_CHM_PREV_STACKLEVEL} ${exitcode}
   exec 1>&3- 2>&4-
 }
 
 
 _chm_main() {
-  source "${_CHM_PARSER_FILE}"
-
-  _CHM_TEST_EXIST=false
-  _CHM_TIME_START=''
-
   _chm_run_test "$1"
 
   {
@@ -157,5 +252,20 @@ _chm_main() {
     declare -p _CHM_FAILURE
   } > "${_CHM_TEST_RESULTS_FILE}"
 }
+
+exit_trap() {
+  {
+    for file in "${_CHM_LVL_OUT_FILES[@]}"
+    do
+      rm "$file"
+    done
+    for file in "${_CHM_LVL_ERR_FILES[@]}"
+    do
+      rm "$file"
+    done
+  } > /dev/null 2>&1
+}
+
+trap 'exit_trap' EXIT
 
 _chm_main "$1"

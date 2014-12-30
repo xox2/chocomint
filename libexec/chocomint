@@ -92,7 +92,8 @@ run() {
     fi
 
     if [ "${_CHM_DATABASE[$path,parse_error]}" ]; then
-      echo '==> Pass this test by Parse Error'
+      echo '==> Skip this test by Parse errors/warnings' 1>&2
+      echo 1>&2
     else
       "${_CHM_LIBEXEC}/chocomint-main" "$path" || {
         local exitcode=$?

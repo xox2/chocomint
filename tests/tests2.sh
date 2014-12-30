@@ -1,4 +1,5 @@
 # test2.sh
+#@ name: second test
 
 function func2() {
   echo 'out error 2' 1>&2
@@ -15,4 +16,3 @@ function func() {
   #: status:3
   #: output::None
 }
-

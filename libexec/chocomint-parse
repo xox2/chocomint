@@ -261,8 +261,10 @@ parse_test_main() {
       :
       ;;
     "" )
-      _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
-      _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
+      [ "${_CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},0,left]}" ] && {
+        _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
+        _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
+      }
       PARSE_METHOD="parse_nl"
       TEST_COMMENT=""
       ;;

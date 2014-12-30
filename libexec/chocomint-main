@@ -29,9 +29,18 @@ _chm_aggregate_execution_results() {
   local _chm_mid
   local _chm_right
 
-  _chm_outputs.command "==> Ran: \"${_CHM_PREV_PATH[$2]}\" (L${_CHM_PREV_LINENO[$2]})" "${_CHM_PREV_COMMAND[$2]}"
-
   source "${_CHM_PARSER_FILE}"
+
+  if [ "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},meta,name]}" ]; then
+    _chm_outputs.command "==> ${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},meta,name]} [L${_CHM_PREV_LINENO[$2]}]" \
+                         "${_CHM_PREV_COMMAND[$2]}"
+  elif [ "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},meta,title]}" ]; then
+    _chm_outputs.command "==> ${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},meta,title]} [L${_CHM_PREV_LINENO[$2]}]" \
+                         "${_CHM_PREV_COMMAND[$2]}"
+  else
+    _chm_outputs.command "==> ${_CHM_PREV_PATH[$2]##*/} [L${_CHM_PREV_LINENO[$2]}]" \
+                         "${_CHM_PREV_COMMAND[$2]}"
+  fi
 
   #echo "${_CHM_CONTINUOUS_TESTLINES[$2]}行目にテストある" >&3
   for _chm_line in ${_CHM_CONTINUOUS_TESTLINES[$2]}
@@ -234,6 +243,7 @@ _chm_run_test() {
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T
   #echo "_chm_run_testに復帰" >&3
+  _chm_stop_stopwatch
   _chm_write_output "${_CHM_PREV_STACKLEVEL}"
   _chm_show_result ${_CHM_BASE_STACKLEVEL} ${_CHM_PREV_STACKLEVEL} ${exitcode}
   exec 1>&3- 2>&4-

@@ -1,3 +1,3 @@
 true #: status:0
 true #:
-true #: status:1
+sleep 2 #: status:1

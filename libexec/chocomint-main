@@ -4,19 +4,18 @@
 source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
 
-_chm_show_debug() {
-  $_CHM_DEBUG && {
-    echo >&3
-    echo " * \$BASH_COMMAND: ${BASH_COMMAND}" >&3
-    echo " * \$LINENO: $1" >&3
-    echo " * \$? (prev exitcode): $2" >&3
-    echo " * \$_CHM_PREV_PATH: $_CHM_PREV_PATH" >&3
-    echo " * \$FUNCNAME item num: $3" >&3
-    echo " * \$FUNCNAME list: $4" >&3
-    echo " * \$BASH_SOURCE item num: $5" >&3
-    echo " * \$BASH_SOURCE list: $6" >&3
-    echo " * \$_CHM_LVL_OUT_FILES list: $(declare -p _CHM_LVL_OUT_FILES)" >&3
-    echo >&3
+_chm_parse() {
+  "${_CHM_LIBEXEC}/chocomint-parse" "$@" 1>&3 2>&4 || {
+    local exitcode=$?
+    case $exitcode in
+      '10' )
+        : # ${PARSE_ERROR} || ${TEST_NOT_FOUND}
+        ;;
+      * )
+        echo "chocomint-parse: Unknown Error (exitcode: $exitcode)" >&4
+        ;;
+    esac
+    exit $exitcode
   }
 }
 
@@ -29,16 +28,21 @@ _chm_aggregate_execution_results() {
   local _chm_mid
   local _chm_right
 
-  _chm_outputs.command "==> Running: \"${_CHM_PREV_PATH[$2]}\" (L${_CHM_PREV_LINENO[$2]})" "${_CHM_PREV_COMMAND[$2]}"
+  _chm_outputs.command "==> Ran: \"${_CHM_PREV_PATH[$2]}\" (L${_CHM_PREV_LINENO[$2]})" "${_CHM_PREV_COMMAND[$2]}"
 
+  source "${_CHM_PARSER_FILE}"
+
+  echo "${_CHM_CONTINUOUS_TESTLINES[$2]}行目にテストある" >&3
   for _chm_line in ${_CHM_CONTINUOUS_TESTLINES[$2]}
   do
+    echo "この行には${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},max_test_index]}番のテストまでがある" >&3
     for _chm_testidx in $(seq 0 "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},max_test_index]}")
     do
       ((_CHM_TEST_COUNT++))
       _chm_left="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_testidx},left]}")"
       _chm_mid="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_testidx},mid]}")"
       _chm_right="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${_chm_line},${_chm_testidx},right]}")"
+      echo " * $_chm_left$_chm_mid$_chm_right" >&3
 
       if "${_CHM_LIBEXEC}/chocomint-main-judge" \
         "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}" \
@@ -155,35 +159,61 @@ _chm_trap() {
   # $2 previous exitcode
   # $3 FUNCNAME item num
   if [ "$5" -ge "$_CHM_BASE_STACKLEVEL" ]; then
-    # stop stopwatch
-    [ "${_CHM_TIME_START}" ] &&
-      _CHM_TIME_RESULT=$(( $(date +%s) - _CHM_TIME_START ))
+    _chm_stop_stopwatch
+
+    source "${_CHM_PARSER_FILE}"
 
     eval $(echo "$6" | sed 's/BASH_SOURCE=/_CHM_BASH_SOURCE=/')
     _CHM_FULLPATH=$(readlink -f -- "$_CHM_BASH_SOURCE")
+
+    $_CHM_DEBUG && {
+      echo >&3
+      echo " * \$BASH_COMMAND: ${BASH_COMMAND}" >&3
+      echo " * \$LINENO: $1" >&3
+      echo " * \$? (prev exitcode): $2" >&3
+      echo " * \$_CHM_PREV_PATH: $_CHM_PREV_PATH" >&3
+      echo " * \$FUNCNAME item num: $3" >&3
+      echo " * \$FUNCNAME list: $4" >&3
+      echo " * \$BASH_SOURCE item num: $5" >&3
+      echo " * \$BASH_SOURCE list: $6" >&3
+      echo " * \$_CHM_LVL_OUT_FILES list: $(declare -p _CHM_LVL_OUT_FILES)" >&3
+      echo >&3
+    }
 
     if [ "$_CHM_INITIAL_EXEC" ]; then
       _chm_write_output "${_CHM_PREV_STACKLEVEL}"
 
       if [ $5 -le $_CHM_PREV_STACKLEVEL ]; then
         _chm_show_result ${5} ${_CHM_PREV_STACKLEVEL} ${2}
+      else
+        _chm_parse "${_CHM_FULLPATH}"
+        source "${_CHM_PARSER_FILE}"
       fi
     else
-      echo "LEVEL${5}　一番最初" >&3
       _CHM_INITIAL_EXEC='start'
     fi
 
     _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${_CHM_FULLPATH}" "${5}"
     echo "LEVEL$5のコマンド「${BASH_COMMAND}」を実行" >&3
 
-    # start stopwatch
-    _CHM_TIME_START=$(date +%s)
+    _chm_start_stopwatch
   fi
+}
+
+
+_chm_stop_stopwatch() {
+  [ "${_CHM_TIME_START}" ] && _CHM_TIME_RESULT=$(( $(date +%s) - _CHM_TIME_START ))
+}
+
+
+_chm_start_stopwatch() {
+  _CHM_TIME_START=$(date +%s)
 }
 
 
 _chm_run_test() {
   # $1 fullpath
+  source "${_CHM_PARSER_FILE}"
   _CHM_BASE_STACKLEVEL=$(( ${#FUNCNAME[*]} + 1 ))
   exec 3>&1 4>&2 1> "${_CHM_CMD_OUT_FILE}" 2> "${_CHM_CMD_ERR_FILE}"
   set -T; trap "_chm_trap \"\${LINENO}\"                 \
@@ -204,10 +234,6 @@ _chm_run_test() {
 
 
 _chm_main() {
-  source "${_CHM_PARSER_FILE}"
-
-  _CHM_TIME_START=''
-
   _chm_run_test "$1"
 
   {

@@ -18,11 +18,11 @@ variables in the test comments, you can create a test to powerful and flexible.
 - [Installation](#installation)
 - [Reference](#reference)
   - [Test comment marker](#test-comment-marker-)
+  - [Meta-data marker](#meta-data-marker-)
   - [Resource and Matcher](#resource-and-matcher)
     - [Status](#status)
     - [Output](#output)
     - [Plain-Strings](#plain-strings)
-  - [Meta-data marker](#meta-data-marker-)
 - [Requirement](#requirement)
 - [License](#license)
 
@@ -198,13 +198,26 @@ $ cp -r chocomint.sh/libexec/ /usr/local/
 
 Identifier of beginning the test comment is `#:`
 
+### Meta-data marker: `#@`
+
+Identifier of beginning the meta-data is `#@`
+
+| Key  | Description            |
+|------|------------------------|
+| name | define the test name   |
+
+``` bash
+# Example:
+#@ name: TEST TITLE IS HERE
+```
+
 ### Resource and Matcher
 #### Status
-##### Status Resource
+###### Status Resource
 | Identifier | Description
 |------------|-------------
 | `status`   | Exit status code
-##### Status Matcher
+###### Status Matcher
 | Matcher | Description                         | Example                   |
 |---------|-------------------------------------|---------------------------|
 | `:`     | Exit code is equal to the value     | `status:0`                |
@@ -216,13 +229,13 @@ false #: status:1
 ```
 
 #### Output
-##### Output Resource
+###### Output Resource
 | Identifier | Description
 |------------|-------------
 | `output`   | Standard output and Standard Error output
 | `stdout`   | Standard output Only
 | `stderr`   | Standard Error output Only
-##### Output Matcher
+###### Output Matcher
 | Matcher  | Description                         | Example                   |
 |----------|-------------------------------------|---------------------------|
 | `:`      | match fixed strings                 | `output:'foo bar'`
@@ -240,10 +253,10 @@ echo 'hello' #: stdout:'hello'
 ```
 
 #### Plain-Strings
-##### Plain-Strings Resource
+###### Plain-Strings Resource
 Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.
 Of course, you can include variables to these strings. `"it is ${any_variable}"`
-##### Plain-Strings Matcher
+###### Plain-Strings Matcher
 | Matcher | Description                         | Example                   |
 |---------|-------------------------------------|---------------------------|
 | `=`     | match fixed strings                 | `"a $bee c"='a b c'`
@@ -254,19 +267,6 @@ Of course, you can include variables to these strings. `"it is ${any_variable}"`
 ``` bash
 # Example:
 name=${USER} #: "${name}"='bob'
-```
-
-### Meta-data marker: `#@`
-
-Identifier of beginning the meta-data is `#@`
-
-| Key  | Description            |
-|------|------------------------|
-| name | define the test name   |
-
-``` bash
-# Example:
-#@ name: TEST TITLE IS HERE
 ```
 
 ## Requirement

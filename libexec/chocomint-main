@@ -79,7 +79,7 @@ _chm_aggregate_execution_results() {
 
   _chm_outputs.stdout "${_CHM_LVL_OUT_FILES[$2]}"
   _chm_outputs.stderr "${_CHM_LVL_ERR_FILES[$2]}"
-  _chm_outputs.print "    ${_CHM_TIME_RESULT} seconds."
+  _chm_outputs.print "    ${_CHM_TIME_RESULT[$2]} seconds."
   _chm_outputs.echo
 }
 
@@ -172,7 +172,7 @@ _chm_trap() {
   # $2 previous exitcode
   # $3 FUNCNAME item num
   if [ "$5" -ge "$_CHM_BASE_STACKLEVEL" ]; then
-    _chm_stop_stopwatch
+    _chm_stop_stopwatch "${5}" "${_CHM_PREV_STACKLEVEL}"
 
     source "${_CHM_PARSER_FILE}"
 
@@ -197,7 +197,7 @@ _chm_trap() {
     _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${_CHM_FULLPATH}" "${5}"
     #echo "LEVEL$5のコマンド「${BASH_COMMAND}」を実行" >&3
 
-    _chm_start_stopwatch
+    _chm_start_stopwatch "$5"
   fi
 }
 
@@ -218,12 +218,24 @@ _chm_trap_debug() {
 
 
 _chm_stop_stopwatch() {
-  [ "${_CHM_TIME_START}" ] && _CHM_TIME_RESULT=$(( $(date +%s) - _CHM_TIME_START ))
+  # $1 current stack level
+  # $2 prev stack level
+  [ "$2" ] && {
+    local _chm_lvl=$2
+    while [ $_chm_lvl -ge ${1} ]
+    do
+      [ "${_CHM_TIME_START[$_chm_lvl]}" ] && {
+        _CHM_TIME_RESULT[$_chm_lvl]=$(( $(date +%s) - _CHM_TIME_START[$_chm_lvl] ))
+        _CHM_TIME_START[$_chm_lvl]=''
+      }
+      ((_chm_lvl--))
+    done
+  }
 }
 
 
 _chm_start_stopwatch() {
-  _CHM_TIME_START=$(date +%s)
+  _CHM_TIME_START[$1]=$(date +%s)
 }
 
 
@@ -243,7 +255,7 @@ _chm_run_test() {
   # if the last command has a test, execute the analysis here.
   trap DEBUG; set +T
   #echo "_chm_run_testに復帰" >&3
-  _chm_stop_stopwatch
+  _chm_stop_stopwatch ${_CHM_BASE_STACKLEVEL} ${_CHM_PREV_STACKLEVEL}
   _chm_write_output "${_CHM_PREV_STACKLEVEL}"
   _chm_show_result ${_CHM_BASE_STACKLEVEL} ${_CHM_PREV_STACKLEVEL} ${exitcode}
   exec 1>&3- 2>&4-

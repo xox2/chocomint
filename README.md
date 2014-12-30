@@ -18,8 +18,12 @@ variables in the test comments, you can create a test to powerful and flexible.
 - [Installation](#installation)
 - [Reference](#reference)
   - [Test comment marker](#test-comment-marker-)
-  - [Resource](#resource)
-  - [Matcher](#matcher)
+  - [Resource::Status](#resourcestatus)
+  - [Resource::Output](#resourceoutput)
+  - [Resource::PlainStrings](#resourceplainstrings)
+  - [Matcher::Status](#matcherstatus)
+  - [Matcher::Output](#matcheroutput)
+  - [Matcher::PlainStrings](#matcherplainstrings)
   - [Meta-data marker](#meta-data-marker-)
 - [Requirement](#requirement)
 - [License](#license)
@@ -196,9 +200,7 @@ $ cp -r chocomint.sh/libexec/ /usr/local/
 
 Identifier of beginning the test comment is `#:`
 
-### Resource
-
-#### Status
+### Resource::Status
 
 | Identifier | Description
 |------------|-------------
@@ -209,7 +211,7 @@ Identifier of beginning the test comment is `#:`
 false #: status:1
 ```
 
-#### Output
+### Resource::Output
 
 | Identifier | Description
 |------------|-------------
@@ -222,7 +224,7 @@ false #: status:1
 echo 'hello' #: stdout:'hello'
 ```
 
-#### Plain Strings
+### Resource::PlainStrings
 
 Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.
 Of course, you can include variables to these strings. `"it is ${any_variable}"`
@@ -232,16 +234,14 @@ Of course, you can include variables to these strings. `"it is ${any_variable}"`
 name=${USER} #: "${name}"='bob'
 ```
 
-### Matcher
-
-#### Status Matcher
+### Matcher::Status
 
 | Matcher | Description                         | Example                   |
 |---------|-------------------------------------|---------------------------|
 | `:`     | Exit code is equal to the value     | `status:0`                |
 | `!:`    | Exit code is NOT equal to the value | `status!:127`             |
 
-#### Output Matcher
+### Matcher::Output
 
 | Matcher  | Description                         | Example                   |
 |----------|-------------------------------------|---------------------------|
@@ -254,7 +254,7 @@ name=${USER} #: "${name}"='bob'
 |----------|---------|-----------------|-----------------|
 | `::`     | `None`  | outputs NOTHING | `output::None`
 
-#### Plain Strings Matcher
+### Matcher::PlainStrings
 
 | Matcher | Description                         | Example                   |
 |---------|-------------------------------------|---------------------------|

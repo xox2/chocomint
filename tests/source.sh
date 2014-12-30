@@ -12,6 +12,6 @@ echo 1 #: status:0
 
 #source <(echo "echo a #: status:1")
 
-source tests/source-sub.sh
+source tests/source-sub.sh #: status:123
 
 func #: status:10

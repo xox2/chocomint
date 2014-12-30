@@ -3,30 +3,16 @@
 
 #@ name: THIS TEST TITLE IS HERE
 
-###
-### IF YOU USE FUNCTIONS, YOU MUST DEFINE BEFORE ALL TESTS.
-###
-function dummy_func2() {
-  echo 'out error 2' 1>&2
-  echo 'out stdout 2'
-  return 5
-}
-
-function dummy_func() {
-  echo 'out error' 1>&2
-  echo 'out stdout'
-  dummy_func2
-  return 3
-}
-
 true #: status:0 output::None
 
 echo "Hello"
 #: stdout:'hello' status!:1
 
-dummy_func  #: stderr:'error' stdout:~'.*std.*'
-            #: status:3       status!:0
-            #: output::None
+source tests/tests2.sh
+
+func #: stderr:'error' stdout:~'.*std.*'
+     #: status:3
+     #: output::None
 
 sleep 2 #: status:0
 

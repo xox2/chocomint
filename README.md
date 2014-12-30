@@ -22,7 +22,7 @@ variables in the test comments, you can create a test to powerful and flexible.
   - [Resource and Matcher](#resource-and-matcher)
     - [Status](#status)
     - [Output](#output)
-    - [Plain-Strings](#plain-strings)
+    - [String](#string)
 - [Requirement](#requirement)
 - [License](#license)
 - [Contribution](#contribution)
@@ -255,11 +255,11 @@ false #: status:1
 echo 'hello' #: stdout:'hello'
 ```
 
-#### Plain-Strings
-###### Plain-Strings Resource
-Plain strings of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.
+#### String
+###### String Resource
+Just a String of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.
 Of course, you can include variables to these strings. `"it is ${any_variable}"`
-###### Plain-Strings Matcher
+###### String Matcher
 | Matcher | Description                         | Example                   |
 |---------|-------------------------------------|---------------------------|
 | `=`     | match fixed strings                 | `"a $bee c"='a b c'`

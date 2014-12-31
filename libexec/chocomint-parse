@@ -279,7 +279,7 @@ parse_test_main() {
 parse_meta_value() {
   case ${1} in
     '' )
-      _CHM_DATABASE[${TARGET_FULLPATH},meta,${META_KEY}]="`echo "${META_VAL}" | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//'`"
+      _CHM_DATABASE[${TARGET_FULLPATH},meta,${META_KEY}]="$(echo "${META_VAL}" | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')"
       PARSE_METHOD='parse_nl'
       META_KEY=''
       META_VAL=''
@@ -519,12 +519,12 @@ main() {
     declare -p _CHM_TEST_POSITION
     declare -p _CHM_DATABASE
     declare -p _CHM_PARSED
-  } > ${_CHM_PARSER_FILE}
+  } > "${_CHM_PARSER_FILE}"
 
   $_CHM_DEBUG && {
-    echo " * `declare -p _CHM_TEST_POSITION`"
-    echo " * `declare -p _CHM_DATABASE`"
-    echo " * `declare -p _CHM_PARSED`"
+    echo " * $(declare -p _CHM_TEST_POSITION)"
+    echo " * $(declare -p _CHM_DATABASE)"
+    echo " * $(declare -p _CHM_PARSED)"
   }
 
   if ${PARSE_ERROR}; then

@@ -3,9 +3,20 @@
 
 declare -A _CHM_TEST_POSITION # "NL" or "EOL"
 declare -A _CHM_DATABASE
+declare -A _CHM_PARSED
 
 TEST_MARKER=${TEST_MARKER:-':'}
 META_MARKER=${META_MARKER:-'@'}
+
+for opt in "$@"
+do
+  case "$opt" in
+    '-q' )
+      QUIET=true
+      shift 1
+      ;;
+  esac
+done
 
 _tput() { $_CHM_TPUT "$@"; }
 
@@ -250,8 +261,10 @@ parse_test_main() {
       :
       ;;
     "" )
-      _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
-      _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
+      [ "${_CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},0,left]}" ] && {
+        _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
+        _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
+      }
       PARSE_METHOD="parse_nl"
       TEST_COMMENT=""
       ;;
@@ -266,7 +279,7 @@ parse_test_main() {
 parse_meta_value() {
   case ${1} in
     '' )
-      _CHM_DATABASE[${TARGET_FULLPATH},meta,${META_KEY}]="`echo "${META_VAL}" | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//'`"
+      _CHM_DATABASE[${TARGET_FULLPATH},meta,${META_KEY}]="$(echo "${META_VAL}" | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')"
       PARSE_METHOD='parse_nl'
       META_KEY=''
       META_VAL=''
@@ -470,33 +483,56 @@ parse() {
 }
 
 main() {
-  PARSE_ERROR=false
-  TEST_NOT_FOUND=false
+  PARSE_ERROR=false    # Any even one of the multiple files
+  TEST_NOT_FOUND=false # Any even one of the multiple files
+  PARSE_DUP=false      # Any even one of the multiple files
+
+  [ -f "${_CHM_PARSER_FILE}" ] && source "${_CHM_PARSER_FILE}"
 
   for i in "$@"
   do
-    LINE_NUMBER=1
-    OFFSET_NUMBER=1
-    TEST_INDEX=-1
-    PARSE_METHOD="parse_nl" # initial parse-method
-    TEST_EXIST=false
+    [ "$QUIET" ] || echo "==> Parsing: \"${i}\""
+    if ! [ "${_CHM_PARSED[${i}]}" ]; then
+      LINE_NUMBER=1
+      OFFSET_NUMBER=1
+      TEST_INDEX=-1
+      PARSE_METHOD="parse_nl" # initial parse-method
+      TEST_EXIST=false
 
-    echo "==> Parsing: \"${i}\""
-    parse "${i}"
+      parse "${i}"
+      _CHM_PARSED[${i}]='parsed'
 
-    ${TEST_EXIST} || {
-      echo "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) test not found"
-      echo
-      TEST_NOT_FOUND=true
-      _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
-    }
+      ${TEST_EXIST} || {
+        [ "$QUIET" ] || echo "===> test not found" 1>&2
+        [ "$QUIET" ] || echo 1>&2
+        TEST_NOT_FOUND=true
+        _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
+      }
+    else
+      [ "$QUIET" ] || echo "===> already parsed" 1>&2
+      [ "$QUIET" ] || echo 1>&2
+      PARSE_DUP=true
+    fi
   done
 
-  declare -p _CHM_TEST_POSITION > ${_CHM_TEST_POSITION_FILE}
-  declare -p _CHM_DATABASE      > ${_CHM_DATABASE_FILE}
+  {
+    declare -p _CHM_TEST_POSITION
+    declare -p _CHM_DATABASE
+    declare -p _CHM_PARSED
+  } > "${_CHM_PARSER_FILE}"
 
-  if ${PARSE_ERROR} || ${TEST_NOT_FOUND}; then
-    return 1
+  $_CHM_DEBUG && {
+    echo " * $(declare -p _CHM_TEST_POSITION)"
+    echo " * $(declare -p _CHM_DATABASE)"
+    echo " * $(declare -p _CHM_PARSED)"
+  }
+
+  if ${PARSE_ERROR}; then
+    return 10
+  elif ${TEST_NOT_FOUND}; then
+    return 11
+  elif ${PARSE_DUP}; then
+    return 12
   else
     return 0
   fi

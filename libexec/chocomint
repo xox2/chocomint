@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
 NAME='chocomint.sh'
-VERSION='0.4.0'
+VERSION='0.6.0'
+
+export _CHM_DEBUG=${DEBUG:-false}
 
 export _CHM_CMD_OUT_FILE=$(mktemp "/tmp/_chm_command_stdout.tmp.$$.XXXXXX")
 export _CHM_CMD_ERR_FILE=$(mktemp "/tmp/_chm_command_stderr.tmp.$$.XXXXXX")
 
-export _CHM_TEST_POSITION_FILE=$(mktemp "/tmp/_chm_test_position.tmp.$$.XXXXXX")
-export _CHM_DATABASE_FILE=$(mktemp "/tmp/_chm_database.tmp.$$.XXXXXX")
+export _CHM_PARSER_FILE=$(mktemp "/tmp/_chm_parser.tmp.$$.XXXXXX")
 
 export _CHM_TEST_RESULTS_FILE=$(mktemp "/tmp/_chm_test_results.tmp.$$.XXXXXX")
 # variables in _CHM_TEST_RESULTS_FILE
@@ -24,7 +25,7 @@ source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
 for opt in "$@"
 do
-  case "$opt" in
+  case "${opt}" in
     '--ignore-parse-error' )
       IGNORE_PARSE_ERROR=true
       shift 1
@@ -33,19 +34,19 @@ do
 done
 
 system_check() {
-  #
-  # "tput" exist check
-  #
-  [ ! -t 1 ] && export _CHM_TPUT="true" && return
-
-  if type tput > /dev/null 2>&1
-  then
-    export _CHM_TPUT="tput"
-  else
-    echo "WARN: \"tput\" command is not found"
-    echo "WARN: run without coloring"
-    echo
+  if [ ! -t 1 ]; then
     export _CHM_TPUT="true"
+  else
+    export _CHM_IS_TERMINAL="true"
+    if type tput > /dev/null 2>&1
+    then
+      export _CHM_TPUT="tput"
+    else
+      echo "WARN: \"tput\" command is not found"
+      echo "WARN: run without coloring"
+      echo
+      export _CHM_TPUT="true"
+    fi
   fi
 }
 
@@ -66,33 +67,51 @@ file_check() {
 
 parse() {
   "${_CHM_LIBEXEC}/chocomint-parse" "$@" || {
-    exitcode=$?
-    case $exitcode in
-      '1' )
-        :
-        ;;
+    local exitcode=$?
+    case ${exitcode} in
+      '10'|'11'|'12' ) : ;;
       * )
-        echo "chocomint-parse: Unknown Error (code $exitcode)"
+        echo "chocomint-parse: Unknown Error (exitcode: ${exitcode})"
         ;;
     esac
-    [ "$IGNORE_PARSE_ERROR" ] || exit $exitcode
+    [ "${IGNORE_PARSE_ERROR}" ] || exit ${exitcode}
   }
 }
 
 
 run() {
-  "${_CHM_LIBEXEC}/chocomint-main" "$@" || {
-    exitcode=$?
-    case $exitcode in
-      '21' )
-        :
-        ;;
-      * )
-        echo "chocomint-main: Unknown Error (code $exitcode)"
-        ;;
-    esac
-    exit $exitcode
-  }
+  local file_num_count=1
+  local path
+  for path in "$@"
+  do
+    if [ "${_CHM_DATABASE[${path},meta,name]}" ]; then
+      _chm_outputs.section "[${file_num_count}/${#@}] ${_CHM_DATABASE[${path},meta,name]} (${path##*/})"
+    elif [ "${_CHM_DATABASE[${path},meta,title]}" ]; then
+      _chm_outputs.section "[${file_num_count}/${#@}] ${_CHM_DATABASE[${path},meta,title]} (${path##*/})"
+    else
+      _chm_outputs.section "[${file_num_count}/${#@}] ${path}"
+    fi
+
+    if [ "${_CHM_DATABASE[${path},parse_error]}" ]; then
+      echo '==> Skip this test by Parse errors/warnings' 1>&2
+      echo 1>&2
+    else
+      "${_CHM_LIBEXEC}/chocomint-main" "${path}" || {
+        local exitcode=$?
+        case ${exitcode} in
+          '21' ) : ;; # in chocomint-main-judge
+          * )
+            echo "chocomint-main: Unknown Error (exitcode: ${exitcode})"
+            cat "${_CHM_CMD_OUT_FILE}"
+            cat "${_CHM_CMD_ERR_FILE}"
+            ;;
+        esac
+        exit ${exitcode}
+      }
+      source "${_CHM_TEST_RESULTS_FILE}"
+    fi
+    ((file_num_count++))
+  done
 }
 
 
@@ -106,20 +125,21 @@ main() {
 
   _chm_outputs.title "${NAME} ${VERSION}"
 
+  local i
   for i in "$@"
   do
-    local fullpath="$(readlink -f -- "${i}")"
-    file_check "${fullpath}"
-    [ $? -eq 0 ] && {
-      local fullpath_list=("${fullpath_list[@]}" "${fullpath}")
+    local path="$(readlink -f -- "${i}")"
+    file_check "${path}" && {
+      local path_list=("${path_list[@]}" "${path}")
     }
   done
-  [ "${fullpath_list[*]}" ] || exit 3
+  [ "${path_list[*]}" ] || exit 3
 
-  parse "${fullpath_list[@]}"
-  run "${fullpath_list[@]}"
+  parse "${path_list[@]}"
+  source "${_CHM_PARSER_FILE}"
 
-  source ${_CHM_TEST_RESULTS_FILE}
+  run "${path_list[@]}"
+  source "${_CHM_TEST_RESULTS_FILE}"
 
   _chm_outputs.overall_results \
     "${_CHM_TEST_FAILURE}"     \
@@ -128,13 +148,24 @@ main() {
     "${_CHM_CMD_SUCCESS}"      \
     "${_CHM_CMD_COUNT}"
 
-  ${_CHM_FAILURE} && return 1 || return 0
+  if ${_CHM_FAILURE}; then
+    return 1
+  else
+    return 0
+  fi
 }
 
-trap "rm \"${_CHM_CMD_OUT_FILE}\" \
-         \"${_CHM_CMD_ERR_FILE}\" \
-         \"${_CHM_TEST_RESULTS_FILE}\" \
-         \"${_CHM_TEST_POSITION_FILE}\" \
-         \"${_CHM_DATABASE_FILE}\" > /dev/null 2>&1" EXIT
+
+exit_trap() {
+  {
+    rm "${_CHM_CMD_OUT_FILE}"
+    rm "${_CHM_CMD_ERR_FILE}"
+    rm "${_CHM_TEST_RESULTS_FILE}"
+    rm "${_CHM_PARSER_FILE}"
+  } > /dev/null 2>&1
+}
+
+
+trap 'exit_trap' EXIT
 
 main "$@"

@@ -3,142 +3,282 @@
 
 source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
-_chm_aggregate_results() {
+
+_chm_parse() {
+  "${_CHM_LIBEXEC}/chocomint-parse" -q "$@" 1>&3 2>&4 || {
+    local exitcode=$?
+    case ${exitcode} in
+      '10' )
+        exit ${exitcode}
+        ;;
+      '11'|'12' ) : ;;
+      * )
+        echo "chocomint-parse: Unknown Error (exitcode: ${exitcode})" >&4
+        exit ${exitcode}
+        ;;
+    esac
+  }
+}
+
+
+_chm_aggregate_execution_results() {
   # $1 exitstatus
   ((_CHM_CMD_COUNT++))
-  local _chm_cmd_failure=false
-  local _chm_left
-  local _chm_mid
-  local _chm_right
+  local cmd_fail=false
+  local left
+  local mid
+  local right
+  local line
+  local testidx
 
-  for _chm_line in "${_CHM_TESTLINE_LIST[@]}"
+  source "${_CHM_PARSER_FILE}"
+
+  if [ "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},meta,name]}" ]; then
+    _chm_outputs.command "==> ${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},meta,name]} [L${_CHM_PREV_LINENO[$2]}]" \
+                         "${_CHM_PREV_COMMAND[$2]}"
+  elif [ "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},meta,title]}" ]; then
+    _chm_outputs.command "==> ${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},meta,title]} [L${_CHM_PREV_LINENO[$2]}]" \
+                         "${_CHM_PREV_COMMAND[$2]}"
+  else
+    _chm_outputs.command "==> ${_CHM_PREV_PATH[$2]##*/} [L${_CHM_PREV_LINENO[$2]}]" \
+                         "${_CHM_PREV_COMMAND[$2]}"
+  fi
+
+  for line in ${_CHM_CONTINUOUS_TESTLINES[$2]}
   do
-    for _chm_i in $(seq 0 "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},max_test_index]}")
+    for testidx in $(seq 0 "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},max_test_index]}")
     do
       ((_CHM_TEST_COUNT++))
-      _chm_left="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},left]}")"
-      _chm_mid="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},mid]}")"
-      _chm_right="$(eval echo "${_CHM_DATABASE[${_CHM_FULLPATH},${_chm_line},${_chm_i},right]}")"
+      left="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},left]}")"
+      mid="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},mid]}")"
+      right="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},right]}")"
 
       if "${_CHM_LIBEXEC}/chocomint-main-judge" \
-        "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}" \
-        "${_CHM_CMD_OUT_FILE}" "${_CHM_CMD_ERR_FILE}"
+        "${left}" "${mid}" "${right}" "${1}" \
+        "${_CHM_LVL_OUT_FILES[$2]}" \
+        "${_CHM_LVL_ERR_FILES[$2]}"
       then
         ((_CHM_TEST_SUCCESS++))
-        _chm_outputs.ok "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
+        _chm_outputs.ok "${left}" "${mid}" "${right}" "${1}"
       else
         exitcode=$?
-        if [ $exitcode -eq 1 ]; then
+        if [ ${exitcode} -eq 1 ]; then
           ((_CHM_TEST_FAILURE++))
-          _chm_outputs.ng "${_chm_left}" "${_chm_mid}" "${_chm_right}" "${1}"
-          _chm_cmd_failure=true
+          _chm_outputs.ng "${left}" "${mid}" "${right}" "${1}"
+          cmd_fail=true
           _CHM_FAILURE=true
         else
-          exit $exitcode
+          exit ${exitcode}
         fi
       fi
     done
   done
 
-  $_chm_cmd_failure || ((_CHM_CMD_SUCCESS++))
+  ${cmd_fail} || ((_CHM_CMD_SUCCESS++))
 
-  _chm_outputs.stdout
-  _chm_outputs.stderr
-  _chm_outputs.print "${_CHM_TIME_RESULT} seconds. "
+  _chm_outputs.stdout "${_CHM_LVL_OUT_FILES[$2]}"
+  _chm_outputs.stderr "${_CHM_LVL_ERR_FILES[$2]}"
+  _chm_outputs.print "    " # indent
+  _chm_outputs.print "${_CHM_TIME_RESULT[$2]} seconds."
   _chm_outputs.echo
 }
 
 
-_chm_prepare_execution-search_continuous_testline() {
-  # $1 line number
-  local _chm_ln="${1}"
-  local _chm_i=1
-  while [ "${_CHM_TEST_POSITION[${_CHM_FULLPATH},$(( _chm_ln + _chm_i ))]-}" = 'NL' ]
-  do
-    _CHM_TESTLINE_LIST=("${_CHM_TESTLINE_LIST[@]}" "$(( _chm_ln + _chm_i ))")
-    ((_chm_i++))
-  done
+_chm_make_lvl_out_file() {
+  # $1 stack level
+  if [ ! "${_CHM_LVL_OUT_FILES[$1]}" ] || [ ! "${_CHM_LVL_ERR_FILES[$1]}" ]; then
+    _CHM_LVL_OUT_FILES[$1]=$(mktemp "/tmp/_chm_command_stdout.lvl${1}.$$.XXXXXX")
+    _CHM_LVL_ERR_FILES[$1]=$(mktemp "/tmp/_chm_command_stderr.lvl${1}.$$.XXXXXX")
+  fi
 }
 
 
 _chm_prepare_execution() {
   # $1 line number
-  if [ "${_CHM_TEST_POSITION[${_CHM_FULLPATH},${1}]-}" = "EOL" ]; then
-    _CHM_TEST_EXIST=true
-    _CHM_TESTLINE_LIST=("${1}")
-    _chm_prepare_execution-search_continuous_testline "${1}"
-  elif [ "${_CHM_TEST_POSITION[${_CHM_FULLPATH},$((${1}+1))]-}" = "NL" ]; then
-    _CHM_TEST_EXIST=true
-    _CHM_TESTLINE_LIST=()
-    _chm_prepare_execution-search_continuous_testline "${1}"
+  # $2 command
+  # $3 fullpath
+  # $4 stack level
+  if [ "${_CHM_TEST_POSITION[${3},${1}]-}" = "EOL" ]; then
+    _CHM_PREV_TEST_EXIST[$4]='y'
+    _CHM_CONTINUOUS_TESTLINES[$4]="${1}"
+  elif [ "${_CHM_TEST_POSITION[${3},$((${1}+1))]-}" = "NL" ]; then
+    _CHM_PREV_TEST_EXIST[$4]='y'
+    _CHM_CONTINUOUS_TESTLINES[$4]=""
   else
-    _CHM_TEST_EXIST=false
+    _CHM_PREV_TEST_EXIST[$4]=''
   fi
 
-  ${_CHM_TEST_EXIST} && {
-    : > "${_CHM_CMD_OUT_FILE}"
-    : > "${_CHM_CMD_ERR_FILE}"
-    _chm_outputs.command "==> L${1}: " "${2}"
+  [ "${_CHM_PREV_TEST_EXIST[$4]}" ] && {
+    local i=1
+    while [ "${_CHM_TEST_POSITION[${3},$(( ${1} + i ))]-}" = 'NL' ]
+    do
+      _CHM_CONTINUOUS_TESTLINES[$4]="${_CHM_CONTINUOUS_TESTLINES[$4]} $(( ${1} + i ))"
+      ((i++))
+    done
+    _CHM_PREV_PATH[$4]="${3}"
+    _CHM_PREV_LINENO[$4]="${1}"
+    _CHM_PREV_COMMAND[$4]="${2}"
   }
+
+  _chm_make_lvl_out_file "${4}"
+
+  if [ ! "${_CHM_PREV_STACKLEVEL}" ] || [ "${4}" -ne "${_CHM_PREV_STACKLEVEL}" ]; then
+    _CHM_PREV_STACKLEVEL="${4}"
+  fi
+}
+
+
+_chm_write_output() {
+  # $1 stack level
+  cp "${_CHM_CMD_OUT_FILE}" "${_CHM_LVL_OUT_FILES[$1]}"
+  cp "${_CHM_CMD_ERR_FILE}" "${_CHM_LVL_ERR_FILES[$1]}"
+
+  local lvl=$((${1} - 1))
+  for (( lvl=lvl; lvl >= _CHM_BASE_STACKLEVEL; lvl-- ))
+  do
+    cat "${_CHM_CMD_OUT_FILE}" >> "${_CHM_LVL_OUT_FILES[${lvl}]}"
+    cat "${_CHM_CMD_ERR_FILE}" >> "${_CHM_LVL_ERR_FILES[${lvl}]}"
+  done
+
+  : > "${_CHM_CMD_OUT_FILE}"
+  : > "${_CHM_CMD_ERR_FILE}"
+}
+
+
+_chm_show_result() {
+  # $1 current stack level
+  # $2 prev stack level
+  # $3 previous exitcode
+  local lvl=$2
+  while [ "${lvl}" -ge "${1}" ]
+  do
+    _CHM_PREV_STATUS[${lvl}]="${3}"
+    [ "${_CHM_PREV_TEST_EXIST[${lvl}]}" ] &&
+      _chm_aggregate_execution_results "${_CHM_PREV_STATUS[${lvl}]}" "${lvl}"
+    ((lvl--))
+  done
 }
 
 
 _chm_trap() {
   # $1 line number
-  # $2 source path
-  local _chm_prev_stat="$?"
+  # $2 previous exitcode
+  # $3 stack level
+  # $4 BASH_SOURCE list
+  if [ "${3}" -ge "${_CHM_BASE_STACKLEVEL}" ]; then
+    _chm_stop_stopwatch "${3}" "${_CHM_PREV_STACKLEVEL}"
+    _chm_clear_now-processing
 
-  [ "${_CHM_TIME_START}" ] && {
-    _CHM_TIME_RESULT=$(( $(date +%s) - _CHM_TIME_START ))
-  }
+    source "${_CHM_PARSER_FILE}"
 
-  if [ "${3}" -eq "${_CHM_TARGETFILE_STACK_LEVEL}" ]; then
-    ${_CHM_TEST_EXIST} && _chm_aggregate_results "${_chm_prev_stat}"
-    _chm_prepare_execution "${1}" "${BASH_COMMAND}"
+    eval $(echo "${4}" | sed 's/BASH_SOURCE=/_CHM_BASH_SOURCE=/')
+    local fullpath=$(readlink -f -- "${_CHM_BASH_SOURCE}")
+
+    ${_CHM_DEBUG} && _chm_trap_debug "$@"
+
+    if [ "${_CHM_INITIAL_EXEC}" ]; then
+      _chm_write_output "${_CHM_PREV_STACKLEVEL}"
+
+      if [ "${3}" -le "${_CHM_PREV_STACKLEVEL}" ]; then
+        _chm_show_result "${3}" "${_CHM_PREV_STACKLEVEL}" "${2}"
+      else
+        _chm_parse "${fullpath}"
+        source "${_CHM_PARSER_FILE}"
+      fi
+    else
+      _CHM_INITIAL_EXEC='start'
+    fi
+
+    _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${fullpath}" "${3}"
+
+    _chm_show_now-processing
+    _chm_start_stopwatch "${3}"
   fi
+}
 
-  _CHM_TIME_START=$(date +%s)
+
+_chm_clear_now-processing() {
+  [ "${_CHM_IS_TERMINAL}" ] && {
+    [ "${_CHM_INITIAL_EXEC}" ] && {
+      echo -ne "\r" >&3
+      local i
+      for (( i=0; i < _CHM_PREV_STRING_CHARNUM; i++ ))
+      do
+        echo -n " " >&3
+      done
+      echo -ne "\r" >&3
+    }
+  }
+}
+
+
+_chm_show_now-processing() {
+  [ "${_CHM_IS_TERMINAL}" ] && {
+    local now_proc="--> \$ ${BASH_COMMAND}"
+    echo -n "${now_proc}" >&3
+    _CHM_PREV_STRING_CHARNUM=${#now_proc}
+  }
+}
+
+
+_chm_trap_debug() {
+  echo >&3
+  echo " * \$BASH_COMMAND:            ${BASH_COMMAND}" >&3
+  echo " * \$LINENO:                  $1" >&3
+  echo " * \$? (prev exitcode):       $2" >&3
+  echo " * \$_CHM_PREV_PATH:          ${_CHM_PREV_PATH}" >&3
+  echo " * \$BASH_SOURCE item num:    $3" >&3
+  echo " * \$BASH_SOURCE list:        $4" >&3
+  echo " * \$_CHM_LVL_OUT_FILES list: $(declare -p _CHM_LVL_OUT_FILES)" >&3
+  echo >&3
+}
+
+
+_chm_stop_stopwatch() {
+  # $1 current stack level
+  # $2 prev stack level
+  [ "$2" ] && {
+    local lvl=$2
+    while [ "${lvl}" -ge "${1}" ]
+    do
+      [ "${_CHM_TIME_START[${lvl}]}" ] && {
+        _CHM_TIME_RESULT[${lvl}]=$(( $(date +%s) - _CHM_TIME_START[lvl] ))
+        _CHM_TIME_START[${lvl}]=''
+      }
+      ((lvl--))
+    done
+  }
+}
+
+
+_chm_start_stopwatch() {
+  _CHM_TIME_START[$1]=$(date +%s)
 }
 
 
 _chm_run_test() {
+  # $1 fullpath
+  source "${_CHM_PARSER_FILE}"
+  _CHM_BASE_STACKLEVEL=$(( ${#FUNCNAME[*]} + 1 ))
   exec 3>&1 4>&2 1> "${_CHM_CMD_OUT_FILE}" 2> "${_CHM_CMD_ERR_FILE}"
-  set -T; trap '_chm_trap "${LINENO}" "${BASH_SOURCE}" "${#FUNCNAME[*]}"' DEBUG
-  _CHM_TARGETFILE_STACK_LEVEL=$(( ${#FUNCNAME[*]} + 1 ))
-  source "${1}"; local exitstat=$?
-  # if the last command has a test, execute the analysis here.
+  set -T; trap "_chm_trap \"\${LINENO}\"                 \
+                          \"\$?\"                        \
+                          \"\${#BASH_SOURCE[*]}\"        \
+                          \"\$(declare -p BASH_SOURCE)\" \
+                          " DEBUG
+  source "${1}"; local exitcode=$?
   trap DEBUG; set +T
-  ${_CHM_TEST_EXIST} && _chm_aggregate_results "${exitstat}"
+  # if the last command has a test, execute the analysis here.
+  _chm_stop_stopwatch "${_CHM_BASE_STACKLEVEL}" "${_CHM_PREV_STACKLEVEL}"
+  _chm_clear_now-processing
+  _chm_write_output "${_CHM_PREV_STACKLEVEL}"
+  _chm_show_result "${_CHM_BASE_STACKLEVEL}" "${_CHM_PREV_STACKLEVEL}" "${exitcode}"
   exec 1>&3- 2>&4-
 }
 
 
 _chm_main() {
-  source "${_CHM_TEST_POSITION_FILE}"
-  source "${_CHM_DATABASE_FILE}"
-
-  local _chm_file_num_count=1
-  for _chm_i in "$@"
-  do
-    _CHM_TEST_EXIST=false
-    _CHM_TIME_START=''
-    _CHM_FULLPATH="${_chm_i}"
-
-    if [ "${_CHM_DATABASE[${_CHM_FULLPATH},meta,name]}" ]; then
-      _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_DATABASE[${_CHM_FULLPATH},meta,name]} (${_CHM_FULLPATH##*/})"
-    elif [ "${_CHM_DATABASE[${_CHM_FULLPATH},meta,title]}" ]; then
-      _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_DATABASE[${_CHM_FULLPATH},meta,title]} (${_CHM_FULLPATH##*/})"
-    else
-      _chm_outputs.section "[${_chm_file_num_count}/${#@}] ${_CHM_FULLPATH}"
-    fi
-
-    if [ "${_CHM_DATABASE[$_CHM_FULLPATH,parse_error]}" ]; then
-      echo "==> Pass this test by Parse Error"
-    else
-      _chm_run_test "${_CHM_FULLPATH}"
-    fi
-    ((_chm_file_num_count++))
-  done
+  _chm_run_test "$1"
 
   {
     declare -p _CHM_TEST_FAILURE
@@ -150,4 +290,19 @@ _chm_main() {
   } > "${_CHM_TEST_RESULTS_FILE}"
 }
 
-_chm_main "$@"
+_chm_exit_trap() {
+  {
+    for file in "${_CHM_LVL_OUT_FILES[@]}"
+    do
+      rm "${file}"
+    done
+    for file in "${_CHM_LVL_ERR_FILES[@]}"
+    do
+      rm "${file}"
+    done
+  } > /dev/null 2>&1
+}
+
+trap '_chm_exit_trap' EXIT
+
+_chm_main "$1"

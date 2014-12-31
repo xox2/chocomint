@@ -7,4 +7,7 @@ orig="
 a="!@^*!%@#@)&
 \$!$^#(&@)&^&!("
 
+b='@#@)&\$!$^'
+
 echo "$orig" #: output:"$a" stdout:"$a" stderr:"$a"
+             #: output:"$b"

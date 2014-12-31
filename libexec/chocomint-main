@@ -205,21 +205,25 @@ _chm_trap() {
 
 
 _chm_clear_now-processing() {
-  [ "$_CHM_INITIAL_EXEC" ] && {
-    echo -ne "\r" >&3
-    for (( _chm_i=0; _chm_i < _CHM_PREV_STRING_CHARNUM; _chm_i++ ))
-    do
-      echo -n " " >&3
-    done
-    echo -ne "\r" >&3
+  [ "$_CHM_IS_TERMINAL" ] && {
+    [ "$_CHM_INITIAL_EXEC" ] && {
+      echo -ne "\r" >&3
+      for (( _chm_i=0; _chm_i < _CHM_PREV_STRING_CHARNUM; _chm_i++ ))
+      do
+        echo -n " " >&3
+      done
+      echo -ne "\r" >&3
+    }
   }
 }
 
 
 _chm_show_now-processing() {
-  local _chm_now_processing="--> \$ ${BASH_COMMAND}"
-  echo -n "$_chm_now_processing" >&3
-  _CHM_PREV_STRING_CHARNUM=${#_chm_now_processing}
+  [ "$_CHM_IS_TERMINAL" ] && {
+    local _chm_now_processing="--> \$ ${BASH_COMMAND}"
+    echo -n "$_chm_now_processing" >&3
+    _CHM_PREV_STRING_CHARNUM=${#_chm_now_processing}
+  }
 }
 
 

@@ -37,16 +37,19 @@ system_check() {
   #
   # "tput" exist check
   #
-  [ ! -t 1 ] && export _CHM_TPUT="true" && return
-
-  if type tput > /dev/null 2>&1
-  then
-    export _CHM_TPUT="tput"
-  else
-    echo "WARN: \"tput\" command is not found"
-    echo "WARN: run without coloring"
-    echo
+  if [ ! -t 1 ]; then
     export _CHM_TPUT="true"
+  else
+    export _CHM_IS_TERMINAL="true"
+    if type tput > /dev/null 2>&1
+    then
+      export _CHM_TPUT="tput"
+    else
+      echo "WARN: \"tput\" command is not found"
+      echo "WARN: run without coloring"
+      echo
+      export _CHM_TPUT="true"
+    fi
   fi
 }
 

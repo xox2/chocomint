@@ -16,6 +16,8 @@ variables in the test comments, you can create a test to powerful and flexible.
   - [Write tests](#write-tests)
   - [Run](#run)
 - [Installation](#installation)
+  - [Simple, Local](#simple-local)
+  - [System-wide](#system-wide)
 - [Reference](#reference)
   - [Test comment marker](#test-comment-marker-)
   - [Meta-data marker](#meta-data-marker-)
@@ -187,7 +189,7 @@ $ git clone -b current https://github.com/toromoti/chocomint.sh ~/chocomint
 $ export PATH=~/chocomint/bin:$PATH
 ```
 
-#### Systemwide
+#### System-wide
 
 ```
 $ git clone -b current https://github.com/toromoti/chocomint.sh
@@ -197,9 +199,9 @@ $ cp -r chocomint.sh/libexec/ /usr/local/
 
 ## Reference
 
-### Test comment marker: `#:`
+### Test-comment marker: `#:`
 
-Identifier of beginning the test comment is `#:`
+Identifier of beginning the test-comment is `#:`
 
 ``` bash
 # Example:
@@ -220,6 +222,7 @@ Identifier of beginning the meta-data is `#@`
 ```
 
 ### Resource and Matcher
+
 #### Status
 ###### Status Resource
 | Resource   | Description

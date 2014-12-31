@@ -173,6 +173,7 @@ _chm_trap() {
   # $3 FUNCNAME item num
   if [ "$5" -ge "$_CHM_BASE_STACKLEVEL" ]; then
     _chm_stop_stopwatch "${5}" "${_CHM_PREV_STACKLEVEL}"
+    _chm_clear_now-processing
 
     source "${_CHM_PARSER_FILE}"
 
@@ -197,8 +198,28 @@ _chm_trap() {
     _chm_prepare_execution "${1}" "${BASH_COMMAND}" "${_CHM_FULLPATH}" "${5}"
     #echo "LEVEL$5のコマンド「${BASH_COMMAND}」を実行" >&3
 
+    _chm_show_now-processing
     _chm_start_stopwatch "$5"
   fi
+}
+
+
+_chm_clear_now-processing() {
+  [ "$_CHM_INITIAL_EXEC" ] && {
+    echo -ne "\r" >&3
+    for (( _chm_i=0; _chm_i < _CHM_PREV_STRING_CHARNUM; _chm_i++ ))
+    do
+      echo -n " " >&3
+    done
+    echo -ne "\r" >&3
+  }
+}
+
+
+_chm_show_now-processing() {
+  local _chm_now_processing="--> \$ ${BASH_COMMAND}"
+  echo -n "$_chm_now_processing" >&3
+  _CHM_PREV_STRING_CHARNUM=${#_chm_now_processing}
 }
 
 
@@ -256,6 +277,7 @@ _chm_run_test() {
   trap DEBUG; set +T
   #echo "_chm_run_testに復帰" >&3
   _chm_stop_stopwatch ${_CHM_BASE_STACKLEVEL} ${_CHM_PREV_STACKLEVEL}
+  _chm_clear_now-processing
   _chm_write_output "${_CHM_PREV_STACKLEVEL}"
   _chm_show_result ${_CHM_BASE_STACKLEVEL} ${_CHM_PREV_STACKLEVEL} ${exitcode}
   exec 1>&3- 2>&4-

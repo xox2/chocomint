@@ -1,9 +1,9 @@
 func3() {
-  sleep 1 #: status:0
+  sleep 3 #: status:0
 }
 
 func2() {
-  sleep 1
+  sleep 2
   func3 #: status:0
 }
 

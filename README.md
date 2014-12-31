@@ -19,7 +19,7 @@ variables in the test comments, you can create a test to powerful and flexible.
   - [Simple, Local](#simple-local)
   - [System-wide](#system-wide)
 - [Reference](#reference)
-  - [Test comment marker](#test-comment-marker-)
+  - [Test-comment marker](#test-comment-marker-)
   - [Meta-data marker](#meta-data-marker-)
   - [Resource and Matcher](#resource-and-matcher)
     - [Status](#status)

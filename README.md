@@ -288,6 +288,21 @@ false #: status:1
 echo 'hello' #: stdout:'hello'
 ```
 
+``` bash
+# Example:
+
+multi_line="\
+bbbbbbbbb
+ccccccccccccccccccccccccc
+ddddddddd"
+
+echo "\
+aaaaaaaaaaaaaaaaaaaaaaaaa
+bbbbbbbbbbbbbbbbbbbbbbbbb
+ccccccccccccccccccccccccc
+ddddddddddddddddddddddddd" #: stdout:"$multi_line"
+```
+
 #### String
 ###### String Resource
 Just a String of Bash. Naturally, It's `'_any_string_'` or `"_any_string_"`.

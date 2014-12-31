@@ -205,16 +205,41 @@ Identifier of beginning the test-comment is `#:`
 
 ``` bash
 # Example:
+# put on End Of Line
+
 echo 'chocomint is awesome' #: stdout:'awesome'
+```
+
+``` bash
+# Example:
+# put on New Line
+
+echo 'chocomint is awesome'
+#: stdout:'awesome'
+```
+
+##### Multiple test-comment line
+
+``` bash
+# Example:
+echo 'chocomint is awesome' #: stdout:'awesome'
+                            #: stdout:'choco'
+```
+
+``` bash
+# Example:
+echo 'chocomint is awesome'
+#: stdout:'awesome'
+#: stdout:'choco'
 ```
 
 ### Meta-data marker: `#@`
 
 Identifier of beginning the meta-data is `#@`
 
-| Key  | Description            |
-|------|------------------------|
-| `name` | define the test name   |
+| Key    | Description                       |
+|--------|-----------------------------------|
+| `name` | define the test name. each file   |
 
 ``` bash
 # Example:
@@ -283,7 +308,7 @@ name=${USER} #: "${name}"='bob'
 ## Requirement
 
 - Bash __4.x__
-- Please __avoid function/variable names__ that begin with __`_chm_` or `_CHM_`__.
+- Please __avoid function/variable names__ that begin with __`_chm_`/`_CHM_`__ prefix.
 
 ## License
 

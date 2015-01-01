@@ -50,7 +50,7 @@ _chm_aggregate_execution_results() {
     do
       ((_CHM_TEST_COUNT++))
       left="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},left]}")"
-      mid="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},mid]}")"
+      mid="${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},mid]}"
       right="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},right]}")"
 
       if "${_CHM_LIBEXEC}/chocomint-main-judge" \

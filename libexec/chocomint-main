@@ -171,7 +171,7 @@ _chm_trap() {
 
     source "${_CHM_PARSER_FILE}"
 
-    eval $(echo "${4}" | sed 's/BASH_SOURCE=/_CHM_BASH_SOURCE=/')
+    eval "${4/BASH_SOURCE=/_CHM_BASH_SOURCE=}"
     local fullpath=$(readlink -f -- "${_CHM_BASH_SOURCE}")
 
     ${_CHM_DEBUG} && _chm_trap_debug "$@"

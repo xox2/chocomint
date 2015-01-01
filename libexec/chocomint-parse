@@ -20,9 +20,11 @@ done
 
 _tput() { $_CHM_TPUT "$@"; }
 
+eecho() { echo "$@" >&2; }
+
 error() {
-  echo -n "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) "
-  echo "${1} (L${LINE_NUMBER})"
+  eecho -n "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) "
+  eecho "${1} (L${LINE_NUMBER})"
 
   local begin_col=$((LINE_NUMBER - 3))
   local end_col=$((LINE_NUMBER + 3))
@@ -36,15 +38,15 @@ error() {
 
   while read -r line; do
     if [ ${cols_count} -eq "${LINE_NUMBER}" ]; then
-      echo -n '->'
-      echo " $(printf "%${padding}d" ${cols_count}) |  $(_tput setaf 1)${line}$(_tput sgr0)"
+      eecho -n '->'
+      eecho " $(printf "%${padding}d" ${cols_count}) |  $(_tput setaf 1)${line}$(_tput sgr0)"
     else
-      echo -n '  '
-      echo " $(printf "%${padding}d" ${cols_count}) |  ${line}"
+      eecho -n '  '
+      eecho " $(printf "%${padding}d" ${cols_count}) |  ${line}"
     fi
     ((cols_count++))
   done < <(sed -n "${begin_col},${end_col}p" "${TARGET_FULLPATH}")
-  echo
+  eecho
 
   PARSE_ERROR=true
   _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
@@ -503,14 +505,14 @@ main() {
       _CHM_PARSED[${i}]='parsed'
 
       ${TEST_EXIST} || {
-        [ "$QUIET" ] || echo "===> test not found" 1>&2
-        [ "$QUIET" ] || echo 1>&2
+        [ "$QUIET" ] || eecho "===> test not found"
+        [ "$QUIET" ] || eecho
         TEST_NOT_FOUND=true
         _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
       }
     else
-      [ "$QUIET" ] || echo "===> already parsed" 1>&2
-      [ "$QUIET" ] || echo 1>&2
+      [ "$QUIET" ] || eecho "===> already parsed"
+      [ "$QUIET" ] || eecho
       PARSE_DUP=true
     fi
   done

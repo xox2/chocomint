@@ -22,6 +22,10 @@ _tput() { $_CHM_TPUT "$@"; }
 
 eecho() { echo "$@" >&2; }
 
+q?echo() { [ "$QUIET" ] || echo "$@"; }
+
+q?eecho() { [ "$QUIET" ] || eecho "$@"; }
+
 error() {
   eecho -n "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) "
   eecho "${1} (L${LINE_NUMBER})"
@@ -493,7 +497,7 @@ main() {
 
   for i in "$@"
   do
-    [ "$QUIET" ] || echo "==> Parsing: \"${i}\""
+    q?echo "==> Parsing: \"${i}\""
     if ! [ "${_CHM_PARSED[${i}]}" ]; then
       LINE_NUMBER=1
       OFFSET_NUMBER=1
@@ -505,14 +509,14 @@ main() {
       _CHM_PARSED[${i}]='parsed'
 
       ${TEST_EXIST} || {
-        [ "$QUIET" ] || eecho "===> test not found"
-        [ "$QUIET" ] || eecho
+        q?eecho "===> test not found"
+        q?eecho
         TEST_NOT_FOUND=true
         _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
       }
     else
-      [ "$QUIET" ] || eecho "===> already parsed"
-      [ "$QUIET" ] || eecho
+      q?eecho "===> already parsed"
+      q?eecho
       PARSE_DUP=true
     fi
   done

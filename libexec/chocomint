@@ -92,7 +92,7 @@ run() {
       _chm_outputs.section "[${file_num_count}/${#@}] ${path}"
     fi
 
-    if [ "${_CHM_DATABASE[${path},parse_error]}" ]; then
+    if [ "${_CHM_DATABASE[${path},do_not_run]}" ]; then
       echo '==> Skip this test by Parse errors/warnings' 1>&2
       echo 1>&2
     else

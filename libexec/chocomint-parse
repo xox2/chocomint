@@ -22,37 +22,44 @@ _tput() { $_CHM_TPUT "$@"; }
 
 eecho() { echo "$@" >&2; }
 
-q?echo() { [ "$QUIET" ] || echo "$@"; }
+quiet?_echo() { [ "$QUIET" ] || echo "$@"; }
 
-q?eecho() { [ "$QUIET" ] || eecho "$@"; }
+quiet?_eecho() { [ "$QUIET" ] || eecho "$@"; }
 
-bool() {
-  eval "$1=$2"
-  eval "function $1() {
-    case \$1 in
-      '?' )
-        \$$1
-        ;;
-      '=' )
-        $1=\$2
-        \$$1
-        ;;
-      * )
-        echo \$$1
-        \$$1
-        ;;
-    esac
-  }"
-  eval "function $1?() {
-    \$$1
-  }
-  "
+?() {
+  if ! [ "$1" ]; then
+    echo '?: no argument' >&2
+    echo '?: no argument' >&4
+    exit 121
+  fi
+  if [ "$2" ]; then
+    if [ "$2" = 'true' ] || [ "$2" = 'false' ]; then
+      eval "$1=$2"
+    else
+      echo '?: boolean type invalid value (must be "true" or "false")' >&2
+      echo '?: boolean type invalid value (must be "true" or "false")' >&4
+      exit 122
+    fi
+  else
+    eval "local v=\$$1"
+    if [ "$v" ]; then
+      if [ "$v" = 'true' ] || [ "$v" = 'false' ]; then
+        $v
+      else
+        echo '?: not boolean type variable' >&2
+        echo '?: not boolean type variable' >&4
+        exit 123
+      fi
+    else
+      false
+    fi
+  fi
 }
 
-bool test_exist false
-bool error_exist false  # Any even one of the multiple files
-bool is_not_found false # Any even one of the multiple files
-bool is_parse_dup false # Any even one of the multiple files
+? test_exist false
+? error_exist_flag false # Any even one of the multiple files
+? not_found_flag false # Any even one of the multiple files
+? parse_dup_flag false # Any even one of the multiple files
 
 error() {
   eecho -n "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) "
@@ -80,7 +87,7 @@ error() {
   done < <(sed -n "${begin_col},${end_col}p" "${TARGET_FULLPATH}")
   eecho
 
-  error_exist = true
+  ? error_exist_flag true
   _CHM_DATABASE[${TARGET_FULLPATH},do_not_run]=true
 }
 
@@ -212,7 +219,7 @@ parse_test_right() {
       _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
       _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
       _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
-      test_exist = true
+      ? test_exist true
       valid
       PARSE_METHOD='parse_nl'
       TEST_COMMENT=''
@@ -519,26 +526,26 @@ main() {
 
   for i in "$@"
   do
-    q?echo "==> Parsing: \"${i}\""
+    quiet?_echo "==> Parsing: \"${i}\""
     if ! [ "${_CHM_PARSED[${i}]}" ]; then
       LINE_NUMBER=1
       TEST_INDEX=-1
       PARSE_METHOD='parse_nl' # initial parse-method
-      test_exist = false
+      ? test_exist false
 
       parse "${i}"
       _CHM_PARSED[${i}]='parsed'
 
-      test_exist? || {
-        q?eecho "===> test not found"
-        q?eecho
-        is_not_found = true
+      if ! ? test_exist; then
+        quiet?_eecho "===> test not found"
+        quiet?_eecho
+        ? not_found_flag true
         _CHM_DATABASE[${i},do_not_run]=true
-      }
+      fi
     else
-      q?eecho "===> already parsed"
-      q?eecho
-      is_parse_dup = true
+      quiet?_eecho "===> already parsed"
+      quiet?_eecho
+      ? parse_dup_flag true
     fi
   done
 
@@ -554,11 +561,11 @@ main() {
     echo " * $(declare -p _CHM_PARSED)"
   }
 
-  if error_exist?; then
+  if ? error_exist_flag; then
     return 10
-  elif is_not_found?; then
+  elif ? not_found_flag; then
     return 11
-  elif is_parse_dup?; then
+  elif ? parse_dup_flag; then
     return 12
   else
     return 0

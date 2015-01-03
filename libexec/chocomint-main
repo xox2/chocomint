@@ -215,7 +215,7 @@ _chm_clear_now-processing() {
 _chm_show_now-processing() {
   [ "${_CHM_IS_TERMINAL}" ] && {
     local now_proc="--> \$ ${BASH_COMMAND}"
-    echo -n "${now_proc}" >&3
+    echo -n ${now_proc} >&3
     _CHM_PREV_STRING_CHARNUM=${#now_proc}
   }
 }

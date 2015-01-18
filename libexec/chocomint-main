@@ -160,6 +160,22 @@ _chm_show_result() {
 }
 
 
+_chm_readpath() {
+  local target_file=$1
+  local pwd="$(pwd)"
+
+  while [ "$target_file" != "" ]
+  do
+    cd "$(dirname $target_file)"
+    local file_name="$(basename $target_file)"
+    target_file="$(readlink $file_name)"
+  done
+
+  echo "$(pwd -P)/$file_name"
+  cd "$pwd"
+}
+
+
 _chm_trap() {
   # $1 line number
   # $2 previous exitcode
@@ -172,7 +188,7 @@ _chm_trap() {
     source "${_CHM_PARSER_FILE}"
 
     eval "${4/BASH_SOURCE=/_CHM_BASH_SOURCE=}"
-    local fullpath=$(readlink -f -- "${_CHM_BASH_SOURCE}")
+    local fullpath=$(_chm_readpath "${_CHM_BASH_SOURCE}")
 
     ${_CHM_DEBUG} && _chm_trap_debug "$@"
 

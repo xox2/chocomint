@@ -19,7 +19,22 @@ export _CHM_CMD_SUCCESS=0
 export _CHM_CMD_COUNT=0
 export _CHM_FAILURE=false
 
-export _CHM_LIBEXEC="$(dirname -- "$(readlink -f -- "${BASH_SOURCE:-$0}")")"
+readpath() {
+  local target_file=$1
+  local pwd="$(pwd)"
+
+  while [ "$target_file" != "" ]
+  do
+    cd "$(dirname $target_file)"
+    local file_name="$(basename $target_file)"
+    target_file="$(readlink $file_name)"
+  done
+
+  echo "$(pwd -P)/$file_name"
+  cd "$pwd"
+}
+
+export _CHM_LIBEXEC="$(dirname -- "$(readpath "${BASH_SOURCE:-$0}")")"
 
 source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
@@ -128,7 +143,7 @@ main() {
   local i
   for i in "$@"
   do
-    local path="$(readlink -f -- "${i}")"
+    local path="$(readpath "${i}")"
     file_check "${path}" && {
       local path_list=("${path_list[@]}" "${path}")
     }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # vim: ft=sh
 
-declare -A _CHM_TEST_POSITION # "NL" or "EOL"
+declare -A _CHM_TEST_POSITION # 'NL' or 'EOL'
 declare -A _CHM_DATABASE
 declare -A _CHM_PARSED
 
@@ -20,9 +20,50 @@ done
 
 _tput() { $_CHM_TPUT "$@"; }
 
+eecho() { echo "$@" >&2; }
+
+quiet?_echo() { [ "$QUIET" ] || echo "$@"; }
+
+quiet?_eecho() { [ "$QUIET" ] || eecho "$@"; }
+
+?() {
+  if ! [ "$1" ]; then
+    echo '?: no argument' >&2
+    echo '?: no argument' >&4
+    exit 121
+  fi
+  if [ "$2" ]; then
+    if [ "$2" = 'true' ] || [ "$2" = 'false' ]; then
+      eval "$1=$2"
+    else
+      echo '?: boolean type invalid value (must be "true" or "false")' >&2
+      echo '?: boolean type invalid value (must be "true" or "false")' >&4
+      exit 122
+    fi
+  else
+    eval "local v=\$$1"
+    if [ "$v" ]; then
+      if [ "$v" = 'true' ] || [ "$v" = 'false' ]; then
+        $v
+      else
+        echo '?: not boolean type variable' >&2
+        echo '?: not boolean type variable' >&4
+        exit 123
+      fi
+    else
+      false
+    fi
+  fi
+}
+
+? test_exist false
+? error_exist_flag false # Any even one of the multiple files
+? not_found_flag false # Any even one of the multiple files
+? parse_dup_flag false # Any even one of the multiple files
+
 error() {
-  echo -n "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) "
-  echo "${1} (L${LINE_NUMBER})"
+  eecho -n "$(_tput bold)$(_tput setaf 1)===> Parse error:$(_tput sgr0) "
+  eecho "${1} (L${LINE_NUMBER})"
 
   local begin_col=$((LINE_NUMBER - 3))
   local end_col=$((LINE_NUMBER + 3))
@@ -36,18 +77,18 @@ error() {
 
   while read -r line; do
     if [ ${cols_count} -eq "${LINE_NUMBER}" ]; then
-      echo -n '->'
-      echo " $(printf "%${padding}d" ${cols_count}) |  $(_tput setaf 1)${line}$(_tput sgr0)"
+      eecho -n '->'
+      eecho " $(printf "%${padding}d" ${cols_count}) |  $(_tput setaf 1)${line}$(_tput sgr0)"
     else
-      echo -n '  '
-      echo " $(printf "%${padding}d" ${cols_count}) |  ${line}"
+      eecho -n '  '
+      eecho " $(printf "%${padding}d" ${cols_count}) |  ${line}"
     fi
     ((cols_count++))
   done < <(sed -n "${begin_col},${end_col}p" "${TARGET_FULLPATH}")
-  echo
+  eecho
 
-  PARSE_ERROR=true
-  _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
+  ? error_exist_flag true
+  _CHM_DATABASE[${TARGET_FULLPATH},do_not_run]=true
 }
 
 valid() {
@@ -98,7 +139,7 @@ parse_test_dq_bs() {
   case ${1} in
     * )
       TEST_COMMENT="${TEST_COMMENT}""${1}"
-      PARSE_METHOD="parse_test_dq"
+      PARSE_METHOD='parse_test_dq'
       ;;
   esac
 }
@@ -111,13 +152,13 @@ parse_test_dq() {
       ;;
     "\\" )
       TEST_COMMENT="${TEST_COMMENT}""\\"
-      PARSE_METHOD="parse_test_dq_bs"
+      PARSE_METHOD='parse_test_dq_bs'
       ;;
-    "" )
+    '' )
       error "\"${TEST_COMMENT}\": quote is not closed"
-      PARSE_METHOD="parse_nl"
-      TEST_COMMENT=""
-      PARENT_PARSE_METHOD=""
+      PARSE_METHOD='parse_nl'
+      TEST_COMMENT=''
+      PARENT_PARSE_METHOD=''
       ;;
     * )
       TEST_COMMENT="${TEST_COMMENT}""${1}"
@@ -131,11 +172,11 @@ parse_test_sq() {
       TEST_COMMENT="${TEST_COMMENT}""'"
       PARSE_METHOD="${PARENT_PARSE_METHOD}"
       ;;
-    "" )
+    '' )
       error "\"${TEST_COMMENT}\": quote is not closed"
-      PARSE_METHOD="parse_nl"
-      TEST_COMMENT=""
-      PARENT_PARSE_METHOD=""
+      PARSE_METHOD='parse_nl'
+      TEST_COMMENT=''
+      PARENT_PARSE_METHOD=''
       ;;
     * )
       TEST_COMMENT="${TEST_COMMENT}""${1}"
@@ -157,32 +198,32 @@ parse_test_right() {
   case ${1} in
     '"' )
       TEST_COMMENT="${TEST_COMMENT}""\""
-      PARSE_METHOD="parse_test_dq"
+      PARSE_METHOD='parse_test_dq'
       ;;
     "'" )
       TEST_COMMENT="${TEST_COMMENT}""'"
-      PARSE_METHOD="parse_test_sq"
+      PARSE_METHOD='parse_test_sq'
       ;;
     "\\" )
       TEST_COMMENT="${TEST_COMMENT}""\\"
-      PARSE_METHOD="parse_test_bs"
+      PARSE_METHOD='parse_test_bs'
       ;;
     " "|"\t" )
       _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
       valid
-      PARSE_METHOD="parse_test_main"
-      TEST_COMMENT=""
-      PARENT_PARSE_METHOD=""
+      PARSE_METHOD='parse_test_main'
+      TEST_COMMENT=''
+      PARENT_PARSE_METHOD=''
       ;;
-    "" )
+    '' )
       _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
       _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},right]="${TEST_COMMENT}"
       _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
-      TEST_EXIST=true
+      ? test_exist true
       valid
-      PARSE_METHOD="parse_nl"
-      TEST_COMMENT=""
-      PARENT_PARSE_METHOD=""
+      PARSE_METHOD='parse_nl'
+      TEST_COMMENT=''
+      PARENT_PARSE_METHOD=''
       ;;
     * )
       TEST_COMMENT="${TEST_COMMENT}""${1}"
@@ -197,20 +238,20 @@ parse_test_mid() {
       ;;
     " "|"\t" )
       error "\"${TEST_COMMENT}\": empty value"
-      PARSE_METHOD="parse_test_main"
-      TEST_COMMENT=""
-      PARENT_PARSE_METHOD=""
+      PARSE_METHOD='parse_test_main'
+      TEST_COMMENT=''
+      PARENT_PARSE_METHOD=''
       ;;
-    "" )
+    '' )
       error "\"${TEST_COMMENT}\": empty value"
-      PARSE_METHOD="parse_nl"
-      TEST_COMMENT=""
-      PARENT_PARSE_METHOD=""
+      PARSE_METHOD='parse_nl'
+      TEST_COMMENT=''
+      PARENT_PARSE_METHOD=''
       ;;
     * )
       _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},mid]="${TEST_COMMENT}"
-      TEST_COMMENT=""
-      PARSE_METHOD="parse_test_right"
+      TEST_COMMENT=''
+      PARSE_METHOD='parse_test_right'
       parse_test_right "${1}"
       ;;
   esac
@@ -221,33 +262,33 @@ parse_test_left() {
   case ${1} in
     '"' )
       TEST_COMMENT="${TEST_COMMENT}""\""
-      PARSE_METHOD="parse_test_dq"
+      PARSE_METHOD='parse_test_dq'
       ;;
     "'" )
       TEST_COMMENT="${TEST_COMMENT}""'"
-      PARSE_METHOD="parse_test_sq"
+      PARSE_METHOD='parse_test_sq'
       ;;
     "\\" )
       TEST_COMMENT="${TEST_COMMENT}""\\"
-      PARSE_METHOD="parse_test_bs"
+      PARSE_METHOD='parse_test_bs'
       ;;
     "!"|"="|":" )
       _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},${TEST_INDEX},left]="${TEST_COMMENT}"
-      TEST_COMMENT=""
-      PARSE_METHOD="parse_test_mid"
+      TEST_COMMENT=''
+      PARSE_METHOD='parse_test_mid'
       parse_test_mid "${1}"
       ;;
     ' '|'\t' )
       error "\"${TEST_COMMENT}\": invalid token"
-      PARSE_METHOD="parse_test_main"
-      TEST_COMMENT=""
-      PARENT_PARSE_METHOD=""
+      PARSE_METHOD='parse_test_main'
+      TEST_COMMENT=''
+      PARENT_PARSE_METHOD=''
       ;;
     '' )
       error "\"${TEST_COMMENT}\": invalid token"
-      PARSE_METHOD="parse_nl"
-      TEST_COMMENT=""
-      PARENT_PARSE_METHOD=""
+      PARSE_METHOD='parse_nl'
+      TEST_COMMENT=''
+      PARENT_PARSE_METHOD=''
       ;;
     * )
       TEST_COMMENT="${TEST_COMMENT}""${1}"
@@ -260,17 +301,17 @@ parse_test_main() {
     " "|"\t" )
       :
       ;;
-    "" )
-      [ "${_CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},0,left]}" ] && {
+    '' )
+      [ "$TEST_INDEX" -ge "0" ] && {
         _CHM_TEST_POSITION[${TARGET_FULLPATH},${LINE_NUMBER}]="${COMMENT_IN}"
         _CHM_DATABASE[${TARGET_FULLPATH},${LINE_NUMBER},max_test_index]="${TEST_INDEX}"
       }
-      PARSE_METHOD="parse_nl"
-      TEST_COMMENT=""
+      PARSE_METHOD='parse_nl'
+      TEST_COMMENT=''
       ;;
     * )
       ((TEST_INDEX++))
-      PARSE_METHOD="parse_test_left"
+      PARSE_METHOD='parse_test_left'
       parse_test_left "${1}"
       ;;
   esac
@@ -293,7 +334,7 @@ parse_meta_value() {
 parse_meta_key() {
   case ${1} in
     ':' )
-      PARSE_METHOD="parse_meta_value"
+      PARSE_METHOD='parse_meta_value'
       ;;
     '' )
       error "\"${META_KEY}\": invalid token"
@@ -311,7 +352,7 @@ parse_meta_main() {
     " "|"\t" )
       :
       ;;
-    "" )
+    '' )
       PARSE_METHOD='parse_nl'
       ;;
     * )
@@ -324,27 +365,27 @@ parse_meta_main() {
 parse_marker() {
   case ${1} in
     "${TEST_MARKER}" )
-      PARSE_METHOD="parse_test_main"
+      PARSE_METHOD='parse_test_main'
       ;;
     "${META_MARKER}" )
-      PARSE_METHOD="parse_meta_main"
+      PARSE_METHOD='parse_meta_main'
       ;;
-    "" )
-      PARSE_METHOD="parse_nl"
+    '' )
+      PARSE_METHOD='parse_nl'
       ;;
     * )
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD='parse_main'
       ;;
   esac
 }
 
 parse_dq_bs() {
   case ${1} in
-    "" )
-      PARSE_METHOD="parse_dq"
+    '' )
+      PARSE_METHOD='parse_dq'
       ;;
     * )
-      PARSE_METHOD="parse_dq"
+      PARSE_METHOD='parse_dq'
       ;;
   esac
 }
@@ -352,12 +393,12 @@ parse_dq_bs() {
 parse_dq() {
   case ${1} in
     "\\" )
-      PARSE_METHOD="parse_dq_bs"
+      PARSE_METHOD='parse_dq_bs'
       ;;
     '"' )
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD='parse_main'
       ;;
-    "" )
+    '' )
       ;;
     * )
       :
@@ -368,9 +409,9 @@ parse_dq() {
 parse_sq() {
   case ${1} in
     "'" )
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD='parse_main'
       ;;
-    "" )
+    '' )
       ;;
     * )
       :
@@ -380,11 +421,11 @@ parse_sq() {
 
 parse_bs() {
   case ${1} in
-    "" )
-      PARSE_METHOD="parse_main"
+    '' )
+      PARSE_METHOD='parse_main'
       ;;
     * )
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD='parse_main'
       ;;
   esac
 }
@@ -392,20 +433,20 @@ parse_bs() {
 parse_main() {
   case ${1} in
     "#" )
-      PARSE_METHOD="parse_marker"
-      COMMENT_IN="EOL"
+      PARSE_METHOD='parse_marker'
+      COMMENT_IN='EOL'
       ;;
     "\\" )
-      PARSE_METHOD="parse_bs"
+      PARSE_METHOD='parse_bs'
       ;;
     "'" )
-      PARSE_METHOD="parse_sq"
+      PARSE_METHOD='parse_sq'
       ;;
     '"' )
-      PARSE_METHOD="parse_dq"
+      PARSE_METHOD='parse_dq'
       ;;
-    "" )
-      PARSE_METHOD="parse_nl"
+    '' )
+      PARSE_METHOD='parse_nl'
       ;;
     * )
       ;;
@@ -415,26 +456,26 @@ parse_main() {
 parse_nl_space() {
   case ${1} in
     "#" )
-      PARSE_METHOD="parse_marker"
-      COMMENT_IN="NL"
+      PARSE_METHOD='parse_marker'
+      COMMENT_IN='NL'
       ;;
     " "|"\t" )
-      PARSE_METHOD="parse_nl_space"
+      PARSE_METHOD='parse_nl_space'
       ;;
     "\\" )
-      PARSE_METHOD="parse_bs"
+      PARSE_METHOD='parse_bs'
       ;;
     "'" )
-      PARSE_METHOD="parse_sq"
+      PARSE_METHOD='parse_sq'
       ;;
     '"' )
-      PARSE_METHOD="parse_dq"
+      PARSE_METHOD='parse_dq'
       ;;
-    "" )
-      PARSE_METHOD="parse_nl"
+    '' )
+      PARSE_METHOD='parse_nl'
       ;;
     * )
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD='parse_main'
       ;;
   esac
 }
@@ -442,26 +483,26 @@ parse_nl_space() {
 parse_nl() {
   case ${1} in
     "#" )
-      PARSE_METHOD="parse_marker"
-      COMMENT_IN="NL"
+      PARSE_METHOD='parse_marker'
+      COMMENT_IN='NL'
       ;;
     " "|"\t" )
-      PARSE_METHOD="parse_nl_space"
+      PARSE_METHOD='parse_nl_space'
       ;;
     "\\" )
-      PARSE_METHOD="parse_bs"
+      PARSE_METHOD='parse_bs'
       ;;
     "'" )
-      PARSE_METHOD="parse_sq"
+      PARSE_METHOD='parse_sq'
       ;;
     '"' )
-      PARSE_METHOD="parse_dq"
+      PARSE_METHOD='parse_dq'
       ;;
-    "" )
-      PARSE_METHOD="parse_nl"
+    '' )
+      PARSE_METHOD='parse_nl'
       ;;
     * )
-      PARSE_METHOD="parse_main"
+      PARSE_METHOD='parse_main'
       ;;
   esac
 }
@@ -474,44 +515,37 @@ parse() {
   while IFS= read -r line; do
     while IFS= read -r -n 1 char; do
       ${PARSE_METHOD} "${char}"
-      ((OFFSET_NUMBER++))
     done < <(echo "${line}")
-    OFFSET_NUMBER=1
     TEST_INDEX=-1 # reset index. '-1' means that there is no test.
     ((LINE_NUMBER++))
   done < "${TARGET_FULLPATH}"
 }
 
 main() {
-  PARSE_ERROR=false    # Any even one of the multiple files
-  TEST_NOT_FOUND=false # Any even one of the multiple files
-  PARSE_DUP=false      # Any even one of the multiple files
-
   [ -f "${_CHM_PARSER_FILE}" ] && source "${_CHM_PARSER_FILE}"
 
   for i in "$@"
   do
-    [ "$QUIET" ] || echo "==> Parsing: \"${i}\""
+    quiet?_echo "==> Parsing: \"${i}\""
     if ! [ "${_CHM_PARSED[${i}]}" ]; then
       LINE_NUMBER=1
-      OFFSET_NUMBER=1
       TEST_INDEX=-1
-      PARSE_METHOD="parse_nl" # initial parse-method
-      TEST_EXIST=false
+      PARSE_METHOD='parse_nl' # initial parse-method
+      ? test_exist false
 
       parse "${i}"
       _CHM_PARSED[${i}]='parsed'
 
-      ${TEST_EXIST} || {
-        [ "$QUIET" ] || echo "===> test not found" 1>&2
-        [ "$QUIET" ] || echo 1>&2
-        TEST_NOT_FOUND=true
-        _CHM_DATABASE[${TARGET_FULLPATH},parse_error]=true
-      }
+      if ! ? test_exist; then
+        quiet?_eecho "===> test not found"
+        quiet?_eecho
+        ? not_found_flag true
+        _CHM_DATABASE[${i},do_not_run]=true
+      fi
     else
-      [ "$QUIET" ] || echo "===> already parsed" 1>&2
-      [ "$QUIET" ] || echo 1>&2
-      PARSE_DUP=true
+      quiet?_eecho "===> already parsed"
+      quiet?_eecho
+      ? parse_dup_flag true
     fi
   done
 
@@ -527,11 +561,11 @@ main() {
     echo " * $(declare -p _CHM_PARSED)"
   }
 
-  if ${PARSE_ERROR}; then
+  if ? error_exist_flag; then
     return 10
-  elif ${TEST_NOT_FOUND}; then
+  elif ? not_found_flag; then
     return 11
-  elif ${PARSE_DUP}; then
+  elif ? parse_dup_flag; then
     return 12
   else
     return 0

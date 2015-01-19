@@ -50,7 +50,7 @@ _chm_aggregate_execution_results() {
     do
       ((_CHM_TEST_COUNT++))
       left="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},left]}")"
-      mid="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},mid]}")"
+      mid="${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},mid]}"
       right="$(eval echo "${_CHM_DATABASE[${_CHM_PREV_PATH[$2]},${line},${testidx},right]}")"
 
       if "${_CHM_LIBEXEC}/chocomint-main-judge" \
@@ -160,6 +160,22 @@ _chm_show_result() {
 }
 
 
+_chm_readpath() {
+  local target_file=$1
+  local pwd="$(pwd)"
+
+  while [ "$target_file" != "" ]
+  do
+    cd "$(dirname $target_file)"
+    local file_name="$(basename $target_file)"
+    target_file="$(readlink $file_name)"
+  done
+
+  echo "$(pwd -P)/$file_name"
+  cd "$pwd"
+}
+
+
 _chm_trap() {
   # $1 line number
   # $2 previous exitcode
@@ -171,8 +187,8 @@ _chm_trap() {
 
     source "${_CHM_PARSER_FILE}"
 
-    eval $(echo "${4}" | sed 's/BASH_SOURCE=/_CHM_BASH_SOURCE=/')
-    local fullpath=$(readlink -f -- "${_CHM_BASH_SOURCE}")
+    eval "${4/BASH_SOURCE=/_CHM_BASH_SOURCE=}"
+    local fullpath=$(_chm_readpath "${_CHM_BASH_SOURCE}")
 
     ${_CHM_DEBUG} && _chm_trap_debug "$@"
 
@@ -215,7 +231,7 @@ _chm_clear_now-processing() {
 _chm_show_now-processing() {
   [ "${_CHM_IS_TERMINAL}" ] && {
     local now_proc="--> \$ ${BASH_COMMAND}"
-    echo -n "${now_proc}" >&3
+    echo -n ${now_proc} >&3
     _CHM_PREV_STRING_CHARNUM=${#now_proc}
   }
 }

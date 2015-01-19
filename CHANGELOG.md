@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.6.1 (2015-01-20)
+
+- Extend `readlink` for BSD(Mac) style `readlink`
+
 ## 0.6.0 (2015-01-01)
 
 - __Big change__ of architecture

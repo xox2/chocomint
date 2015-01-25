@@ -22,11 +22,12 @@ export _CHM_FAILURE=false
 readpath() {
   local target_file=$1
   local pwd="$(pwd)"
+  local file_name
 
   while [ "$target_file" != "" ]
   do
     cd "$(dirname $target_file)"
-    local file_name="$(basename $target_file)"
+    file_name="$(basename $target_file)"
     target_file="$(readlink $file_name)"
   done
 
@@ -35,6 +36,8 @@ readpath() {
 }
 
 export _CHM_LIBEXEC="$(dirname -- "$(readpath "${BASH_SOURCE:-$0}")")"
+
+export PATH=$_CHM_LIBEXEC:$PATH
 
 source "${_CHM_LIBEXEC}/chocomint-lib/outputs"
 
@@ -81,7 +84,7 @@ file_check() {
 
 
 parse() {
-  "${_CHM_LIBEXEC}/chocomint-parse" "$@" || {
+  . ${_CHM_LIBEXEC}/chocomint-parse "$@" || {
     local exitcode=$?
     case ${exitcode} in
       '10'|'11'|'12' ) : ;;
@@ -111,7 +114,7 @@ run() {
       echo '==> Skip this test by Parse errors/warnings' 1>&2
       echo 1>&2
     else
-      "${_CHM_LIBEXEC}/chocomint-main" "${path}" || {
+      chocomint-main "${path}" || {
         local exitcode=$?
         case ${exitcode} in
           '21' ) : ;; # in chocomint-main-judge
@@ -140,34 +143,35 @@ main() {
 
   _chm_outputs.title "${NAME} ${VERSION}"
 
-  local i
+  local i path_ path_list
+  path_list=()
   for i in "$@"
   do
-    local path="$(readpath "${i}")"
-    file_check "${path}" && {
-      local path_list=("${path_list[@]}" "${path}")
+    path_="$(readpath "${i}")"
+    file_check "${path_}" && {
+      path_list=("${path_list[@]}" "${path_}")
     }
   done
   [ "${path_list[*]}" ] || exit 3
 
   parse "${path_list[@]}"
-  source "${_CHM_PARSER_FILE}"
+  #source "${_CHM_PARSER_FILE}"
 
-  run "${path_list[@]}"
-  source "${_CHM_TEST_RESULTS_FILE}"
+  #run "${path_list[@]}"
+  #source "${_CHM_TEST_RESULTS_FILE}"
 
-  _chm_outputs.overall_results \
-    "${_CHM_TEST_FAILURE}"     \
-    "${_CHM_TEST_SUCCESS}"     \
-    "${_CHM_TEST_COUNT}"       \
-    "${_CHM_CMD_SUCCESS}"      \
-    "${_CHM_CMD_COUNT}"
+  #_chm_outputs.overall_results \
+  #  "${_CHM_TEST_FAILURE}"     \
+  #  "${_CHM_TEST_SUCCESS}"     \
+  #  "${_CHM_TEST_COUNT}"       \
+  #  "${_CHM_CMD_SUCCESS}"      \
+  #  "${_CHM_CMD_COUNT}"
 
-  if ${_CHM_FAILURE}; then
-    return 1
-  else
-    return 0
-  fi
+  #if ${_CHM_FAILURE}; then
+  #  return 1
+  #else
+  #  return 0
+  #fi
 }
 
 

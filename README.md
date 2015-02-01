@@ -1,11 +1,11 @@
-# chocomint.sh
+# chocomint
 
 Simple, powerful, flexible, __comment-based Testing Framework__ for your command-line tools or shell scripts on Bash 4.x
 
 ## Description
 
 You can create a test by simply appending test comments on Bash script.
-chocomint.sh is a test tool that is written in Bash.
+chocomint is a test tool that is written in Bash.
 Hence if you have even Bash, other language environments such as Perl or
 Ruby or Python is not required. In addition, since it is possible to use shell
 variables in the test comments, you can create a test to powerful and flexible.
@@ -111,8 +111,8 @@ $ chocomint path/to/test1 path/to/test2 path/to/test3
 
 ```
 $ chocomint tests/tests.sh
-::: chocomint.sh 0.6.0-rc
-==> Parsing: "/home/vagrant/github/chocomint.sh/tests/tests.sh"
+::: chocomint 0.6.0-rc
+==> Parsing: "/home/vagrant/github/chocomint/tests/tests.sh"
 >>> [1/1] THIS TEST TITLE IS HERE (tests.sh)
 ==> THIS TEST TITLE IS HERE [L6]
 --> $ true
@@ -185,16 +185,16 @@ $ chocomint tests/tests.sh
 #### Simple, Local
 
 ```
-$ git clone -b current https://github.com/toromoti/chocomint.sh ~/chocomint
+$ git clone -b current https://github.com/toromoti/chocomint ~/chocomint
 $ export PATH=~/chocomint/bin:$PATH
 ```
 
 #### System-wide
 
 ```
-$ git clone -b current https://github.com/toromoti/chocomint.sh
-$ cp -r chocomint.sh/bin/ /usr/local/
-$ cp -r chocomint.sh/libexec/ /usr/local/
+$ git clone -b current https://github.com/toromoti/chocomint
+$ cp -r chocomint/bin/ /usr/local/
+$ cp -r chocomint/libexec/ /usr/local/
 ```
 
 ## Reference

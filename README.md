@@ -338,10 +338,6 @@ name=${USER} #: "${name}"='bob'
 5. Push to the branch
 6. Create new Pull Request
 
-## Author
-
-[toromoti](https://github.com/toromoti)
-
 ## Influenced by
 
 - [sstephenson/bats](https://github.com/sstephenson/bats)
